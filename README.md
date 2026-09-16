@@ -19,10 +19,10 @@ designed to run on **GitHub Pages**.
 ## What A to Z Wise AI currently does
 
 - **AI Home Diagnosis (front-end demo):** homeowners pick a category
-  (Plumbing, Electrical, HVAC, Appliance, Structural, Home Equipment, Doors & Windows, or Other) and describe what they see, hear,
-  smell, and notice, optionally attach photos, and get a structured result:
+  (Plumbing, Electrical, HVAC, Appliance, Structural, Home Equipment, Doors & Windows, or Other), name the area/system/equipment involved, describe what they see, hear,
+  smell, and notice, optionally add leak details, error codes, intermittent behavior, when the problem started, make/model information, reuse a saved My Home equipment record, attach photos, and get a structured result:
   a confidence/likelihood label, most likely causes, other possible causes,
-  clarifying questions, step-by-step troubleshooting, tools/parts needed,
+  why each cause is possible, safe checks, clarifying questions, step-by-step next actions, tools/parts needed,
   estimated time, DIY difficulty, safety warnings, stop conditions, and
   when to call a professional. Results are always phrased as "possible" or
   "likely" — never as a guaranteed fact.
@@ -74,8 +74,9 @@ designed to run on **GitHub Pages**.
 User fills form + optional photos
         │
         ▼
-js/modules/diagnosis.js  ── builds a request (category, problem, seen,
-        │                    heard, smell, otherSymptoms, photos,
+js/modules/diagnosis.js  ── builds a request (category, area/equipment,
+        │                    problem, symptom details, make/model,
+        │                    optional My Home context, photos,
         │                    conversationHistory) and shows loading state
         ▼
 js/api/ai-client.js       ── the ONLY place that knows whether a backend
@@ -129,6 +130,11 @@ A to Z Wise AI ships with **no backend configured**, so it runs in **Demo
 Mode**: `js/api/ai-client.js` uses local, keyword-matching logic instead of
 calling a network API. The UI shows a "Demo Mode" badge next to diagnosis
 results so this is never presented as a real AI analysis.
+
+If a backend URL is configured later, the browser still never gets an AI
+provider key. The front end only sends the structured diagnosis request to
+that secure backend, and if the backend cannot be reached the app now falls
+back honestly to Demo Mode with an explicit status message.
 
 To connect a real backend later, no code changes or rebuild are required —
 just set its HTTPS URL in **one** of these non-secret places:

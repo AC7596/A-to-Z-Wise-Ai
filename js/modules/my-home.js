@@ -3,6 +3,7 @@ import {
   addEquipment,
   addMaintenanceRecord,
   addUpcomingMaintenance,
+  buildEquipmentLabel,
   loadMyHomeProfile,
   removeEquipment,
   removeMaintenanceRecord,
@@ -63,11 +64,6 @@ function homeLabel() {
   return nickname || address || 'Your digital home profile';
 }
 
-function equipmentLabel(item) {
-  const manufacturerModel = [item.manufacturer, item.modelNumber].filter(Boolean).join(' · ');
-  return manufacturerModel ? `${item.type} — ${manufacturerModel}` : item.type;
-}
-
 function populateHomeInfoForm() {
   if (!els.myHomeInfoForm) return;
   els.myHomeNickname.value = profile.homeInfo.nickname;
@@ -101,7 +97,7 @@ function renderSummary() {
 function renderEquipmentOptions() {
   if (!els.myHomeEquipmentOptions) return;
   els.myHomeEquipmentOptions.innerHTML = profile.equipment
-    .map(item => `<option value="${escapeHtml(equipmentLabel(item))}"></option>`)
+    .map(item => `<option value="${escapeHtml(buildEquipmentLabel(item))}"></option>`)
     .join('');
 }
 

@@ -85,6 +85,78 @@ function normalizeReminderEntry(entry) {
   };
 }
 
+export function buildEquipmentLabel(item) {
+  const manufacturerModel = [item?.manufacturer, item?.modelNumber].map(toStringValue).filter(Boolean).join(' · ');
+  const type = toStringValue(item?.type);
+  return manufacturerModel ? `${type} — ${manufacturerModel}` : type;
+}
+
+function normalizeSearchText(value) {
+  return toStringValue(value).toLowerCase();
+}
+
+function recordMentionsEquipment(record, equipment) {
+  const haystack = normalizeSearchText([
+    record?.equipment,
+    record?.servicePerformed,
+    record?.notes,
+    record?.partsUsed
+  ].filter(Boolean).join(' '));
+
+  if (!haystack) return false;
+
+  const exactLabels = [
+    buildEquipmentLabel(equipment),
+    equipment?.type,
+    equipment?.manufacturer,
+    equipment?.modelNumber,
+    equipment?.serialNumber
+  ].map(normalizeSearchText).filter(Boolean);
+
+  return exactLabels.some(label => haystack.includes(label));
+}
+
+function isRepairLikeRecord(record) {
+  const text = normalizeSearchText([
+    record?.servicePerformed,
+    record?.notes,
+    record?.partsUsed
+  ].filter(Boolean).join(' '));
+
+  return /(repair|repaired|replace|replacement|fixed|fix|service call|diagnos|troubleshoot)/.test(text);
+}
+
+export function getEquipmentById(profile, equipmentId) {
+  if (!equipmentId) return null;
+  return (profile?.equipment || []).find(item => item.id === equipmentId) || null;
+}
+
+export function getEquipmentDiagnosisContext(profile, equipmentId) {
+  const normalizedProfile = normalizeMyHomeProfile(profile);
+  const selectedEquipment = getEquipmentById(normalizedProfile, equipmentId);
+
+  if (!selectedEquipment) {
+    return {
+      selectedEquipment: null,
+      maintenanceHistory: [],
+      previousRepairs: []
+    };
+  }
+
+  const maintenanceHistory = normalizedProfile.maintenanceRecords
+    .filter(record => recordMentionsEquipment(record, selectedEquipment))
+    .map(record => ({ ...record, recordType: 'maintenance' }))
+    .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+  return {
+    selectedEquipment,
+    maintenanceHistory,
+    previousRepairs: maintenanceHistory
+      .filter(isRepairLikeRecord)
+      .map(record => ({ ...record, recordType: 'repair' }))
+  };
+}
+
 function createStarterReminders() {
   return STARTER_REMINDERS.map(({ task, target }) => createReminderTemplate(task, target));
 }

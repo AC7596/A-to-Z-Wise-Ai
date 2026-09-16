@@ -46,23 +46,83 @@ with no network calls and no keys anywhere in the repository.
 
 ```jsonc
 {
-  "category": "string (Plumbing | Electrical | Heating & Cooling | Appliance | Structural | Home Equipment | Doors & Windows | Other)",
-  "problem": "string",
-  "seen": "string",
-  "heard": "string",
-  "smell": "string",
-  "otherSymptoms": "string",
-  "photos": ["File", "..."],
-  "conversationHistory": [
-    { "answer": "string", "timestamp": "ISO 8601 string" }
-  ]
+ "version": "2026-09-home-diy-v1",
+ "scope": "home-diy-only",
+ "category": "string (Plumbing | Electrical | Heating & Cooling | Appliance | Structural | Home Equipment | Doors & Windows | Other)",
+ "areaOrEquipment": "string",
+ "equipment": {
+   "make": "string",
+   "model": "string"
+ },
+ "problem": "string",
+ "symptoms": {
+   "seen": "string",
+   "heard": "string",
+   "smell": "string",
+   "leakDetails": "string",
+   "errorCode": "string",
+   "intermittentBehavior": "string",
+   "problemStart": "string",
+   "otherSymptoms": "string"
+ },
+ "conversationHistory": [
+   { "answer": "string", "timestamp": "ISO 8601 string" }
+ ],
+ "useMyHomeContext": true,
+ "myHomeContext": {
+   "profileUpdatedAt": "ISO 8601 string",
+   "selectedEquipment": {
+     "type": "string",
+     "manufacturer": "string",
+     "modelNumber": "string",
+     "serialNumber": "string",
+     "installationDateOrAge": "string",
+     "warrantyExpiration": "string",
+     "notes": "string"
+   },
+   "maintenanceHistory": [{ "recordType": "maintenance", "servicePerformed": "string", "date": "string", "partsUsed": "string", "notes": "string" }],
+   "previousRepairs": [{ "recordType": "repair", "servicePerformed": "string", "date": "string", "partsUsed": "string", "notes": "string" }],
+   "homeSummary": {
+     "nickname": "string",
+     "yearBuilt": "string",
+     "homeType": "string"
+   }
+ },
+ "requestedOutputs": {
+   "possibleCauses": true,
+   "causeExplanations": true,
+   "safeChecks": true,
+   "tools": true,
+   "parts": true,
+   "nextActions": true,
+   "safetyWarnings": true,
+   "whenToStopDIY": true,
+   "whenToCallProfessional": true,
+   "followUpQuestions": true
+ },
+ "disclaimers": {
+   "scope": "home-diy-only",
+   "requireVerifiedManufacturerClaims": true,
+   "neverClaimCertainty": true
+ },
+ "attachmentSummary": {
+   "photoCount": 2
+ }
 }
 ```
+
+The browser sends this JSON inside a multipart `FormData` field named
+`request`, and appends each actual photo file separately under the `photos`
+field. The backend should therefore read structured request data from the
+JSON field and uploaded image binaries from the multipart files.
 
 `conversationHistory` carries every follow-up answer the homeowner has
 given so far in the current browser session (see "Follow-up conversation"
 in the README), so the backend can progressively narrow the diagnosis
 instead of treating each request as unrelated to the last.
+
+`scope: "home-diy-only"` is intentional. Do not use this endpoint for
+automotive diagnosis yet.
 
 ## Response shape the front end expects
 
@@ -72,12 +132,25 @@ shape currently used by the demo logic in `js/api/ai-client.js`:
 ```jsonc
 {
   "matched": true,
+  "needsFollowUp": false,
   "confidence": {
     "level": "high | medium | low",
     "label": "string, e.g. \"Likely cause, based on the details you provided\""
   },
   "hasDanger": false,
   "dangerConfig": { "message": "string", "badge": "string" },
+  "possibleCauses": [
+    { "title": "string", "whyPossible": "string" }
+  ],
+  "otherPossibleCauses": [
+    { "title": "string", "whyPossible": "string" }
+  ],
+  "safeChecks": ["string", "..."],
+  "nextActions": ["string", "..."],
+  "safetyWarnings": ["string", "..."],
+  "whenToStopDIY": ["string", "..."],
+  "whenToCallProfessional": ["string", "..."],
+  "followUpQuestions": ["string", "..."],
   "issue": {
     "causes": ["string", "..."],
     "otherCauses": ["string", "..."],
@@ -129,8 +202,9 @@ backend may do the same; the UI ignores them when absent):
    choice, but make sure the UI never claims a real AI analyzed something
    when it did not.
 5. Test thoroughly, especially error states (network failure, backend
-   downtime, invalid responses) since `js/modules/diagnosis.js` already
-   has loading/error handling wired up to support this.
+   downtime, invalid responses) since `js/api/ai-client.js` now supports an
+   honest demo fallback and `js/modules/diagnosis.js` already has loading/
+   error handling wired up to support this.
 
 ## What is intentionally NOT built yet
 

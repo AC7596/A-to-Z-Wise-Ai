@@ -16,6 +16,7 @@ node tests/regression-co-vs-co2-followup.mjs
 node tests/regression-kids-progress.mjs
 node tests/regression-diagnosis-followup.mjs
 node tests/regression-diagnosis-facts.mjs
+node tests/regression-diagnosis-backend.mjs
 node tests/regression-branding.mjs
 node tests/regression-monetization.mjs
 node tests/regression-my-home.mjs
@@ -82,6 +83,11 @@ without any additional tooling.
   dripping faucet) surfaces `relatedGuideId` for the "Guide me through it"
   hand-off; and genuinely unrecognizable input still gets an honest,
   Zee-style follow-up instead of a dead end.
+- **regression-diagnosis-backend.mjs** — the backend-ready diagnosis
+  foundation: request shaping in `js/api/diagnosis-contract.js`, secure
+  home-only payload fields, My Home equipment/maintenance context inclusion,
+  structured cause normalization, successful live backend calls, and honest
+  fallback back to Demo Mode when a configured backend is unavailable.
 - **regression-branding.mjs** — launch-branding and SEO regression coverage
   for A to Z Wise AI: canonical/Open Graph URLs, robots directives, footer
   slogan, Zee/DIY Together wording, and the unchanged hosted PayPal
