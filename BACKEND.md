@@ -35,7 +35,8 @@ This repo is now prepared for **Cloudflare Workers** as the simplest production 
 
 Prepared deployment files:
 
-- `backend/wrangler.toml` (deployment config, no secrets)
+- `wrangler.toml` (repository-root config for Cloudflare Git-connected Worker deploys, no secrets)
+- `backend/wrangler.toml` (backend-folder config for manual/local Wrangler deploys, no secrets)
 - `backend/.gitignore` (prevents local secret files from being committed)
 - `backend/wrangler.example.toml` (alternate template)
 
@@ -72,24 +73,29 @@ If backend is not reachable or is not configured correctly, frontend automatical
 1. Create/sign in to a Cloudflare account.
 2. Add the `atozwiseai.com` domain to Cloudflare DNS (or manage DNS records there).
 3. Create/get an AI provider API key (for example, OpenAI key for `gpt-4o-mini`, or another OpenAI-compatible provider).
-4. Install Wrangler locally (`npm i -g wrangler`) and log in (`wrangler login`).
-5. Deploy the Worker from the `backend/` folder and set secrets.
+4. Install Wrangler locally (`npm i -g wrangler`) and log in (`wrangler login`) if you want manual/local deploys.
+5. For Cloudflare Git-connected deploys, connect this repository as a Worker project and use the repository-root `wrangler.toml`.
 
 ## Exact deployment steps (beginner-friendly)
 
 From the repository root:
 
-1. `cd backend`
-2. Confirm `wrangler.toml` values:
-   - `name = "a-to-z-wise-ai-diagnosis-backend"`
+1. In Cloudflare Workers Builds, connect the GitHub repository as a Worker project, not a static-assets-only Worker.
+2. Use these Git-connected deployment settings:
+   - Root directory: repository root
+   - Wrangler config: `wrangler.toml`
+   - Build command: `echo "No build step required"`
+   - Deploy command: `npx wrangler deploy`
+   - Production branch: `main`
+3. Confirm repository-root `wrangler.toml` values:
+   - `main = "backend/worker.mjs"`
    - Production default: `ALLOWED_ORIGINS = "https://atozwiseai.com,https://www.atozwiseai.com"`
    - Optional testing-only temporary value: add `,https://ac7596.github.io` while testing from GitHub Pages, then remove it for full production lock-down
-3. Set secret key (never in git):
+4. Set secret key in Cloudflare (never in git):
+   - `AI_PROVIDER_API_KEY`
+5. If you prefer manual/local Wrangler deploys instead:
+   - `cd backend`
    - `wrangler secret put AI_PROVIDER_API_KEY`
-4. (Optional) set alternate non-secret vars in `wrangler.toml`:
-   - `AI_PROVIDER_MODEL`
-   - `AI_PROVIDER_BASE_URL`
-5. Deploy:
    - `wrangler deploy`
 6. In Cloudflare, map a custom domain route (recommended):
    - `api.atozwiseai.com/*` → this Worker
@@ -105,13 +111,16 @@ From the repository root:
 
 ## What you personally need to do next (simple checklist)
 
-1. In Cloudflare, open your Worker settings and run `wrangler secret put AI_PROVIDER_API_KEY` so the API key stays server-side.
-2. Deploy from `backend/` with `wrangler deploy`.
-3. In Cloudflare routes/domains, connect `api.atozwiseai.com/*` to this Worker.
-4. Open `https://api.atozwiseai.com/api/health` and confirm you see `"ok": true`.
-5. In `/index.html`, set `<meta name="atozwiseai-backend-url" content="https://api.atozwiseai.com">`.
-6. Commit that frontend meta-tag change and publish GitHub Pages.
-7. Test one diagnosis on the live site:
+1. In Cloudflare Workers Builds, keep the project as a Worker runtime using repository-root `wrangler.toml`, not a static-assets-only Worker.
+2. Set `AI_PROVIDER_API_KEY` in Cloudflare **Settings → Variables and Secrets** so the API key stays server-side.
+3. Use Cloudflare Git settings:
+   - Build command: `echo "No build step required"`
+   - Deploy command: `npx wrangler deploy`
+4. In Cloudflare routes/domains, connect `api.atozwiseai.com/*` to this Worker.
+5. Open `https://api.atozwiseai.com/api/health` and confirm you see `"ok": true`.
+6. In `/index.html`, set `<meta name="atozwiseai-backend-url" content="https://api.atozwiseai.com">`.
+7. Commit that frontend meta-tag change and publish GitHub Pages.
+8. Test one diagnosis on the live site:
    - Success path: mode shows backend connected.
    - Safety path: if backend is unavailable, it clearly falls back to Demo Mode.
 

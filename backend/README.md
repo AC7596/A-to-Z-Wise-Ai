@@ -12,7 +12,10 @@ This folder contains a server-side backend foundation for `POST /api/diagnose`.
 
 ## Deploy target
 
-The provided entrypoint (`backend/worker.mjs`) is designed for Cloudflare Workers and this repo now includes a ready-to-use `backend/wrangler.toml`.
+The provided entrypoint (`backend/worker.mjs`) is designed for Cloudflare Workers. This repo now includes:
+
+- repository-root `wrangler.toml` for Cloudflare Git-connected Worker deployments
+- `backend/wrangler.toml` for manual/local Wrangler deploys from the `backend/` folder
 
 ## Required environment variables
 
@@ -39,18 +42,26 @@ The frontend already calls `${backendUrl}/api/diagnose` and safely falls back to
 
 ## Deploy (Cloudflare Workers)
 
-1. `cd backend`
-2. Review `wrangler.toml` (name, allowed origins, optional model/base URL).
+1. For Cloudflare Git-connected Worker deploys, keep the project root at the repository root so Cloudflare reads `/wrangler.toml`.
+2. Use these Cloudflare settings:
+   - Root directory: repository root
+   - Wrangler config: `wrangler.toml`
+   - Build command: `echo "No build step required"`
+   - Deploy command: `npx wrangler deploy`
+3. Review repository-root `wrangler.toml` (entrypoint, allowed origins, optional model/base URL).
+   - `main = "backend/worker.mjs"` keeps the runtime code in the existing backend Worker.
    - Keep production origins only by default: `https://atozwiseai.com,https://www.atozwiseai.com`.
    - If needed for GitHub Pages testing, temporarily add `https://ac7596.github.io`, then remove it after testing.
-3. Set secret:
+4. Set secret in Cloudflare Variables and Secrets:
+   - `AI_PROVIDER_API_KEY`
+5. If you prefer manual/local Wrangler deploys instead, use:
+   - `cd backend`
    - `wrangler secret put AI_PROVIDER_API_KEY`
-4. Deploy:
    - `wrangler deploy`
-5. In Cloudflare dashboard, map `api.atozwiseai.com/*` (or another HTTPS domain) to this Worker.
-6. Validate:
+6. In Cloudflare dashboard, map `api.atozwiseai.com/*` (or another HTTPS domain) to this Worker.
+7. Validate:
    - `GET https://<your-backend-domain>/api/health`
-7. Point frontend to backend:
+8. Point frontend to backend:
    - In `/index.html`, set `<meta name="atozwiseai-backend-url" content="https://<your-backend-domain>">`
 
 If the backend is unavailable or misconfigured, frontend remains safe and transparent by falling back to Demo Mode.

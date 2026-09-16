@@ -231,16 +231,22 @@ which GitHub Pages supports without any additional configuration.
 
 The repo is prepared for a Cloudflare Workers deployment while keeping this website on GitHub Pages.
 
-1. Deploy `backend/worker.mjs` with `backend/wrangler.toml`.
+1. For Cloudflare Git-connected Worker deploys, use the repository-root `wrangler.toml`, which points `main` at `backend/worker.mjs` and avoids static-assets-only deployment mode. For manual/local Wrangler deploys, `backend/wrangler.toml` still works from the `backend/` folder.
 2. Set backend secret/environment variables on Cloudflare:
    - `AI_PROVIDER_API_KEY` (required)
    - `AI_PROVIDER_MODEL` (optional)
    - `AI_PROVIDER_BASE_URL` (optional)
    - `ALLOWED_ORIGINS` (production: `https://atozwiseai.com,https://www.atozwiseai.com`; add `https://ac7596.github.io` only temporarily while GitHub Pages testing)
-3. Bind an HTTPS backend domain (recommended `https://api.atozwiseai.com`).
-4. Set that URL in the `atozwiseai-backend-url` meta tag in `index.html` (or
+3. In Cloudflare Workers Builds / Git settings, deploy the Worker runtime instead of static assets:
+   - Root directory: repository root
+   - Wrangler config: `wrangler.toml`
+   - Build command: `echo "No build step required"`
+   - Deploy command: `npx wrangler deploy`
+   - Runtime secret: add `AI_PROVIDER_API_KEY` in **Settings → Variables and Secrets**
+4. Bind an HTTPS backend domain (recommended `https://api.atozwiseai.com`).
+5. Set that URL in the `atozwiseai-backend-url` meta tag in `index.html` (or
    via `window.ATOZWISEAI_CONFIG.backendUrl`). No rebuild is required.
-5. Verify:
+6. Verify:
    - `/api/health` responds from the backend
    - diagnosis shows backend-connected mode when healthy
    - diagnosis safely falls back to Demo Mode when backend is unavailable/misconfigured

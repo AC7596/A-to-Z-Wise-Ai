@@ -21,6 +21,7 @@ node tests/regression-branding.mjs
 node tests/regression-monetization.mjs
 node tests/regression-my-home.mjs
 node tests/regression-secure-backend-service.mjs
+node tests/regression-cloudflare-worker-config.mjs
 ```
 
 Each script exits with a non-zero status (via Node's built-in
@@ -108,3 +109,7 @@ without any additional tooling.
   confirms immediate STOP safety responses, verifies provider-response
   normalization into the existing UI contract, and checks missing backend
   credentials return a safe configuration error.
+- **regression-cloudflare-worker-config.mjs** — deployment-config checks:
+  verifies repository-root `wrangler.toml` points Cloudflare at
+  `backend/worker.mjs` and does not declare static-assets-only config, so
+  runtime secrets remain available.
