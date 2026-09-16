@@ -203,7 +203,7 @@ test('Diagnosis backend-ready contract and fallback regression checks', async (t
   });
 
   await t.test('live backend calls use the structured contract without exposing secrets', async () => {
-    withBackendConfig('https://backend.example');
+    withBackendConfig('https://backend.example/');
     global.fetch = async (url, options) => {
       const payload = JSON.parse(options.body.get('request'));
       assert.equal(url, 'https://backend.example/api/diagnose');
@@ -265,5 +265,29 @@ test('Diagnosis backend-ready contract and fallback regression checks', async (t
     assert.equal(result.backendStatus.usingFallback, true);
     assert.match(result.backendStatus.message, /fell back to Demo Mode/i);
     assert.equal(result.matched, true);
+  });
+
+  await t.test('backend configuration errors are surfaced while still falling back safely', async () => {
+    withBackendConfig('https://backend.example');
+    global.fetch = async () => ({
+      ok: false,
+      status: 503,
+      async json() {
+        return { message: 'AI provider credentials are not configured on the backend.' };
+      }
+    });
+
+    const result = await diagnoseProblem({
+      category: 'Appliance',
+      areaOrEquipment: 'Dryer',
+      problem: 'Dryer runs but does not heat.',
+      photos: [],
+      conversationHistory: []
+    });
+
+    assert.equal(result.backendStatus.mode, 'demo');
+    assert.equal(result.backendStatus.usingFallback, true);
+    assert.match(result.backendStatus.message, /configured but not ready/i);
+    assert.match(result.backendStatus.message, /not configured on the backend/i);
   });
 });

@@ -34,13 +34,14 @@ import {
 // If neither is set, the app runs in Demo Mode using local logic only.
 function resolveBackendBaseUrl() {
   if (typeof window === 'undefined') return null;
+  const normalizeUrl = value => String(value || '').trim().replace(/\/+$/, '');
   if (window.FIXWISE_CONFIG && window.FIXWISE_CONFIG.backendUrl) {
-    return String(window.FIXWISE_CONFIG.backendUrl).trim() || null;
+    return normalizeUrl(window.FIXWISE_CONFIG.backendUrl) || null;
   }
   if (typeof document !== 'undefined') {
     const meta = document.querySelector('meta[name="fixwise-backend-url"]');
     const content = meta && meta.getAttribute('content');
-    if (content && content.trim()) return content.trim();
+    if (content && content.trim()) return normalizeUrl(content);
   }
   return null;
 }
@@ -66,9 +67,27 @@ async function fetchJson(url, options = {}) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
-    const response = await fetch(url, { ...options, signal: controller.signal });
+    let response;
+    try {
+      response = await fetch(url, { ...options, signal: controller.signal });
+    } catch (error) {
+      if (error?.name === 'AbortError') {
+        throw new Error('Diagnosis backend request timed out.');
+      }
+      throw new Error('Diagnosis backend request could not reach the server.');
+    }
     if (!response.ok) {
-      throw new Error(`Diagnosis backend request failed (${response.status})`);
+      let backendMessage = '';
+      try {
+        const payload = await response.json();
+        backendMessage = payload && typeof payload.message === 'string'
+          ? payload.message.trim()
+          : '';
+      } catch {
+        backendMessage = '';
+      }
+      const suffix = backendMessage ? `: ${backendMessage}` : '';
+      throw new Error(`Diagnosis backend request failed (${response.status})${suffix}`);
     }
     return await response.json();
   } finally {
@@ -117,6 +136,7 @@ export async function diagnoseProblem(request) {
       });
     } catch (err) {
       const fallbackResponse = localDemoDiagnosis(normalizedRequest);
+      const fallbackReason = err && typeof err.message === 'string' ? err.message : '';
       return normalizeDiagnosisResponse(fallbackResponse, normalizedRequest, {
         sourceMode: 'demo',
         usingFallback: true,
@@ -124,7 +144,9 @@ export async function diagnoseProblem(request) {
         message: buildResponseMessage(
           'demo',
           backendUrl,
-          'The secure diagnosis backend could not be reached, so A to Z Wise AI safely fell back to Demo Mode. No browser-side secret key was used.'
+          fallbackReason
+            ? `The secure diagnosis backend is configured but not ready (${fallbackReason}), so A to Z Wise AI safely fell back to Demo Mode. No browser-side secret key was used.`
+            : 'The secure diagnosis backend could not be reached, so A to Z Wise AI safely fell back to Demo Mode. No browser-side secret key was used.'
         )
       });
     }

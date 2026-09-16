@@ -227,13 +227,23 @@ which GitHub Pages supports without any additional configuration.
 
 ## Activating live AI diagnosis (next step)
 
-1. Deploy the backend foundation in `backend/` to your serverless/API host.
-2. Set backend provider secrets/environment variables there (see `BACKEND.md`).
-3. Set the backend's HTTPS URL in the `fixwise-backend-url` meta tag in
-   `index.html` (or via `window.FIXWISE_CONFIG.backendUrl`) — see "Demo Mode
-   & backend configuration" above. No rebuild is required.
-4. Verify the mode badge shows backend-connected responses and fallback still
-   works when backend is unavailable.
+The repo is prepared for a Cloudflare Workers deployment while keeping this website on GitHub Pages.
+
+1. Deploy `backend/worker.mjs` with `backend/wrangler.toml`.
+2. Set backend secret/environment variables on Cloudflare:
+   - `AI_PROVIDER_API_KEY` (required)
+   - `AI_PROVIDER_MODEL` (optional)
+   - `AI_PROVIDER_BASE_URL` (optional)
+   - `ALLOWED_ORIGINS` (set to `https://atozwiseai.com,https://www.atozwiseai.com`)
+3. Bind an HTTPS backend domain (recommended `https://api.atozwiseai.com`).
+4. Set that URL in the `fixwise-backend-url` meta tag in `index.html` (or
+   via `window.FIXWISE_CONFIG.backendUrl`). No rebuild is required.
+5. Verify:
+   - `/api/health` responds from the backend
+   - diagnosis shows backend-connected mode when healthy
+   - diagnosis safely falls back to Demo Mode when backend is unavailable/misconfigured
+
+See `BACKEND.md` for exact command-by-command deployment instructions and required external accounts/API keys.
 
 ## Brand note
 

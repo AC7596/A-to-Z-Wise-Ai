@@ -1,4 +1,4 @@
-# A to Z Wise AI secure diagnosis backend foundation
+# A to Z Wise AI secure diagnosis backend
 
 This folder contains a server-side backend foundation for `POST /api/diagnose`.
 
@@ -12,7 +12,7 @@ This folder contains a server-side backend foundation for `POST /api/diagnose`.
 
 ## Deploy target
 
-The provided entrypoint (`backend/worker.mjs`) is designed for Cloudflare Workers-style runtimes.
+The provided entrypoint (`backend/worker.mjs`) is designed for Cloudflare Workers and this repo now includes a ready-to-use `backend/wrangler.toml`.
 
 ## Required environment variables
 
@@ -21,7 +21,7 @@ Set these in your backend platform (never in frontend code and never in git):
 - `AI_PROVIDER_API_KEY` (required, secret)
 - `AI_PROVIDER_MODEL` (optional, default: `gpt-4o-mini`)
 - `AI_PROVIDER_BASE_URL` (optional, default: `https://api.openai.com/v1`)
-- `ALLOWED_ORIGINS` (optional but recommended, comma-separated CORS allowlist)
+- `ALLOWED_ORIGINS` (required for production browser access, comma-separated CORS allowlist)
 
 For OpenAI-compatible deployments, `OPENAI_API_KEY`, `OPENAI_MODEL`, and `OPENAI_BASE_URL`
 are also accepted.
@@ -34,6 +34,22 @@ After deployment, set your backend base URL in:
 - `window.FIXWISE_CONFIG.backendUrl` at runtime.
 
 The frontend already calls `${backendUrl}/api/diagnose` and safely falls back to Demo Mode if unavailable.
+
+## Deploy (Cloudflare Workers)
+
+1. `cd backend`
+2. Review `wrangler.toml` (name, allowed origins, optional model/base URL).
+3. Set secret:
+   - `wrangler secret put AI_PROVIDER_API_KEY`
+4. Deploy:
+   - `wrangler deploy`
+5. In Cloudflare dashboard, map `api.atozwiseai.com/*` (or another HTTPS domain) to this Worker.
+6. Validate:
+   - `GET https://<your-backend-domain>/api/health`
+7. Point frontend to backend:
+   - In `/index.html`, set `<meta name="fixwise-backend-url" content="https://<your-backend-domain>">`
+
+If the backend is unavailable or misconfigured, frontend remains safe and transparent by falling back to Demo Mode.
 
 ## Local smoke check (Node 20+)
 
