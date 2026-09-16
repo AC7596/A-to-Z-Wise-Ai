@@ -426,7 +426,8 @@ function populateMyHomeEquipmentSelect() {
 
   if (session.selectedHomeEquipmentId && options.some(item => item.id === session.selectedHomeEquipmentId)) {
     els.myHomeEquipmentSelect.value = session.selectedHomeEquipmentId;
-  } else if (!hasEquipment) {
+  } else {
+    els.myHomeEquipmentSelect.value = '';
     session.selectedHomeEquipmentId = '';
   }
 

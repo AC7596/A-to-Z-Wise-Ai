@@ -143,10 +143,14 @@ export function buildDiagnosisRequest(rawRequest = {}) {
     conversationHistory: normalizeConversationHistory(rawRequest.conversationHistory),
     photos: normalizePhotoList(rawRequest.photos),
     useMyHomeContext: Boolean(rawRequest.useMyHomeContext && selectedEquipment),
-    selectedHomeEquipmentId: toTrimmedString(rawRequest.selectedHomeEquipmentId),
+    selectedHomeEquipmentId: '',
     myHomeContext: null,
     symptomSummary: ''
   };
+
+  request.selectedHomeEquipmentId = request.useMyHomeContext
+    ? toTrimmedString(selectedEquipment?.id || rawRequest.selectedHomeEquipmentId)
+    : '';
 
   if (request.useMyHomeContext && selectedEquipment) {
     if (!request.areaOrEquipment) request.areaOrEquipment = toTrimmedString(selectedEquipment.type);
