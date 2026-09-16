@@ -213,6 +213,9 @@ export function addUpcomingMaintenance(entry, storage) {
 
 export function updateUpcomingMaintenance(reminderId, patch, storage) {
   const profile = loadMyHomeProfile(storage);
+  if (!profile.upcomingMaintenance.some(item => item.id === reminderId)) {
+    return profile;
+  }
   return saveMyHomeProfile({
     ...profile,
     upcomingMaintenance: profile.upcomingMaintenance.map(item => {

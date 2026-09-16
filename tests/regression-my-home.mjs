@@ -9,6 +9,9 @@ import {
   addUpcomingMaintenance,
   createDefaultMyHomeProfile,
   loadMyHomeProfile,
+  removeEquipment,
+  removeMaintenanceRecord,
+  removeUpcomingMaintenance,
   updateHomeInfo,
   updateUpcomingMaintenance
 } from '../js/modules/my-home-store.js';
@@ -96,6 +99,35 @@ test('My Home profile regression checks', async (t) => {
     assert.equal(reloaded.upcomingMaintenance.some(item => item.task === 'Dryer vent cleaning'), true);
     assert.equal(reloaded.upcomingMaintenance.some(item => item.notes === 'Replace before winter'), true);
     assert.match(reloaded.updatedAt, /^\d{4}-\d{2}-\d{2}T/);
+  });
+
+  await t.test('remove operations delete saved items and missing reminder updates stay unchanged', () => {
+    const storage = createMemoryStorage();
+
+    let profile = addEquipment({ type: 'Water heater', manufacturer: 'AO Smith' }, storage);
+    const equipmentId = profile.equipment[0].id;
+
+    profile = addMaintenanceRecord({
+      equipment: 'Water heater',
+      servicePerformed: 'Flushed tank',
+      date: '2026-08-15'
+    }, storage);
+    const recordId = profile.maintenanceRecords[0].id;
+
+    const reminderId = profile.upcomingMaintenance[0].id;
+    const unchangedUpdatedAt = profile.updatedAt;
+
+    profile = removeEquipment(equipmentId, storage);
+    profile = removeMaintenanceRecord(recordId, storage);
+    profile = removeUpcomingMaintenance(reminderId, storage);
+
+    assert.equal(profile.equipment.length, 0);
+    assert.equal(profile.maintenanceRecords.length, 0);
+    assert.equal(profile.upcomingMaintenance.some(item => item.id === reminderId), false);
+
+    const afterMiss = updateUpcomingMaintenance('missing-reminder', { dueDate: '2026-12-01' }, storage);
+    assert.equal(afterMiss.updatedAt, profile.updatedAt);
+    assert.notEqual(afterMiss.updatedAt, unchangedUpdatedAt);
   });
 
   await t.test('homepage and navigation expose the My Home experience', () => {

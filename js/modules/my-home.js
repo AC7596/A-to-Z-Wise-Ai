@@ -12,6 +12,7 @@ import {
 } from './my-home-store.js';
 
 let profile = null;
+let isBound = false;
 const els = {};
 
 function formatDate(value) {
@@ -249,8 +250,9 @@ function bindForms() {
 }
 
 function bindCollectionActions() {
-  document.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-action]');
+  const myHomeSection = document.getElementById('my-home');
+  myHomeSection?.addEventListener('click', (e) => {
+    const btn = e.target.closest('.my-home-remove-btn');
     if (!btn) return;
 
     if (btn.dataset.action === 'delete-equipment') {
@@ -283,10 +285,11 @@ function bindCollectionActions() {
 }
 
 export function initMyHome() {
-  if (!document.getElementById('my-home')) return;
+  if (!document.getElementById('my-home') || isBound) return;
   cacheEls();
   profile = loadMyHomeProfile();
   renderAll();
   bindForms();
   bindCollectionActions();
+  isBound = true;
 }
