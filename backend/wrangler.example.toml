@@ -3,9 +3,11 @@ main = "worker.mjs"
 compatibility_date = "2026-09-16"
 
 [vars]
-# Comma-separated list of allowed site origins for CORS, for example:
-# ALLOWED_ORIGINS = "https://atozwiseai.com,https://www.atozwiseai.com"
-ALLOWED_ORIGINS = "https://atozwiseai.com"
+# Comma-separated list of allowed site origins for CORS.
+# Include your production domains and GitHub Pages origin for testing.
+# Example:
+# ALLOWED_ORIGINS = "https://atozwiseai.com,https://www.atozwiseai.com,https://ac7596.github.io"
+ALLOWED_ORIGINS = "https://atozwiseai.com,https://www.atozwiseai.com,https://ac7596.github.io"
 AI_PROVIDER_MODEL = "gpt-4o-mini"
 AI_PROVIDER_BASE_URL = "https://api.openai.com/v1"
 

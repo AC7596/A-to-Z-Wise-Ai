@@ -64,7 +64,7 @@ function createProfile() {
 }
 
 function withBackendConfig(backendUrl) {
-  global.window = { FIXWISE_CONFIG: { backendUrl } };
+  global.window = { ATOZWISEAI_CONFIG: { backendUrl } };
   global.document = { querySelector: () => null };
 }
 
@@ -245,6 +245,81 @@ test('Diagnosis backend-ready contract and fallback regression checks', async (t
     assert.equal(result.backendStatus.mode, 'live');
     assert.equal(result.backendStatus.usingFallback, false);
     assert.equal(result.issue.causes[0], 'Dirty filter');
+  });
+
+  await t.test('legacy backend config key remains compatible', async () => {
+    global.window = { FIXWISE_CONFIG: { backendUrl: 'https://legacy-backend.example/' } };
+    global.document = { querySelector: () => null };
+    global.fetch = async (url) => {
+      assert.equal(url, 'https://legacy-backend.example/api/diagnose');
+      return {
+        ok: true,
+        async json() {
+          return {
+            matched: true,
+            possibleCauses: [{ title: 'Legacy config route works', whyPossible: 'Legacy config key resolved correctly.' }],
+            safeChecks: ['Check accessible filters and vents first.'],
+            nextActions: ['Power off before opening any panels.'],
+            whenToCallProfessional: ['Call a licensed professional for advanced testing.'],
+            issue: { difficulty: 'beginner', nextCheck: 'Start with simple checks' }
+          };
+        }
+      };
+    };
+
+    const result = await diagnoseProblem({
+      category: 'Heating & Cooling',
+      areaOrEquipment: 'Air conditioner / HVAC',
+      problem: 'Airflow is weak.',
+      photos: [],
+      conversationHistory: []
+    });
+
+    assert.equal(result.backendStatus.mode, 'live');
+    assert.equal(result.issue.causes[0], 'Legacy config route works');
+  });
+
+  await t.test('branded backend meta tag is supported', async () => {
+    global.window = {};
+    global.document = {
+      querySelector(selector) {
+        if (selector === 'meta[name="atozwiseai-backend-url"]') {
+          return {
+            getAttribute(name) {
+              return name === 'content' ? 'https://meta-backend.example/' : '';
+            }
+          };
+        }
+        return null;
+      }
+    };
+    global.fetch = async (url) => {
+      assert.equal(url, 'https://meta-backend.example/api/diagnose');
+      return {
+        ok: true,
+        async json() {
+          return {
+            matched: true,
+            possibleCauses: [{ title: 'Meta config route works', whyPossible: 'Branded meta tag resolved correctly.' }],
+            safeChecks: ['Start with safe external checks.'],
+            nextActions: ['Turn off power or water before inspection.'],
+            whenToCallProfessional: ['Call a licensed professional if internal work is required.'],
+            issue: { difficulty: 'beginner', nextCheck: 'Confirm symptom details' }
+          };
+        }
+      };
+    };
+
+    const result = await diagnoseProblem({
+      category: 'Appliance',
+      areaOrEquipment: 'Dryer',
+      problem: 'Dryer has weak airflow.',
+      photos: [],
+      conversationHistory: []
+    });
+
+    assert.equal(result.backendStatus.mode, 'live');
+    assert.equal(result.issue.causes[0], 'Meta config route works');
   });
 
   await t.test('backend failure falls back honestly to demo mode', async () => {

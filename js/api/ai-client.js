@@ -27,18 +27,26 @@ import {
 // The backend URL itself is not sensitive (it's just an endpoint address,
 // not a credential), so it is safe to read from either of these
 // non-secret, static-hosting-friendly sources:
-//   1. A global `window.FIXWISE_CONFIG.backendUrl` set by a small,
+//   1. A global `window.ATOZWISEAI_CONFIG.backendUrl` set by a small,
 //      un-committed config script (useful for local/staging overrides).
-//   2. A `<meta name="fixwise-backend-url" content="...">` tag in
+//   2. A `<meta name="atozwiseai-backend-url" content="...">` tag in
 //      index.html (the default, checked-in mechanism — see the <head>).
+// Legacy `FIXWISE_CONFIG` and `fixwise-backend-url` are still accepted for
+// backward compatibility with existing deployments.
 // If neither is set, the app runs in Demo Mode using local logic only.
 function resolveBackendBaseUrl() {
   if (typeof window === 'undefined') return null;
   const normalizeUrl = value => String(value || '').trim().replace(/\/+$/, '');
+  if (window.ATOZWISEAI_CONFIG && window.ATOZWISEAI_CONFIG.backendUrl) {
+    return normalizeUrl(window.ATOZWISEAI_CONFIG.backendUrl) || null;
+  }
   if (window.FIXWISE_CONFIG && window.FIXWISE_CONFIG.backendUrl) {
     return normalizeUrl(window.FIXWISE_CONFIG.backendUrl) || null;
   }
   if (typeof document !== 'undefined') {
+    const brandedMeta = document.querySelector('meta[name="atozwiseai-backend-url"]');
+    const brandedContent = brandedMeta && brandedMeta.getAttribute('content');
+    if (brandedContent && brandedContent.trim()) return normalizeUrl(brandedContent);
     const meta = document.querySelector('meta[name="fixwise-backend-url"]');
     const content = meta && meta.getAttribute('content');
     if (content && content.trim()) return normalizeUrl(content);
@@ -225,7 +233,7 @@ function estimateConfidence(filledFieldCount, matchedKeywordHits, hasFollowUp) {
 // Malfunction-signal words that suggest something is actually failing, even
 // when the sentence is primarily phrased as an intentional action (e.g.
 // "I want to replace my outlet because it sparks"). When these are present
-// alongside an intentional-action intent, FixWise treats it as a repair-
+// alongside an intentional-action intent, A to Z Wise AI treats it as a repair-
 // driven replacement rather than asking purely exploratory questions.
 const MALFUNCTION_SIGNAL_WORDS = [
   'not working', "isn't working", 'broken', 'stopped working', 'failed', 'failing',
@@ -242,8 +250,8 @@ function hasMalfunctionSignal(text) {
   return MALFUNCTION_SIGNAL_WORDS.some(word => matchesKeyword(text, word));
 }
 
-// Fixy's philosophy in practice: when nothing is recognized at all (no risk
-// signal, no intent, no knowledge-base match), FixWise should say so
+// Zee's philosophy in practice: when nothing is recognized at all (no risk
+// signal, no intent, no knowledge-base match), A to Z Wise AI should say so
 // honestly and ask a useful, general question rather than invent an answer
 // or simply dead-end with "no specific match". See README/BACKEND.md for
 // the broader "ask, don't guess" principle applied throughout this file.
@@ -465,7 +473,7 @@ function localDemoDiagnosis({
 
   // ---- 3. Does this look like an intentional action (replace/install/
   // maintenance/inspection/upgrade/how-it-works) rather than a malfunction
-  // report? If so, and there's no malfunction language mixed in, FixWise
+  // report? If so, and there's no malfunction language mixed in, A to Z Wise AI
   // should ask a clarifying question rather than assume a failure. This is
   // the fix for "I want to replace my outlets" being treated like "my
   // outlet isn't working".
@@ -497,7 +505,7 @@ function localDemoDiagnosis({
   // itself isn't in the local knowledge base and when it is but nothing
   // inside it matched.
   //
-  // `matched` intentionally stays `true` here (it means "FixWise has a
+  // `matched` intentionally stays `true` here (it means "A to Z Wise AI has a
   // useful response to show", which the UI in js/modules/diagnosis.js
   // relies on to avoid its own flat "No specific match yet" dead end —
   // see the `!diagnosis.matched` check there). `recognized: false` is the
