@@ -99,9 +99,16 @@ with no network calls and no keys anywhere in the repository.
    "requireVerifiedManufacturerClaims": true,
    "neverClaimCertainty": true
  },
- "photos": ["File", "..."]
+ "attachmentSummary": {
+   "photoCount": 2
+ }
 }
 ```
+
+The browser sends this JSON inside a multipart `FormData` field named
+`request`, and appends each actual photo file separately under the `photos`
+field. The backend should therefore read structured request data from the
+JSON field and uploaded image binaries from the multipart files.
 
 `conversationHistory` carries every follow-up answer the homeowner has
 given so far in the current browser session (see "Follow-up conversation"

@@ -267,7 +267,9 @@ export function normalizeDiagnosisResponse(rawResponse = {}, request = {}, meta 
   const whenToStopDIY = uniqueStrings(issue.stopWhenList.length ? issue.stopWhenList : [issue.stopWhen]);
   const whenToCallProfessional = uniqueStrings(issue.professionalWhenList.length ? issue.professionalWhenList : [issue.pro]);
   const includedDataSources = uniqueStrings([
-    request.problem || request.seen || request.heard || request.smell || request.otherSymptoms ? 'Homeowner description' : '',
+    request.problem || request.areaOrEquipment || request.seen || request.heard || request.smell
+    || request.leakDetails || request.errorCode || request.intermittentBehavior
+    || request.problemStart || request.otherSymptoms ? 'Homeowner description' : '',
     request.photos.length ? 'Attached photos' : '',
     request.useMyHomeContext && request.myHomeContext?.selectedEquipment ? 'My Home equipment record' : '',
     request.useMyHomeContext && request.myHomeContext?.maintenanceHistory?.length ? 'My Home maintenance history' : '',

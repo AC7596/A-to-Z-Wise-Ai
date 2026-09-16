@@ -416,9 +416,18 @@ function syncSelectedEquipmentFields() {
     return;
   }
 
-  if (!els.areaOrEquipment.value.trim()) els.areaOrEquipment.value = item.type || '';
-  if (!els.equipmentMake.value.trim()) els.equipmentMake.value = item.manufacturer || '';
-  if (!els.equipmentModel.value.trim()) els.equipmentModel.value = item.modelNumber || '';
+  if (!els.areaOrEquipment.value.trim()) {
+    els.areaOrEquipment.value = item.type || '';
+    session.areaOrEquipment = els.areaOrEquipment.value.trim();
+  }
+  if (!els.equipmentMake.value.trim()) {
+    els.equipmentMake.value = item.manufacturer || '';
+    session.make = els.equipmentMake.value.trim();
+  }
+  if (!els.equipmentModel.value.trim()) {
+    els.equipmentModel.value = item.modelNumber || '';
+    session.model = els.equipmentModel.value.trim();
+  }
   if (els.myHomeContextHint) els.myHomeContextHint.textContent = buildMyHomeHint(profile, context);
 }
 

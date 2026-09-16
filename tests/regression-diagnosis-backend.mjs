@@ -170,6 +170,7 @@ test('Diagnosis backend-ready contract and fallback regression checks', async (t
     assert.equal(normalized.issue.causes[0], 'Restricted vent');
     assert.equal(normalized.possibleCauses[0].whyPossible, 'Long dry times and rising heat fit a vent restriction.');
     assert.equal(normalized.backendStatus.mode, 'live');
+    assert.ok(normalized.requestContext.includedDataSources.includes('Homeowner description'));
     assert.ok(normalized.requestContext.includedDataSources.includes('My Home equipment record'));
     assert.ok(normalized.requestContext.includedDataSources.includes('Secure backend AI service'));
   });
