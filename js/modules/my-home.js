@@ -178,19 +178,19 @@ function renderReminderList() {
         <button type="button" class="btn secondary my-home-remove-btn" data-action="delete-reminder" data-id="${escapeHtml(item.id)}">Remove</button>
       </div>
       <div class="my-home-inline-grid">
-        <label>
+        <label for="my-home-reminder-task-${escapeHtml(item.id)}">
           Reminder
           <input id="my-home-reminder-task-${escapeHtml(item.id)}" name="task" type="text" value="${escapeHtml(item.task)}" required />
         </label>
-        <label>
+        <label for="my-home-reminder-target-${escapeHtml(item.id)}">
           Equipment / area
           <input id="my-home-reminder-target-${escapeHtml(item.id)}" name="target" type="text" value="${escapeHtml(item.target)}" list="myHomeEquipmentOptions" />
         </label>
-        <label>
+        <label for="my-home-reminder-date-${escapeHtml(item.id)}">
           Due date
           <input id="my-home-reminder-date-${escapeHtml(item.id)}" name="dueDate" type="date" value="${escapeHtml(item.dueDate)}" />
         </label>
-        <label class="my-home-full">
+        <label class="my-home-full" for="my-home-reminder-notes-${escapeHtml(item.id)}">
           Notes
           <textarea id="my-home-reminder-notes-${escapeHtml(item.id)}" name="notes" rows="3">${escapeHtml(item.notes)}</textarea>
         </label>

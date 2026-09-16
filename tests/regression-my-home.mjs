@@ -167,6 +167,13 @@ test('My Home profile regression checks', async (t) => {
     assert.equal(profile.upcomingMaintenance.some(item => item.id === reminderId), false);
     const afterMiss = updateUpcomingMaintenance('missing-reminder', { dueDate: '2026-12-01' }, storage);
     assert.deepEqual(afterMiss, profile);
+
+    const afterBlankTask = updateUpcomingMaintenance(
+      profile.upcomingMaintenance[0].id,
+      { task: '   ' },
+      storage
+    );
+    assert.deepEqual(afterBlankTask, profile);
   });
 
   await t.test('removing the last reminder restores the starter reminder list', () => {

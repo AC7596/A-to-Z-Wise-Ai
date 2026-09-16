@@ -223,11 +223,16 @@ export function updateUpcomingMaintenance(reminderId, patch, storage) {
   if (!profile.upcomingMaintenance.some(item => item.id === reminderId)) {
     return profile;
   }
+  const existing = profile.upcomingMaintenance.find(item => item.id === reminderId);
+  const normalizedEntry = normalizeReminderEntry({ ...existing, ...patch, id: reminderId });
+  if (!normalizedEntry.task) {
+    return profile;
+  }
   return saveMyHomeProfile({
     ...profile,
     upcomingMaintenance: profile.upcomingMaintenance.map(item => {
       if (item.id !== reminderId) return item;
-      return normalizeReminderEntry({ ...item, ...patch, id: reminderId });
+      return normalizedEntry;
     })
   }, storage);
 }
