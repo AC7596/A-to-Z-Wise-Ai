@@ -47,6 +47,7 @@
       </a>
       <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false">☰</button>
       <nav id="navLinks" class="nav-links">
+        <a href="#my-home">My Home</a>
         <a href="#diagnosis">AI Diagnosis</a>
         <a href="#pricing">Pricing</a>
         <a href="#guides">Repair Guides</a>
@@ -69,6 +70,7 @@
           </p>
           <div class="hero-actions">
             <a class="btn primary hero-early-access-btn" href="#pricing" data-action="checkout">Become a Founding Member</a>
+            <a class="btn secondary" href="#my-home">Start My Home profile</a>
             <a class="btn secondary" href="#diagnosis">Try current diagnosis tools</a>
             <a class="btn secondary" href="#guides">Browse repair guides</a>
           </div>
@@ -91,6 +93,261 @@
             <span>P-trap buildup</span>
           </div>
           <small>Demo only — this version does not send your problem to an AI service yet.</small>
+        </div>
+      </div>
+    </section>
+
+    <section class="section my-home-section" id="my-home">
+      <div class="container">
+        <div class="section-heading">
+          <div class="eyebrow">My Home</div>
+          <h2>Start your home's digital record.</h2>
+          <p>
+            Build a browser-based profile for your house, major equipment, service history, and upcoming maintenance.
+            This first version stays on your device using browser storage only — there is no account, cloud backup, or permanent online storage yet.
+          </p>
+        </div>
+
+        <div class="my-home-intro">
+          <div class="my-home-intro-card">
+            <strong>Home basics</strong>
+            <span>Store the address, home type, year built, size, bedrooms, and bathrooms in one place.</span>
+          </div>
+          <div class="my-home-intro-card">
+            <strong>Equipment records</strong>
+            <span>Track model numbers, serial numbers, install timing, warranty dates, and notes for core systems and appliances.</span>
+          </div>
+          <div class="my-home-intro-card">
+            <strong>Maintenance timeline</strong>
+            <span>Keep simple service records and future reminders so your home history can grow over time.</span>
+          </div>
+        </div>
+
+        <div class="my-home-layout">
+          <section class="my-home-card">
+            <div class="my-home-card-header">
+              <div>
+                <div class="eyebrow">Home information</div>
+                <h3>Set up your home's profile</h3>
+              </div>
+              <span class="status-pill">Browser-only preview</span>
+            </div>
+
+            <form id="myHomeInfoForm" class="my-home-form" novalidate>
+              <div class="my-home-form-grid">
+                <label for="myHomeNickname">
+                  Home nickname
+                  <input id="myHomeNickname" name="nickname" type="text" placeholder="Example: Maple House" />
+                </label>
+                <label for="myHomeAddress">
+                  Street / address
+                  <input id="myHomeAddress" name="address" type="text" placeholder="123 Main Street" />
+                </label>
+                <label for="myHomeYearBuilt">
+                  Year built
+                  <input id="myHomeYearBuilt" name="yearBuilt" type="number" min="0" inputmode="numeric" placeholder="1998" />
+                </label>
+                <label for="myHomeType">
+                  Home type
+                  <select id="myHomeType" name="homeType">
+                    <option value="">Select a home type</option>
+                    <option value="Single-family house">Single-family house</option>
+                    <option value="Townhouse">Townhouse</option>
+                    <option value="Condo">Condo</option>
+                    <option value="Duplex">Duplex</option>
+                    <option value="Mobile / manufactured home">Mobile / manufactured home</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </label>
+                <label for="myHomeSquareFootage">
+                  Square footage
+                  <input id="myHomeSquareFootage" name="squareFootage" type="number" min="0" inputmode="numeric" placeholder="1850" />
+                </label>
+                <label for="myHomeBedrooms">
+                  Number of bedrooms
+                  <input id="myHomeBedrooms" name="bedrooms" type="number" min="0" step="1" inputmode="numeric" placeholder="3" />
+                </label>
+                <label for="myHomeBathrooms">
+                  Number of bathrooms
+                  <input id="myHomeBathrooms" name="bathrooms" type="number" min="0" step="0.5" inputmode="decimal" placeholder="2.5" />
+                </label>
+              </div>
+              <div class="my-home-card-actions">
+                <button type="submit" class="btn primary">Save My Home profile</button>
+              </div>
+            </form>
+          </section>
+
+          <aside class="my-home-card my-home-summary-card">
+            <div class="my-home-card-header">
+              <div>
+                <div class="eyebrow">My Home snapshot</div>
+                <h3 id="myHomeSummaryTitle">Your digital home profile</h3>
+              </div>
+            </div>
+            <p id="myHomeSaveMessage" class="my-home-browser-note">
+              Save details in this browser and they will still be here after a refresh on this device.
+            </p>
+            <div class="my-home-stats">
+              <div class="my-home-stat"><span>Equipment</span><strong id="myHomeEquipmentCount">0</strong></div>
+              <div class="my-home-stat"><span>Service records</span><strong id="myHomeMaintenanceCount">0</strong></div>
+              <div class="my-home-stat"><span>Reminders</span><strong id="myHomeReminderCount">0</strong></div>
+            </div>
+            <div class="my-home-summary-list">
+              <div>
+                <strong>Saved home</strong>
+                <span id="myHomeSummaryAddress">Add your home's details to begin building its record.</span>
+              </div>
+              <div>
+                <strong>Coming later</strong>
+                <span>Accounts, cloud sync, manuals, warranties, documents, exports, and future-homeowner transfer support can be added on top of this foundation later.</span>
+              </div>
+            </div>
+          </aside>
+        </div>
+
+        <div class="my-home-grid">
+          <section class="my-home-card">
+            <div class="my-home-card-header">
+              <div>
+                <div class="eyebrow">Home equipment</div>
+                <h3>Track appliances and major systems</h3>
+              </div>
+            </div>
+            <form id="myHomeEquipmentForm" class="my-home-form" novalidate>
+              <div class="my-home-form-grid">
+                <label for="myHomeEquipmentType">
+                  Equipment
+                  <select id="myHomeEquipmentType" name="type" required>
+                    <option value="">Select equipment</option>
+                    <option value="Furnace">Furnace</option>
+                    <option value="Air conditioner / HVAC">Air conditioner / HVAC</option>
+                    <option value="Water heater">Water heater</option>
+                    <option value="Refrigerator">Refrigerator</option>
+                    <option value="Dishwasher">Dishwasher</option>
+                    <option value="Washer">Washer</option>
+                    <option value="Dryer">Dryer</option>
+                    <option value="Range / oven">Range / oven</option>
+                    <option value="Microwave">Microwave</option>
+                    <option value="Electrical panel">Electrical panel</option>
+                    <option value="Garage door opener">Garage door opener</option>
+                    <option value="Other home equipment">Other home equipment</option>
+                  </select>
+                </label>
+                <label for="myHomeEquipmentManufacturer">
+                  Manufacturer
+                  <input id="myHomeEquipmentManufacturer" name="manufacturer" type="text" placeholder="Carrier" />
+                </label>
+                <label for="myHomeEquipmentModel">
+                  Model number
+                  <input id="myHomeEquipmentModel" name="modelNumber" type="text" placeholder="Model number" />
+                </label>
+                <label for="myHomeEquipmentSerial">
+                  Serial number
+                  <input id="myHomeEquipmentSerial" name="serialNumber" type="text" placeholder="Serial number" />
+                </label>
+                <label for="myHomeEquipmentInstall">
+                  Installation date or approximate age
+                  <input id="myHomeEquipmentInstall" name="installationDateOrAge" type="text" placeholder="Installed 2021 or about 6 years old" />
+                </label>
+                <label for="myHomeEquipmentWarranty">
+                  Warranty expiration
+                  <input id="myHomeEquipmentWarranty" name="warrantyExpiration" type="date" />
+                </label>
+                <label for="myHomeEquipmentNotes" class="my-home-full">
+                  Notes
+                  <textarea id="myHomeEquipmentNotes" name="notes" rows="3" placeholder="Location, condition, installer, filter size, or other details"></textarea>
+                </label>
+              </div>
+              <div class="my-home-card-actions">
+                <button type="submit" class="btn primary">Add equipment</button>
+              </div>
+            </form>
+            <datalist id="myHomeEquipmentOptions"></datalist>
+            <div id="myHomeEquipmentList" class="my-home-collection"></div>
+            <p id="myHomeEquipmentEmpty" class="empty-state">No equipment has been added yet.</p>
+          </section>
+
+          <section class="my-home-card">
+            <div class="my-home-card-header">
+              <div>
+                <div class="eyebrow">Maintenance record</div>
+                <h3>Log service history</h3>
+              </div>
+            </div>
+            <form id="myHomeMaintenanceForm" class="my-home-form" novalidate>
+              <div class="my-home-form-grid">
+                <label for="myHomeMaintenanceEquipment">
+                  Equipment
+                  <input id="myHomeMaintenanceEquipment" name="equipment" type="text" list="myHomeEquipmentOptions" placeholder="Choose or type equipment" required />
+                </label>
+                <label for="myHomeMaintenanceService">
+                  Service performed
+                  <input id="myHomeMaintenanceService" name="servicePerformed" type="text" placeholder="Annual tune-up, cleaned burner, replaced filter..." required />
+                </label>
+                <label for="myHomeMaintenanceDate">
+                  Date
+                  <input id="myHomeMaintenanceDate" name="date" type="date" required />
+                </label>
+                <label for="myHomeMaintenanceParts">
+                  Parts used
+                  <input id="myHomeMaintenanceParts" name="partsUsed" type="text" placeholder="Capacitor, filter, igniter..." />
+                </label>
+                <label for="myHomeMaintenanceNotes" class="my-home-full">
+                  Notes
+                  <textarea id="myHomeMaintenanceNotes" name="notes" rows="3" placeholder="Who serviced it, what was found, and any follow-up needed"></textarea>
+                </label>
+              </div>
+              <div class="my-home-card-actions">
+                <button type="submit" class="btn primary">Add maintenance record</button>
+              </div>
+            </form>
+            <div id="myHomeMaintenanceList" class="my-home-collection"></div>
+            <p id="myHomeMaintenanceEmpty" class="empty-state">No maintenance records have been added yet.</p>
+          </section>
+
+          <section class="my-home-card my-home-reminders-card">
+            <div class="my-home-card-header">
+              <div>
+                <div class="eyebrow">Upcoming maintenance</div>
+                <h3>Keep future reminders in one place</h3>
+              </div>
+            </div>
+            <p class="my-home-browser-note">Starter reminders are included below. Add your own, then save dates and notes right in each reminder card.</p>
+            <form id="myHomeReminderForm" class="my-home-form" novalidate>
+              <div class="my-home-form-grid">
+                <label for="myHomeReminderTask">
+                  Reminder
+                  <input id="myHomeReminderTask" name="task" type="text" list="myHomeReminderTemplates" placeholder="HVAC filter replacement" required />
+                </label>
+                <label for="myHomeReminderTarget">
+                  Equipment / area
+                  <input id="myHomeReminderTarget" name="target" type="text" list="myHomeEquipmentOptions" placeholder="Air conditioner / HVAC" />
+                </label>
+                <label for="myHomeReminderDate">
+                  Due date
+                  <input id="myHomeReminderDate" name="dueDate" type="date" />
+                </label>
+                <label for="myHomeReminderNotes" class="my-home-full">
+                  Notes
+                  <textarea id="myHomeReminderNotes" name="notes" rows="3" placeholder="Seasonal timing, contractor, or inspection details"></textarea>
+                </label>
+              </div>
+              <div class="my-home-card-actions">
+                <button type="submit" class="btn primary">Add reminder</button>
+              </div>
+            </form>
+            <datalist id="myHomeReminderTemplates">
+              <option value="HVAC filter replacement"></option>
+              <option value="Furnace/HVAC inspection"></option>
+              <option value="Gutter cleaning"></option>
+              <option value="Roof/shingle inspection"></option>
+              <option value="Water heater maintenance"></option>
+              <option value="Smoke/CO detector checks"></option>
+              <option value="Exterior/siding inspection"></option>
+            </datalist>
+            <div id="myHomeReminderList" class="my-home-collection"></div>
+          </section>
         </div>
       </div>
     </section>

@@ -7,6 +7,7 @@ import { initDiagnosisForm } from './modules/diagnosis.js';
 import { initGuides } from './modules/guides.js';
 import { initFixy } from './modules/kids.js';
 import { initKidsActivities } from './modules/kids-activities.js';
+import { initMyHome } from './modules/my-home.js';
 import { initRepairMode } from './modules/repair-mode.js';
 import { initMonetization } from './modules/monetization.js';
 
@@ -16,5 +17,6 @@ initDiagnosisForm();
 initGuides();
 initFixy();
 initKidsActivities();
+initMyHome();
 initRepairMode();
 initMonetization();
