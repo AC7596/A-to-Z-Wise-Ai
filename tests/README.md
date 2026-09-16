@@ -17,6 +17,8 @@ node tests/regression-kids-progress.mjs
 node tests/regression-diagnosis-followup.mjs
 node tests/regression-diagnosis-facts.mjs
 node tests/regression-branding.mjs
+node tests/regression-monetization.mjs
+node tests/regression-my-home.mjs
 ```
 
 Each script exits with a non-zero status (via Node's built-in
@@ -80,3 +82,17 @@ without any additional tooling.
   dripping faucet) surfaces `relatedGuideId` for the "Guide me through it"
   hand-off; and genuinely unrecognizable input still gets an honest,
   Zee-style follow-up instead of a dead end.
+- **regression-branding.mjs** — launch-branding and SEO regression coverage
+  for A to Z Wise AI: canonical/Open Graph URLs, robots directives, footer
+  slogan, Zee/DIY Together wording, and the unchanged hosted PayPal
+  subscription URL.
+- **regression-monetization.mjs** — PayPal checkout and monetization checks:
+  the hosted subscription URL, required public pages, pricing copy, robots
+  sitemap reference, and absence of payment secrets in the core monetization
+  files.
+- **regression-my-home.mjs** — the first browser-only `My Home` digital
+  profile foundation: default profile state includes starter maintenance
+  reminders; home info, equipment, maintenance history, and reminder updates
+  persist through storage-backed operations in `js/modules/my-home-store.js`;
+  and the homepage/public-page navigation exposes the `My Home` experience
+  without implying accounts or cloud backup.
