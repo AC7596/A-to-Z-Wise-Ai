@@ -413,22 +413,29 @@ export async function generateDiagnosisFromProvider(payload, env = {}, fetchImpl
   const apiBaseUrl = toText(env.AI_PROVIDER_BASE_URL || env.OPENAI_BASE_URL || 'https://api.openai.com/v1').replace(/\/$/, '');
   const model = toText(env.AI_PROVIDER_MODEL || env.OPENAI_MODEL || 'gpt-4o-mini');
 
-  const response = await fetchImpl(`${apiBaseUrl}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: 'Bearer ' + apiKey
-    },
-    body: JSON.stringify({
-      model,
-      temperature: 0.2,
-      response_format: { type: 'json_object' },
-      messages: [
-        { role: 'system', content: buildSystemPrompt() },
-        { role: 'user', content: buildUserPrompt(payload) }
-      ]
-    })
-  });
+  let response;
+  try {
+    response = await fetchImpl(`${apiBaseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + apiKey
+      },
+      body: JSON.stringify({
+        model,
+        temperature: 0.2,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: buildSystemPrompt() },
+          { role: 'user', content: buildUserPrompt(payload) }
+        ]
+      })
+    });
+  } catch (error) {
+    const err = new Error('Provider request failed (network error)');
+    err.status = 502;
+    throw err;
+  }
 
   if (!response.ok) {
     const err = new Error(`Provider request failed (${response.status})`);
