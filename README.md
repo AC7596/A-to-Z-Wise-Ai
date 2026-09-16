@@ -152,9 +152,9 @@ endpoint (`/api/diagnose`).
 static files — anything in this repository or shipped to the browser is
 publicly visible to anyone who views the page source. A backend *URL* is
 not sensitive (it's just an address), but an AI provider *API key* is a
-secret that must stay server-side. See [BACKEND.md](BACKEND.md) for the
-full explanation and the request/response contract the backend should
-implement.
+secret that must stay server-side. See [BACKEND.md](BACKEND.md) and
+`backend/README.md` for the full explanation and the backend
+request/response contract plus deployment flow.
 
 ## What is still demo/public-preview behavior
 
