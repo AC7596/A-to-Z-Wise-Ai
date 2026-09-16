@@ -4,10 +4,11 @@ compatibility_date = "2026-09-16"
 
 [vars]
 # Comma-separated list of allowed site origins for CORS.
-# Include your production domains and GitHub Pages origin for testing.
+# Keep production domains only by default.
+# If you need GitHub Pages testing, temporarily add `https://ac7596.github.io`.
 # Example:
 # ALLOWED_ORIGINS = "https://atozwiseai.com,https://www.atozwiseai.com,https://ac7596.github.io"
-ALLOWED_ORIGINS = "https://atozwiseai.com,https://www.atozwiseai.com,https://ac7596.github.io"
+ALLOWED_ORIGINS = "https://atozwiseai.com,https://www.atozwiseai.com"
 AI_PROVIDER_MODEL = "gpt-4o-mini"
 AI_PROVIDER_BASE_URL = "https://api.openai.com/v1"
 
