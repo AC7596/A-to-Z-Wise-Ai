@@ -101,25 +101,25 @@
       <div class="container">
         <div class="section-heading">
           <div class="eyebrow">My Home</div>
-          <h2>Start your home's digital record.</h2>
+          <h2>Build your home's detailed digital record.</h2>
           <p>
-            Build a browser-based profile for your house, major equipment, service history, and upcoming maintenance.
-            This first version stays on your device using browser storage only — there is no account, cloud backup, or permanent online storage yet.
+            Save your property's exact equipment, warranty details, manuals, service history, and maintenance schedule in one browser-based record.
+            This version still lives in local browser storage only, so there is no account, server document upload, or permanent cloud storage yet.
           </p>
         </div>
 
         <div class="my-home-intro">
           <div class="my-home-intro-card">
-            <strong>Home basics</strong>
-            <span>Store the address, home type, year built, size, bedrooms, and bathrooms in one place.</span>
+            <strong>Property record</strong>
+            <span>Keep the home's address, basics, and attached equipment together so this can later migrate to a permanent property account.</span>
           </div>
           <div class="my-home-intro-card">
-            <strong>Equipment records</strong>
-            <span>Track model numbers, serial numbers, install timing, warranty dates, and notes for core systems and appliances.</span>
+            <strong>Exact equipment details</strong>
+            <span>Track brand, model, serial, location, age, warranty clues, manuals, receipts, and parts information for real installed equipment.</span>
           </div>
           <div class="my-home-intro-card">
-            <strong>Maintenance timeline</strong>
-            <span>Keep simple service records and future reminders so your home history can grow over time.</span>
+            <strong>Backup foundation</strong>
+            <span>Download or import a My Home JSON backup so the homeowner keeps a portable copy while this remains browser-only.</span>
           </div>
         </div>
 
@@ -127,8 +127,8 @@
           <section class="my-home-card">
             <div class="my-home-card-header">
               <div>
-                <div class="eyebrow">Home information</div>
-                <h3>Set up your home's profile</h3>
+                <div class="eyebrow">Property information</div>
+                <h3>Set up your home's property record</h3>
               </div>
               <span class="status-pill">Browser-only preview</span>
             </div>
@@ -176,7 +176,7 @@
                 </div>
               </fieldset>
               <div class="my-home-card-actions">
-                <button type="submit" class="btn primary">Save My Home profile</button>
+                <button type="submit" class="btn primary">Save My Home property record</button>
               </div>
             </form>
           </section>
@@ -185,112 +185,196 @@
             <div class="my-home-card-header">
               <div>
                 <div class="eyebrow">My Home snapshot</div>
-                <h3 id="myHomeSummaryTitle">Your digital home profile</h3>
+                <h3 id="myHomeSummaryTitle">Your digital home property record</h3>
               </div>
             </div>
-            <p id="myHomeSaveMessage" class="my-home-browser-note">
+            <p id="myHomeSaveMessage" class="my-home-browser-note" role="status" aria-live="polite">
               Save details in this browser and they will still be here after a refresh on this device.
             </p>
             <div class="my-home-stats">
               <div class="my-home-stat"><span>Equipment</span><strong id="myHomeEquipmentCount">0</strong></div>
               <div class="my-home-stat"><span>Service records</span><strong id="myHomeMaintenanceCount">0</strong></div>
-              <div class="my-home-stat"><span>Reminders</span><strong id="myHomeReminderCount">0</strong></div>
+              <div class="my-home-stat"><span>Maintenance tasks</span><strong id="myHomeReminderCount">0</strong></div>
             </div>
             <div class="my-home-summary-list">
               <div>
-                <strong>Saved home</strong>
+                <strong>Saved property</strong>
                 <span id="myHomeSummaryAddress">Add your home's details to begin building its record.</span>
               </div>
               <div>
-                <strong>Coming later</strong>
-                <span>Accounts, cloud sync, manuals, warranties, documents, exports, and future-homeowner transfer support can be added on top of this foundation later.</span>
+                <strong>Browser-only limits</strong>
+                <span>Manuals and receipts are stored here as document names and lawful URLs only. There is still no account, cloud sync, or server-side document storage.</span>
+              </div>
+              <div>
+                <strong>Preparing for Zee</strong>
+                <span>This structure now keeps equipment, warranty, history, documents, and parts notes ready for a future assistant to retrieve from a permanent property record later.</span>
               </div>
             </div>
           </aside>
         </div>
 
-        <div class="my-home-grid">
-          <section class="my-home-card">
-            <div class="my-home-card-header">
-              <div>
-                <div class="eyebrow">Home equipment</div>
-                <h3>Track appliances and major systems</h3>
-              </div>
+        <section class="my-home-card my-home-card-wide">
+          <div class="my-home-card-header">
+            <div>
+              <div class="eyebrow">Home equipment</div>
+              <h3>Track each installed system and appliance</h3>
             </div>
-            <form id="myHomeEquipmentForm" class="my-home-form">
-              <fieldset class="my-home-fieldset">
-                <legend>Equipment details</legend>
-                <div class="my-home-form-grid">
-                  <label for="myHomeEquipmentType">
-                    Equipment
-                    <select id="myHomeEquipmentType" name="type" required>
-                      <option value="">Select equipment</option>
-                      <option value="Furnace">Furnace</option>
-                      <option value="Air conditioner / HVAC">Air conditioner / HVAC</option>
-                      <option value="Water heater">Water heater</option>
-                      <option value="Refrigerator">Refrigerator</option>
-                      <option value="Dishwasher">Dishwasher</option>
-                      <option value="Washer">Washer</option>
-                      <option value="Dryer">Dryer</option>
-                      <option value="Range / oven">Range / oven</option>
-                      <option value="Microwave">Microwave</option>
-                      <option value="Electrical panel">Electrical panel</option>
-                      <option value="Garage door opener">Garage door opener</option>
-                      <option value="Other home equipment">Other home equipment</option>
-                    </select>
-                  </label>
-                  <label for="myHomeEquipmentManufacturer">
-                    Manufacturer
-                    <input id="myHomeEquipmentManufacturer" name="manufacturer" type="text" placeholder="Carrier" />
-                  </label>
-                  <label for="myHomeEquipmentModel">
-                    Model number
-                    <input id="myHomeEquipmentModel" name="modelNumber" type="text" placeholder="Model number" />
-                  </label>
-                  <label for="myHomeEquipmentSerial">
-                    Serial number
-                    <input id="myHomeEquipmentSerial" name="serialNumber" type="text" placeholder="Serial number" />
-                  </label>
-                  <label for="myHomeEquipmentInstall">
-                    Installation date or approximate age
-                    <input id="myHomeEquipmentInstall" name="installationDateOrAge" type="text" placeholder="Installed 2021 or about 6 years old" />
-                  </label>
-                  <label for="myHomeEquipmentWarranty">
-                    Warranty expiration
-                    <input id="myHomeEquipmentWarranty" name="warrantyExpiration" type="date" />
-                  </label>
-                  <label for="myHomeEquipmentNotes" class="my-home-full">
-                    Notes
-                    <textarea id="myHomeEquipmentNotes" name="notes" rows="3" placeholder="Location, condition, installer, filter size, or other details"></textarea>
-                  </label>
-                </div>
-              </fieldset>
-              <div class="my-home-card-actions">
-                <button type="submit" class="btn primary">Add equipment</button>
+          </div>
+          <p class="my-home-browser-note">
+            Add one record per installed item. For this browser-only version, save document names and official manufacturer, contractor, or retailer URLs instead of pretending files were uploaded anywhere.
+          </p>
+          <form id="myHomeEquipmentForm" class="my-home-form">
+            <input id="myHomeEquipmentEditingId" name="editingId" type="hidden" />
+            <fieldset class="my-home-fieldset">
+              <legend>Equipment record details</legend>
+              <div class="my-home-form-grid my-home-form-grid-wide">
+                <label for="myHomeEquipmentType">
+                  Equipment type
+                  <select id="myHomeEquipmentType" name="type" required>
+                    <option value="">Select equipment</option>
+                    <option value="Furnace">Furnace</option>
+                    <option value="Air conditioner / heat pump">Air conditioner / heat pump</option>
+                    <option value="Water heater">Water heater</option>
+                    <option value="Refrigerator">Refrigerator</option>
+                    <option value="Dishwasher">Dishwasher</option>
+                    <option value="Washer">Washer</option>
+                    <option value="Dryer">Dryer</option>
+                    <option value="Range / oven">Range / oven</option>
+                    <option value="Microwave">Microwave</option>
+                    <option value="Garbage disposal">Garbage disposal</option>
+                    <option value="Electrical panel">Electrical panel</option>
+                    <option value="Sump pump">Sump pump</option>
+                    <option value="Garage door opener">Garage door opener</option>
+                    <option value="Other home equipment">Other home equipment</option>
+                  </select>
+                </label>
+                <label for="myHomeEquipmentManufacturer">
+                  Manufacturer / brand
+                  <input id="myHomeEquipmentManufacturer" name="manufacturer" type="text" placeholder="Carrier" />
+                </label>
+                <label for="myHomeEquipmentModel">
+                  Model number
+                  <input id="myHomeEquipmentModel" name="modelNumber" type="text" placeholder="Model number" />
+                </label>
+                <label for="myHomeEquipmentSerial">
+                  Serial number
+                  <input id="myHomeEquipmentSerial" name="serialNumber" type="text" placeholder="Serial number" />
+                </label>
+                <label for="myHomeEquipmentInstallDate">
+                  Installation date
+                  <input id="myHomeEquipmentInstallDate" name="installationDate" type="date" />
+                </label>
+                <label for="myHomeEquipmentManufactureDate">
+                  Manufacture date
+                  <input id="myHomeEquipmentManufactureDate" name="manufactureDate" type="date" />
+                </label>
+                <label for="myHomeEquipmentApproximateAge">
+                  Approximate equipment age
+                  <input id="myHomeEquipmentApproximateAge" name="approximateAge" type="text" placeholder="About 8 years old" />
+                </label>
+                <label for="myHomeEquipmentLocation">
+                  Location in the home
+                  <input id="myHomeEquipmentLocation" name="location" type="text" placeholder="Basement utility room" />
+                </label>
+                <label for="myHomeEquipmentInstaller">
+                  Installer or contractor
+                  <input id="myHomeEquipmentInstaller" name="installer" type="text" placeholder="ABC Heating & Cooling" />
+                </label>
+                <label for="myHomeEquipmentWarrantyStart">
+                  Warranty start date
+                  <input id="myHomeEquipmentWarrantyStart" name="warrantyStartDate" type="date" />
+                </label>
+                <label for="myHomeEquipmentWarrantyExpiration">
+                  Warranty expiration date
+                  <input id="myHomeEquipmentWarrantyExpiration" name="warrantyExpirationDate" type="date" />
+                </label>
+                <label for="myHomeEquipmentWarrantyProvider">
+                  Warranty provider
+                  <input id="myHomeEquipmentWarrantyProvider" name="warrantyProvider" type="text" placeholder="Manufacturer, retailer, home warranty..." />
+                </label>
+                <label for="myHomeEquipmentWarrantyNumber">
+                  Warranty number
+                  <input id="myHomeEquipmentWarrantyNumber" name="warrantyNumber" type="text" placeholder="Warranty or contract number" />
+                </label>
+                <label for="myHomeEquipmentPartsInfo">
+                  Parts information
+                  <input id="myHomeEquipmentPartsInfo" name="partsInformation" type="text" placeholder="Filter size, igniter part, water filter SKU..." />
+                </label>
+                <label for="myHomeEquipmentOwnerManualName">
+                  Owner's manual name
+                  <input id="myHomeEquipmentOwnerManualName" name="ownerManualName" type="text" placeholder="PDF title or printed manual name" />
+                </label>
+                <label for="myHomeEquipmentOwnerManualUrl">
+                  Owner's manual URL
+                  <input id="myHomeEquipmentOwnerManualUrl" name="ownerManualUrl" type="url" inputmode="url" placeholder="https://manufacturer.example/manual" />
+                </label>
+                <label for="myHomeEquipmentInstallManualName">
+                  Installation manual name
+                  <input id="myHomeEquipmentInstallManualName" name="installationManualName" type="text" placeholder="Installer packet or PDF title" />
+                </label>
+                <label for="myHomeEquipmentInstallManualUrl">
+                  Installation manual URL
+                  <input id="myHomeEquipmentInstallManualUrl" name="installationManualUrl" type="url" inputmode="url" placeholder="https://manufacturer.example/install-manual" />
+                </label>
+                <label for="myHomeEquipmentWarrantyDocName">
+                  Warranty document name
+                  <input id="myHomeEquipmentWarrantyDocName" name="warrantyDocumentName" type="text" placeholder="Warranty PDF or contract name" />
+                </label>
+                <label for="myHomeEquipmentWarrantyDocUrl">
+                  Warranty document URL
+                  <input id="myHomeEquipmentWarrantyDocUrl" name="warrantyDocumentUrl" type="url" inputmode="url" placeholder="https://manufacturer.example/warranty" />
+                </label>
+                <label for="myHomeEquipmentReceiptName">
+                  Receipt name
+                  <input id="myHomeEquipmentReceiptName" name="receiptName" type="text" placeholder="Receipt, invoice, or purchase file name" />
+                </label>
+                <label for="myHomeEquipmentReceiptUrl">
+                  Receipt URL
+                  <input id="myHomeEquipmentReceiptUrl" name="receiptUrl" type="url" inputmode="url" placeholder="https://retailer.example/receipt" />
+                </label>
+                <label for="myHomeEquipmentWarrantyNotes" class="my-home-full">
+                  Warranty notes
+                  <textarea id="myHomeEquipmentWarrantyNotes" name="warrantyNotes" rows="3" placeholder="Coverage details, proof needed, registration notes, or unknown items"></textarea>
+                </label>
+                <label for="myHomeEquipmentModelNotes" class="my-home-full">
+                  Model-specific notes
+                  <textarea id="myHomeEquipmentModelNotes" name="modelSpecificNotes" rows="3" placeholder="Known settings, accessories, filter size, breaker size, or installer notes"></textarea>
+                </label>
+                <label for="myHomeEquipmentNotes" class="my-home-full">
+                  Notes
+                  <textarea id="myHomeEquipmentNotes" name="notes" rows="3" placeholder="Condition, symptoms, room details, replacement history, or future plans"></textarea>
+                </label>
               </div>
-            </form>
-            <datalist id="myHomeEquipmentOptions"></datalist>
-            <div id="myHomeEquipmentList" class="my-home-collection"></div>
-            <p id="myHomeEquipmentEmpty" class="empty-state">No equipment has been added yet.</p>
-          </section>
+            </fieldset>
+            <div class="my-home-card-actions">
+              <button id="myHomeEquipmentSubmit" type="submit" class="btn primary">Add equipment record</button>
+              <button id="myHomeEquipmentCancel" type="button" class="btn secondary" hidden>Cancel editing</button>
+            </div>
+          </form>
+          <datalist id="myHomeEquipmentOptions"></datalist>
+          <div id="myHomeEquipmentList" class="my-home-collection"></div>
+          <p id="myHomeEquipmentEmpty" class="empty-state">No equipment has been added yet.</p>
+        </section>
 
+        <div class="my-home-grid my-home-grid-secondary">
           <section class="my-home-card">
             <div class="my-home-card-header">
               <div>
-                <div class="eyebrow">Maintenance record</div>
-                <h3>Log service history</h3>
+                <div class="eyebrow">Property service log</div>
+                <h3>Save whole-home or legacy service records</h3>
               </div>
             </div>
+            <p class="my-home-browser-note">Use this for house-wide work or older records that are not attached to one exact equipment card.</p>
             <form id="myHomeMaintenanceForm" class="my-home-form">
               <fieldset class="my-home-fieldset">
-                <legend>Maintenance record details</legend>
+                <legend>Property service record details</legend>
                 <div class="my-home-form-grid">
                   <label for="myHomeMaintenanceEquipment">
-                    Equipment
-                    <input id="myHomeMaintenanceEquipment" name="equipment" type="text" list="myHomeEquipmentOptions" placeholder="Choose or type equipment" required />
+                    Equipment / area
+                    <input id="myHomeMaintenanceEquipment" name="equipment" type="text" list="myHomeEquipmentOptions" placeholder="Panel, roof, dryer, kitchen sink..." required />
                   </label>
                   <label for="myHomeMaintenanceService">
-                    Service performed
+                    Maintenance or repair performed
                     <input id="myHomeMaintenanceService" name="servicePerformed" type="text" placeholder="Annual tune-up, cleaned burner, replaced filter..." required />
                   </label>
                   <label for="myHomeMaintenanceDate">
@@ -298,67 +382,118 @@
                     <input id="myHomeMaintenanceDate" name="date" type="date" required />
                   </label>
                   <label for="myHomeMaintenanceParts">
-                    Parts used
-                    <input id="myHomeMaintenanceParts" name="partsUsed" type="text" placeholder="Capacitor, filter, igniter..." />
+                    Parts replaced
+                    <input id="myHomeMaintenanceParts" name="partsReplaced" type="text" placeholder="Capacitor, filter, igniter..." />
+                  </label>
+                  <label for="myHomeMaintenancePerformedBy">
+                    Contractor or DIY
+                    <input id="myHomeMaintenancePerformedBy" name="performedBy" type="text" placeholder="DIY, ABC HVAC, warranty visit..." />
+                  </label>
+                  <label for="myHomeMaintenanceCost">
+                    Cost
+                    <input id="myHomeMaintenanceCost" name="cost" type="text" inputmode="decimal" placeholder="$0.00" />
                   </label>
                   <label for="myHomeMaintenanceNotes" class="my-home-full">
                     Notes
-                    <textarea id="myHomeMaintenanceNotes" name="notes" rows="3" placeholder="Who serviced it, what was found, and any follow-up needed"></textarea>
+                    <textarea id="myHomeMaintenanceNotes" name="notes" rows="3" placeholder="What was found, follow-up needed, part details, or receipt notes"></textarea>
                   </label>
                 </div>
               </fieldset>
               <div class="my-home-card-actions">
-                <button type="submit" class="btn primary">Add maintenance record</button>
+                <button type="submit" class="btn primary">Add property service record</button>
               </div>
             </form>
             <div id="myHomeMaintenanceList" class="my-home-collection"></div>
-            <p id="myHomeMaintenanceEmpty" class="empty-state">No maintenance records have been added yet.</p>
+            <p id="myHomeMaintenanceEmpty" class="empty-state">No property-wide service records have been added yet.</p>
           </section>
 
           <section class="my-home-card my-home-reminders-card">
             <div class="my-home-card-header">
               <div>
-                <div class="eyebrow">Upcoming maintenance</div>
-                <h3>Keep future reminders in one place</h3>
+                <div class="eyebrow">Property reminders</div>
+                <h3>Keep whole-home reminders in one place</h3>
               </div>
             </div>
-            <p class="my-home-browser-note">Starter reminders are included below. Add your own, then save dates and notes right in each reminder card.</p>
+            <p class="my-home-browser-note">Starter reminders are general guidance. If you verify a manufacturer or installer interval, label it that way instead of guessing.</p>
             <form id="myHomeReminderForm" class="my-home-form">
               <fieldset class="my-home-fieldset">
-                <legend>Upcoming maintenance reminder details</legend>
+                <legend>Property reminder details</legend>
                 <div class="my-home-form-grid">
                   <label for="myHomeReminderTask">
-                    Reminder
+                    Task
                     <input id="myHomeReminderTask" name="task" type="text" list="myHomeReminderTemplates" placeholder="HVAC filter replacement" required />
                   </label>
                   <label for="myHomeReminderTarget">
                     Equipment / area
-                    <input id="myHomeReminderTarget" name="target" type="text" list="myHomeEquipmentOptions" placeholder="Air conditioner / HVAC" />
+                    <input id="myHomeReminderTarget" name="target" type="text" list="myHomeEquipmentOptions" placeholder="Air conditioner / heat pump" />
+                  </label>
+                  <label for="myHomeReminderInterval">
+                    Recommended interval
+                    <input id="myHomeReminderInterval" name="recommendedInterval" type="text" placeholder="Every 1-3 months" />
+                  </label>
+                  <label for="myHomeReminderIntervalBasis">
+                    Interval basis
+                    <select id="myHomeReminderIntervalBasis" name="intervalBasis">
+                      <option value="general">General guidance</option>
+                      <option value="manufacturer">Manufacturer / installer guidance</option>
+                    </select>
+                  </label>
+                  <label for="myHomeReminderLastCompleted">
+                    Last completed date
+                    <input id="myHomeReminderLastCompleted" name="lastCompletedDate" type="date" />
                   </label>
                   <label for="myHomeReminderDate">
-                    Due date
-                    <input id="myHomeReminderDate" name="dueDate" type="date" />
+                    Next due date
+                    <input id="myHomeReminderDate" name="nextDueDate" type="date" />
+                  </label>
+                  <label class="my-home-checkbox" for="myHomeReminderCompleted">
+                    <input id="myHomeReminderCompleted" name="completed" type="checkbox" />
+                    Mark as completed
                   </label>
                   <label for="myHomeReminderNotes" class="my-home-full">
                     Notes
-                    <textarea id="myHomeReminderNotes" name="notes" rows="3" placeholder="Seasonal timing, contractor, or inspection details"></textarea>
+                    <textarea id="myHomeReminderNotes" name="notes" rows="3" placeholder="Seasonal timing, contractor, or source for the interval"></textarea>
                   </label>
                 </div>
               </fieldset>
               <div class="my-home-card-actions">
-                <button type="submit" class="btn primary">Add reminder</button>
+                <button type="submit" class="btn primary">Add property reminder</button>
               </div>
             </form>
             <datalist id="myHomeReminderTemplates">
               <option value="HVAC filter replacement"></option>
-              <option value="Furnace/HVAC inspection"></option>
-              <option value="Gutter cleaning"></option>
-              <option value="Roof/shingle inspection"></option>
+              <option value="Furnace or heat pump inspection"></option>
               <option value="Water heater maintenance"></option>
+              <option value="Dryer vent cleaning"></option>
               <option value="Smoke/CO detector checks"></option>
-              <option value="Exterior/siding inspection"></option>
+              <option value="Gutter cleaning"></option>
+              <option value="Sump pump test"></option>
             </datalist>
             <div id="myHomeReminderList" class="my-home-collection"></div>
+          </section>
+
+          <section class="my-home-card">
+            <div class="my-home-card-header">
+              <div>
+                <div class="eyebrow">Backup & import</div>
+                <h3>Keep a homeowner-controlled JSON copy</h3>
+              </div>
+            </div>
+            <p class="my-home-browser-note">
+              Downloading creates a local JSON backup file from this browser. Import only valid A to Z Wise AI My Home backups.
+            </p>
+            <div class="my-home-card-actions">
+              <button id="myHomeExportButton" type="button" class="btn primary">Download My Home JSON backup</button>
+            </div>
+            <form class="my-home-form">
+              <label for="myHomeImportFile">
+                Import My Home JSON backup
+                <input id="myHomeImportFile" type="file" accept="application/json,.json" />
+              </label>
+            </form>
+            <p id="myHomeImportFeedback" class="my-home-browser-note" role="status" aria-live="polite">
+              Import validation runs before anything is saved so malformed data does not break the page.
+            </p>
           </section>
         </div>
       </div>
