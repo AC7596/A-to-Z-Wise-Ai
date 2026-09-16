@@ -137,6 +137,11 @@ test('My Home profile regression checks', async (t) => {
 
     const starterFallback = normalizeMyHomeProfile({ upcomingMaintenance: [] });
     assert.equal(starterFallback.upcomingMaintenance.length, STARTER_REMINDERS.length);
+
+    const invalidReminderFallback = normalizeMyHomeProfile({
+      upcomingMaintenance: [{ id: 'bad-reminder', task: '   ', target: 'Roof' }]
+    });
+    assert.equal(invalidReminderFallback.upcomingMaintenance.length, STARTER_REMINDERS.length);
   });
 
   await t.test('remove operations delete saved items and missing reminder updates stay unchanged', () => {
@@ -162,6 +167,22 @@ test('My Home profile regression checks', async (t) => {
     assert.equal(profile.upcomingMaintenance.some(item => item.id === reminderId), false);
     const afterMiss = updateUpcomingMaintenance('missing-reminder', { dueDate: '2026-12-01' }, storage);
     assert.deepEqual(afterMiss, profile);
+  });
+
+  await t.test('removing the last reminder restores the starter reminder list', () => {
+    const storage = createMemoryStorage({
+      fixwiseMyHomeProfile: JSON.stringify({
+        version: 1,
+        updatedAt: '2026-09-01T00:00:00.000Z',
+        homeInfo: {},
+        equipment: [],
+        maintenanceRecords: [],
+        upcomingMaintenance: [{ id: 'single-reminder', task: 'Dryer vent cleaning', target: 'Dryer' }]
+      })
+    });
+
+    const profile = removeUpcomingMaintenance('single-reminder', storage);
+    assert.equal(profile.upcomingMaintenance.length, STARTER_REMINDERS.length);
   });
 
   await t.test('empty add operations are ignored instead of creating transient invalid state', () => {

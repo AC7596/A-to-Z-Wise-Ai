@@ -103,6 +103,9 @@ export function createDefaultMyHomeProfile() {
 export function normalizeMyHomeProfile(rawProfile) {
   const base = createDefaultMyHomeProfile();
   const profile = rawProfile && typeof rawProfile === 'object' ? rawProfile : {};
+  const normalizedReminders = Array.isArray(profile.upcomingMaintenance) && profile.upcomingMaintenance.length
+    ? profile.upcomingMaintenance.map(normalizeReminderEntry).filter(item => item.task)
+    : [];
 
   return {
     version: CURRENT_VERSION,
@@ -123,9 +126,7 @@ export function normalizeMyHomeProfile(rawProfile) {
     maintenanceRecords: Array.isArray(profile.maintenanceRecords)
       ? profile.maintenanceRecords.map(normalizeMaintenanceEntry).filter(item => item.equipment && item.servicePerformed)
       : [],
-    upcomingMaintenance: Array.isArray(profile.upcomingMaintenance) && profile.upcomingMaintenance.length
-      ? profile.upcomingMaintenance.map(normalizeReminderEntry).filter(item => item.task)
-      : base.upcomingMaintenance
+    upcomingMaintenance: normalizedReminders.length ? normalizedReminders : base.upcomingMaintenance
   };
 }
 
@@ -233,8 +234,9 @@ export function updateUpcomingMaintenance(reminderId, patch, storage) {
 
 export function removeUpcomingMaintenance(reminderId, storage) {
   const profile = loadMyHomeProfile(storage);
+  const remaining = profile.upcomingMaintenance.filter(item => item.id !== reminderId);
   return saveMyHomeProfile({
     ...profile,
-    upcomingMaintenance: profile.upcomingMaintenance.filter(item => item.id !== reminderId)
+    upcomingMaintenance: remaining.length ? remaining : createStarterReminders()
   }, storage);
 }

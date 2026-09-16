@@ -158,6 +158,8 @@
 .my-home-card h3{margin:0;font-size:24px;color:#102d24}
 .my-home-form{display:grid;gap:16px}
 .my-home-form-grid,.my-home-inline-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.my-home-fieldset{margin:0;padding:0;border:0;min-width:0}
+.my-home-fieldset legend{padding:0;margin:0 0 14px;font-size:14px;font-weight:800;color:#123b2e;text-transform:uppercase;letter-spacing:.04em}
 .my-home-form label,.my-home-inline-grid label{display:grid;gap:8px;font-weight:800;color:#28483d}
 .my-home-form input,.my-home-form select,.my-home-form textarea,.my-home-inline-grid input,.my-home-inline-grid textarea{width:100%;border:1px solid #cbdad4;border-radius:12px;background:#fbfdfc;padding:14px;font:inherit;color:#1a3028}
 .my-home-form textarea,.my-home-inline-grid textarea{resize:vertical;min-height:96px}

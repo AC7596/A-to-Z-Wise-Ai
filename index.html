@@ -134,44 +134,47 @@
             </div>
 
             <form id="myHomeInfoForm" class="my-home-form">
-              <div class="my-home-form-grid">
-                <label for="myHomeNickname">
-                  Home nickname
-                  <input id="myHomeNickname" name="nickname" type="text" placeholder="Example: Maple House" />
-                </label>
-                <label for="myHomeAddress">
-                  Street / address
-                  <input id="myHomeAddress" name="address" type="text" placeholder="123 Main Street" />
-                </label>
-                <label for="myHomeYearBuilt">
-                  Year built
-                  <input id="myHomeYearBuilt" name="yearBuilt" type="number" min="0" inputmode="numeric" placeholder="1998" />
-                </label>
-                <label for="myHomeType">
-                  Home type
-                  <select id="myHomeType" name="homeType">
-                    <option value="">Select a home type</option>
-                    <option value="Single-family house">Single-family house</option>
-                    <option value="Townhouse">Townhouse</option>
-                    <option value="Condo">Condo</option>
-                    <option value="Duplex">Duplex</option>
-                    <option value="Mobile / manufactured home">Mobile / manufactured home</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </label>
-                <label for="myHomeSquareFootage">
-                  Square footage
-                  <input id="myHomeSquareFootage" name="squareFootage" type="number" min="0" inputmode="numeric" placeholder="1850" />
-                </label>
-                <label for="myHomeBedrooms">
-                  Number of bedrooms
-                  <input id="myHomeBedrooms" name="bedrooms" type="number" min="0" step="1" inputmode="numeric" placeholder="3" />
-                </label>
-                <label for="myHomeBathrooms">
-                  Number of bathrooms
-                  <input id="myHomeBathrooms" name="bathrooms" type="number" min="0" step="0.5" inputmode="decimal" placeholder="2.5" />
-                </label>
-              </div>
+              <fieldset class="my-home-fieldset">
+                <legend>Home information</legend>
+                <div class="my-home-form-grid">
+                  <label for="myHomeNickname">
+                    Home nickname
+                    <input id="myHomeNickname" name="nickname" type="text" placeholder="Example: Maple House" />
+                  </label>
+                  <label for="myHomeAddress">
+                    Street / address
+                    <input id="myHomeAddress" name="address" type="text" placeholder="123 Main Street" />
+                  </label>
+                  <label for="myHomeYearBuilt">
+                    Year built
+                    <input id="myHomeYearBuilt" name="yearBuilt" type="number" min="0" inputmode="numeric" placeholder="1998" />
+                  </label>
+                  <label for="myHomeType">
+                    Home type
+                    <select id="myHomeType" name="homeType">
+                      <option value="">Select a home type</option>
+                      <option value="Single-family house">Single-family house</option>
+                      <option value="Townhouse">Townhouse</option>
+                      <option value="Condo">Condo</option>
+                      <option value="Duplex">Duplex</option>
+                      <option value="Mobile / manufactured home">Mobile / manufactured home</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </label>
+                  <label for="myHomeSquareFootage">
+                    Square footage
+                    <input id="myHomeSquareFootage" name="squareFootage" type="number" min="0" inputmode="numeric" placeholder="1850" />
+                  </label>
+                  <label for="myHomeBedrooms">
+                    Number of bedrooms
+                    <input id="myHomeBedrooms" name="bedrooms" type="number" min="0" step="1" inputmode="numeric" placeholder="3" />
+                  </label>
+                  <label for="myHomeBathrooms">
+                    Number of bathrooms
+                    <input id="myHomeBathrooms" name="bathrooms" type="number" min="0" step="0.5" inputmode="decimal" placeholder="2.5" />
+                  </label>
+                </div>
+              </fieldset>
               <div class="my-home-card-actions">
                 <button type="submit" class="btn primary">Save My Home profile</button>
               </div>
@@ -215,50 +218,53 @@
               </div>
             </div>
             <form id="myHomeEquipmentForm" class="my-home-form">
-              <div class="my-home-form-grid">
-                <label for="myHomeEquipmentType">
-                  Equipment
-                  <select id="myHomeEquipmentType" name="type" required>
-                    <option value="">Select equipment</option>
-                    <option value="Furnace">Furnace</option>
-                    <option value="Air conditioner / HVAC">Air conditioner / HVAC</option>
-                    <option value="Water heater">Water heater</option>
-                    <option value="Refrigerator">Refrigerator</option>
-                    <option value="Dishwasher">Dishwasher</option>
-                    <option value="Washer">Washer</option>
-                    <option value="Dryer">Dryer</option>
-                    <option value="Range / oven">Range / oven</option>
-                    <option value="Microwave">Microwave</option>
-                    <option value="Electrical panel">Electrical panel</option>
-                    <option value="Garage door opener">Garage door opener</option>
-                    <option value="Other home equipment">Other home equipment</option>
-                  </select>
-                </label>
-                <label for="myHomeEquipmentManufacturer">
-                  Manufacturer
-                  <input id="myHomeEquipmentManufacturer" name="manufacturer" type="text" placeholder="Carrier" />
-                </label>
-                <label for="myHomeEquipmentModel">
-                  Model number
-                  <input id="myHomeEquipmentModel" name="modelNumber" type="text" placeholder="Model number" />
-                </label>
-                <label for="myHomeEquipmentSerial">
-                  Serial number
-                  <input id="myHomeEquipmentSerial" name="serialNumber" type="text" placeholder="Serial number" />
-                </label>
-                <label for="myHomeEquipmentInstall">
-                  Installation date or approximate age
-                  <input id="myHomeEquipmentInstall" name="installationDateOrAge" type="text" placeholder="Installed 2021 or about 6 years old" />
-                </label>
-                <label for="myHomeEquipmentWarranty">
-                  Warranty expiration
-                  <input id="myHomeEquipmentWarranty" name="warrantyExpiration" type="date" />
-                </label>
-                <label for="myHomeEquipmentNotes" class="my-home-full">
-                  Notes
-                  <textarea id="myHomeEquipmentNotes" name="notes" rows="3" placeholder="Location, condition, installer, filter size, or other details"></textarea>
-                </label>
-              </div>
+              <fieldset class="my-home-fieldset">
+                <legend>Equipment details</legend>
+                <div class="my-home-form-grid">
+                  <label for="myHomeEquipmentType">
+                    Equipment
+                    <select id="myHomeEquipmentType" name="type" required>
+                      <option value="">Select equipment</option>
+                      <option value="Furnace">Furnace</option>
+                      <option value="Air conditioner / HVAC">Air conditioner / HVAC</option>
+                      <option value="Water heater">Water heater</option>
+                      <option value="Refrigerator">Refrigerator</option>
+                      <option value="Dishwasher">Dishwasher</option>
+                      <option value="Washer">Washer</option>
+                      <option value="Dryer">Dryer</option>
+                      <option value="Range / oven">Range / oven</option>
+                      <option value="Microwave">Microwave</option>
+                      <option value="Electrical panel">Electrical panel</option>
+                      <option value="Garage door opener">Garage door opener</option>
+                      <option value="Other home equipment">Other home equipment</option>
+                    </select>
+                  </label>
+                  <label for="myHomeEquipmentManufacturer">
+                    Manufacturer
+                    <input id="myHomeEquipmentManufacturer" name="manufacturer" type="text" placeholder="Carrier" />
+                  </label>
+                  <label for="myHomeEquipmentModel">
+                    Model number
+                    <input id="myHomeEquipmentModel" name="modelNumber" type="text" placeholder="Model number" />
+                  </label>
+                  <label for="myHomeEquipmentSerial">
+                    Serial number
+                    <input id="myHomeEquipmentSerial" name="serialNumber" type="text" placeholder="Serial number" />
+                  </label>
+                  <label for="myHomeEquipmentInstall">
+                    Installation date or approximate age
+                    <input id="myHomeEquipmentInstall" name="installationDateOrAge" type="text" placeholder="Installed 2021 or about 6 years old" />
+                  </label>
+                  <label for="myHomeEquipmentWarranty">
+                    Warranty expiration
+                    <input id="myHomeEquipmentWarranty" name="warrantyExpiration" type="date" />
+                  </label>
+                  <label for="myHomeEquipmentNotes" class="my-home-full">
+                    Notes
+                    <textarea id="myHomeEquipmentNotes" name="notes" rows="3" placeholder="Location, condition, installer, filter size, or other details"></textarea>
+                  </label>
+                </div>
+              </fieldset>
               <div class="my-home-card-actions">
                 <button type="submit" class="btn primary">Add equipment</button>
               </div>
@@ -276,28 +282,31 @@
               </div>
             </div>
             <form id="myHomeMaintenanceForm" class="my-home-form">
-              <div class="my-home-form-grid">
-                <label for="myHomeMaintenanceEquipment">
-                  Equipment
-                  <input id="myHomeMaintenanceEquipment" name="equipment" type="text" list="myHomeEquipmentOptions" placeholder="Choose or type equipment" required />
-                </label>
-                <label for="myHomeMaintenanceService">
-                  Service performed
-                  <input id="myHomeMaintenanceService" name="servicePerformed" type="text" placeholder="Annual tune-up, cleaned burner, replaced filter..." required />
-                </label>
-                <label for="myHomeMaintenanceDate">
-                  Date
-                  <input id="myHomeMaintenanceDate" name="date" type="date" required />
-                </label>
-                <label for="myHomeMaintenanceParts">
-                  Parts used
-                  <input id="myHomeMaintenanceParts" name="partsUsed" type="text" placeholder="Capacitor, filter, igniter..." />
-                </label>
-                <label for="myHomeMaintenanceNotes" class="my-home-full">
-                  Notes
-                  <textarea id="myHomeMaintenanceNotes" name="notes" rows="3" placeholder="Who serviced it, what was found, and any follow-up needed"></textarea>
-                </label>
-              </div>
+              <fieldset class="my-home-fieldset">
+                <legend>Maintenance record details</legend>
+                <div class="my-home-form-grid">
+                  <label for="myHomeMaintenanceEquipment">
+                    Equipment
+                    <input id="myHomeMaintenanceEquipment" name="equipment" type="text" list="myHomeEquipmentOptions" placeholder="Choose or type equipment" required />
+                  </label>
+                  <label for="myHomeMaintenanceService">
+                    Service performed
+                    <input id="myHomeMaintenanceService" name="servicePerformed" type="text" placeholder="Annual tune-up, cleaned burner, replaced filter..." required />
+                  </label>
+                  <label for="myHomeMaintenanceDate">
+                    Date
+                    <input id="myHomeMaintenanceDate" name="date" type="date" required />
+                  </label>
+                  <label for="myHomeMaintenanceParts">
+                    Parts used
+                    <input id="myHomeMaintenanceParts" name="partsUsed" type="text" placeholder="Capacitor, filter, igniter..." />
+                  </label>
+                  <label for="myHomeMaintenanceNotes" class="my-home-full">
+                    Notes
+                    <textarea id="myHomeMaintenanceNotes" name="notes" rows="3" placeholder="Who serviced it, what was found, and any follow-up needed"></textarea>
+                  </label>
+                </div>
+              </fieldset>
               <div class="my-home-card-actions">
                 <button type="submit" class="btn primary">Add maintenance record</button>
               </div>
@@ -315,24 +324,27 @@
             </div>
             <p class="my-home-browser-note">Starter reminders are included below. Add your own, then save dates and notes right in each reminder card.</p>
             <form id="myHomeReminderForm" class="my-home-form">
-              <div class="my-home-form-grid">
-                <label for="myHomeReminderTask">
-                  Reminder
-                  <input id="myHomeReminderTask" name="task" type="text" list="myHomeReminderTemplates" placeholder="HVAC filter replacement" required />
-                </label>
-                <label for="myHomeReminderTarget">
-                  Equipment / area
-                  <input id="myHomeReminderTarget" name="target" type="text" list="myHomeEquipmentOptions" placeholder="Air conditioner / HVAC" />
-                </label>
-                <label for="myHomeReminderDate">
-                  Due date
-                  <input id="myHomeReminderDate" name="dueDate" type="date" />
-                </label>
-                <label for="myHomeReminderNotes" class="my-home-full">
-                  Notes
-                  <textarea id="myHomeReminderNotes" name="notes" rows="3" placeholder="Seasonal timing, contractor, or inspection details"></textarea>
-                </label>
-              </div>
+              <fieldset class="my-home-fieldset">
+                <legend>Upcoming maintenance reminder details</legend>
+                <div class="my-home-form-grid">
+                  <label for="myHomeReminderTask">
+                    Reminder
+                    <input id="myHomeReminderTask" name="task" type="text" list="myHomeReminderTemplates" placeholder="HVAC filter replacement" required />
+                  </label>
+                  <label for="myHomeReminderTarget">
+                    Equipment / area
+                    <input id="myHomeReminderTarget" name="target" type="text" list="myHomeEquipmentOptions" placeholder="Air conditioner / HVAC" />
+                  </label>
+                  <label for="myHomeReminderDate">
+                    Due date
+                    <input id="myHomeReminderDate" name="dueDate" type="date" />
+                  </label>
+                  <label for="myHomeReminderNotes" class="my-home-full">
+                    Notes
+                    <textarea id="myHomeReminderNotes" name="notes" rows="3" placeholder="Seasonal timing, contractor, or inspection details"></textarea>
+                  </label>
+                </div>
+              </fieldset>
               <div class="my-home-card-actions">
                 <button type="submit" class="btn primary">Add reminder</button>
               </div>
