@@ -1,25 +1,13 @@
 // ========================================
-// AI BACKEND INTEGRATION LAYER (placeholder)
+// AI BACKEND INTEGRATION LAYER
 // ========================================
 // GitHub Pages only serves static files, so this file MUST NEVER contain
-// API keys, tokens, or secrets. Real AI calls belong on a secure backend
-// (serverless function, small API server, etc.) that this file will call
-// over HTTPS once it exists.
+// API keys, tokens, or secrets. Real AI calls must stay server-side in a
+// secure backend. This module only sends the diagnosis contract to that
+// backend URL (if configured) and safely falls back to local Demo Mode if
+// the backend is unavailable.
 //
-// HOW TO CONNECT A REAL BACKEND LATER:
-// 1. Stand up a backend endpoint (e.g. a serverless function such as
-//    Azure Functions, AWS Lambda, Cloudflare Workers, or a small Node/
-//    Python API) that holds the real AI provider key server-side only.
-// 2. Set BACKEND_BASE_URL below (or load it from a non-secret config file)
-//    to point at that backend's public HTTPS URL.
-// 3. Replace the body of diagnoseProblem() / analyzePhotos() with a
-//    fetch() call to that backend, and remove the local demo logic.
-// 4. The backend should accept the same request shape used here and
-//    return the same response shape so the UI code above this layer
-//    (js/modules/diagnosis.js) does not need to change.
-//
-// See BACKEND.md in the project root for a full description of the
-// backend pieces required for a production AI diagnosis service.
+// See BACKEND.md and backend/README.md for deployment/configuration details.
 
 import { diagnosisDatabase } from '../data/diagnosis-data.js';
 import { classifyIntent, INTENT, INTENT_META, INTENTIONAL_ACTION_INTENTS, getIntentFollowUpQuestions } from '../data/intent-data.js';
