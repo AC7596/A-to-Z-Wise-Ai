@@ -144,6 +144,49 @@
 .kid-activity-complete{text-align:center}
 @media(max-width:820px){.repair-modal-panel{padding:22px}.repair-step-actions .btn{min-width:100%}}
 
+/* ======= MY HOME PROFILE STYLES ======= */
+.my-home-section{background:linear-gradient(180deg,#f7faf8,#eef6f2)}
+.my-home-intro{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+.my-home-intro-card,.my-home-card,.my-home-entry{background:#fff;border:1px solid #dfe9e4;box-shadow:0 20px 55px rgba(26,69,54,.08)}
+.my-home-intro-card{border-radius:18px;padding:20px;display:grid;gap:8px}
+.my-home-intro-card strong{color:#123b2e}
+.my-home-intro-card span,.my-home-browser-note,.my-home-summary-list span,.my-home-entry p,.my-home-entry-note{color:#5f746b;font-size:14px}
+.my-home-layout{display:grid;grid-template-columns:1.15fr .85fr;gap:24px;margin-bottom:24px;align-items:start}
+.my-home-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;align-items:start}
+.my-home-card{border-radius:22px;padding:26px}
+.my-home-card-header{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:16px}
+.my-home-card h3{margin:0;font-size:24px;color:#102d24}
+.my-home-form{display:grid;gap:16px}
+.my-home-form-grid,.my-home-inline-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.my-home-fieldset{margin:0;padding:0;border:0;min-width:0}
+.my-home-fieldset legend{padding:0;margin:0 0 14px;font-size:14px;font-weight:800;color:#123b2e;text-transform:uppercase;letter-spacing:.04em}
+.my-home-form label,.my-home-inline-grid label{display:grid;gap:8px;font-weight:800;color:#28483d}
+.my-home-form input,.my-home-form select,.my-home-form textarea,.my-home-inline-grid input,.my-home-inline-grid textarea{width:100%;border:1px solid #cbdad4;border-radius:12px;background:#fbfdfc;padding:14px;font:inherit;color:#1a3028}
+.my-home-form textarea,.my-home-inline-grid textarea{resize:vertical;min-height:96px}
+.my-home-full{grid-column:1/-1}
+.my-home-card-actions{display:flex;gap:10px;flex-wrap:wrap}
+.my-home-card-actions .btn{flex:1 1 180px}
+.my-home-summary-card{position:sticky;top:90px}
+.my-home-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}
+.my-home-stat{background:#f3f8f5;border-radius:16px;padding:16px;display:grid;gap:4px}
+.my-home-stat span{font-size:12px;color:#6e827a;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.my-home-stat strong{font-size:24px;color:#123b2e}
+.my-home-summary-list{display:grid;gap:14px}
+.my-home-summary-list strong{display:block;margin-bottom:4px;color:#123b2e}
+.my-home-collection{display:grid;gap:14px}
+.my-home-entry{border-radius:18px;padding:18px}
+.my-home-entry-header{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin-bottom:12px}
+.my-home-entry-header h4{margin:0;color:#123b2e;font-size:18px}
+.my-home-entry-header p{margin:4px 0 0}
+.my-home-remove-btn{min-height:40px;padding:0 14px;white-space:nowrap}
+.my-home-entry-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.my-home-entry-grid div{background:#f3f8f5;border-radius:12px;padding:12px}
+.my-home-entry-grid span{display:block;font-size:11px;color:#6e827a;font-weight:800;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.my-home-entry-grid strong{display:block;font-size:14px;color:#123b2e}
+.my-home-entry-note{margin:12px 0 0}
+.my-home-inline-form{display:grid;gap:14px}
+.my-home-reminders-card .my-home-collection{margin-top:16px}
+
 /* ======= MONETIZATION & PRICING STYLES ======= */
 .pricing-section{padding:80px 0;background:#edf5f1}
 .pricing-grid{display:flex;justify-content:center;max-width:680px;margin:0 auto}
@@ -200,4 +243,6 @@
 .checkout-modal-content p{color:#526b62;font-size:14px;margin:0 0 12px;line-height:1.55;text-align:left}
 .checkout-modal-content code{background:#f0f7f4;padding:2px 6px;border-radius:4px;font-size:12px;color:#1f7a58;border:1px solid #cbdad4;font-family:monospace;word-break:break-all}
 .checkout-modal-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;justify-content:center}
-@media(max-width:600px){.pricing-card{padding:24px 18px}.status-tag.live,.status-tag.coming{margin-left:0}.pricing-feature-list li{align-items:flex-start}.legal-card,.success-card{padding:22px}}
+@media(max-width:980px){.my-home-intro,.my-home-grid{grid-template-columns:1fr 1fr}.my-home-layout{grid-template-columns:1fr}.my-home-summary-card{position:static}}
+@media(max-width:820px){.my-home-intro,.my-home-grid,.my-home-form-grid,.my-home-inline-grid,.my-home-entry-grid{grid-template-columns:1fr}.my-home-entry-header{flex-direction:column}.my-home-remove-btn,.my-home-card-actions .btn{width:100%}}
+@media(max-width:600px){.pricing-card{padding:24px 18px}.status-tag.live,.status-tag.coming{margin-left:0}.pricing-feature-list li{align-items:flex-start}.legal-card,.success-card,.my-home-card{padding:22px}.my-home-stats{grid-template-columns:1fr}}
