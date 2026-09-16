@@ -220,10 +220,10 @@ export function addUpcomingMaintenance(entry, storage) {
 
 export function updateUpcomingMaintenance(reminderId, patch, storage) {
   const profile = loadMyHomeProfile(storage);
-  if (!profile.upcomingMaintenance.some(item => item.id === reminderId)) {
+  const existing = profile.upcomingMaintenance.find(item => item.id === reminderId);
+  if (!existing) {
     return profile;
   }
-  const existing = profile.upcomingMaintenance.find(item => item.id === reminderId);
   const normalizedEntry = normalizeReminderEntry({ ...existing, ...patch, id: reminderId });
   if (!normalizedEntry.task) {
     return profile;
