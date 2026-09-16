@@ -11,6 +11,11 @@ const SUPPORTED_HOME_CATEGORIES = new Set([
   'Other'
 ]);
 
+const CATEGORY_ALIASES = {
+  HVAC: 'Heating & Cooling',
+  'Heating and Cooling': 'Heating & Cooling'
+};
+
 const DANGER_RULES = [
   {
     level: 'stop',
@@ -148,7 +153,8 @@ export function validateAndNormalizeDiagnosisPayload(rawPayload) {
   const scope = toText(rawPayload.scope);
   assert(scope === ALLOWED_SCOPE, 400, 'Unsupported scope. This endpoint only supports home-diy-only requests.');
 
-  const category = toText(rawPayload.category);
+  const rawCategory = toText(rawPayload.category);
+  const category = CATEGORY_ALIASES[rawCategory] || rawCategory;
   assert(!category || SUPPORTED_HOME_CATEGORIES.has(category), 400, 'Unsupported category for home/DIY diagnosis.');
 
   const problem = toText(rawPayload.problem);
@@ -297,10 +303,35 @@ function extractJsonFromModelText(text) {
     const start = trimmed.indexOf('{');
     const end = trimmed.lastIndexOf('}');
     if (start >= 0 && end > start) {
-      return JSON.parse(trimmed.slice(start, end + 1));
+      try {
+        return JSON.parse(trimmed.slice(start, end + 1));
+      } catch {
+        return {};
+      }
     }
     return {};
   }
+}
+
+function normalizeModelContent(content) {
+  if (typeof content === 'string') return content;
+  if (Array.isArray(content)) {
+    return content
+      .map(part => (typeof part?.text === 'string' ? part.text : ''))
+      .join('');
+  }
+  return '';
+}
+
+function hasMeaningfulDiagnosisPayload(payload) {
+  if (!payload || typeof payload !== 'object') return false;
+  return Boolean(
+    payload.matched !== undefined
+    || payload.needsFollowUp !== undefined
+    || (Array.isArray(payload.possibleCauses) && payload.possibleCauses.length)
+    || (Array.isArray(payload.followUpQuestions) && payload.followUpQuestions.length)
+    || (payload.issue && typeof payload.issue === 'object')
+  );
 }
 
 function normalizePossibleCauses(rawValue, fallbackWhy) {
@@ -343,10 +374,16 @@ export function normalizeProviderDiagnosis(rawResponse, payload) {
 
   const issue = rawResponse?.issue && typeof rawResponse.issue === 'object' ? rawResponse.issue : {};
   const difficulty = normalizeDifficulty(issue.difficulty || rawResponse?.difficulty);
+  const matched = typeof rawResponse?.matched === 'boolean'
+    ? rawResponse.matched
+    : Boolean(possibleCauses.length || followUpQuestions.length);
+  const needsFollowUp = typeof rawResponse?.needsFollowUp === 'boolean'
+    ? rawResponse.needsFollowUp
+    : Boolean(followUpQuestions.length);
 
   const normalized = {
-    matched: Boolean(rawResponse?.matched ?? (possibleCauses.length || followUpQuestions.length)),
-    needsFollowUp: Boolean(rawResponse?.needsFollowUp ?? followUpQuestions.length),
+    matched,
+    needsFollowUp,
     confidence: {
       level: ['high', 'medium', 'low'].includes(toText(rawResponse?.confidence?.level).toLowerCase())
         ? toText(rawResponse?.confidence?.level).toLowerCase()
@@ -443,9 +480,26 @@ export async function generateDiagnosisFromProvider(payload, env = {}, fetchImpl
     throw err;
   }
 
-  const data = await response.json();
-  const content = data?.choices?.[0]?.message?.content;
+  let data;
+  try {
+    data = await response.json();
+  } catch {
+    const err = new Error('Provider response could not be parsed as JSON.');
+    err.status = 502;
+    throw err;
+  }
+  const content = normalizeModelContent(data?.choices?.[0]?.message?.content);
+  if (!content) {
+    const err = new Error('Provider response did not include diagnosis content.');
+    err.status = 502;
+    throw err;
+  }
   const parsed = extractJsonFromModelText(content);
+  if (!hasMeaningfulDiagnosisPayload(parsed)) {
+    const err = new Error('Provider response did not contain a valid diagnosis payload.');
+    err.status = 502;
+    throw err;
+  }
   return normalizeProviderDiagnosis(parsed, payload);
 }
 

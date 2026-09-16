@@ -132,6 +132,70 @@ test('provider call uses server-side secret and returns normalized response', as
   assert.equal(result.issue.difficulty, 'beginner');
 });
 
+test('provider array content responses are parsed correctly', async () => {
+  const payload = validateAndNormalizeDiagnosisPayload(createBasePayload());
+
+  const fakeFetch = async () => ({
+    ok: true,
+    async json() {
+      return {
+        choices: [
+          {
+            message: {
+              content: [
+                {
+                  type: 'output_text',
+                  text: JSON.stringify({
+                    matched: true,
+                    possibleCauses: ['Loose wiring connection'],
+                    safeChecks: ['Turn off power before opening access panels.'],
+                    nextActions: ['Inspect visible wiring for looseness.'],
+                    whenToCallProfessional: ['Call a licensed electrician for live-circuit testing.'],
+                    issue: { difficulty: 'professional', nextCheck: 'Inspect accessible wiring points' }
+                  })
+                }
+              ]
+            }
+          }
+        ]
+      };
+    }
+  });
+
+  const result = await generateDiagnosisFromProvider(payload, { AI_PROVIDER_API_KEY: 'test-key' }, fakeFetch);
+  assert.equal(result.possibleCauses[0].title, 'Loose wiring connection');
+});
+
+test('invalid provider payload returns backend/provider error', async () => {
+  const payload = validateAndNormalizeDiagnosisPayload(createBasePayload());
+  const fakeFetch = async () => ({
+    ok: true,
+    async json() {
+      return { choices: [{ message: { content: '{}' } }] };
+    }
+  });
+
+  await assert.rejects(
+    () => generateDiagnosisFromProvider(payload, { AI_PROVIDER_API_KEY: 'test-key' }, fakeFetch),
+    /valid diagnosis payload/i
+  );
+});
+
+  test('provider boolean diagnosis flags are preserved', () => {
+    const payload = validateAndNormalizeDiagnosisPayload(createBasePayload());
+    const normalized = normalizeProviderDiagnosis({
+      matched: false,
+      needsFollowUp: true,
+      followUpQuestions: ['Is the dryer getting full voltage?'],
+      safeChecks: ['Check breaker positions without opening panels.'],
+      nextActions: ['Answer follow-up questions before attempting repairs.'],
+      whenToCallProfessional: ['Call an appliance technician for meter-based testing.']
+    }, payload);
+
+    assert.equal(normalized.matched, false);
+    assert.equal(normalized.needsFollowUp, true);
+  });
+
 test('worker endpoint serves diagnosis and enforces backend configuration', async () => {
   const body = JSON.stringify(createBasePayload());
 
@@ -159,4 +223,70 @@ test('worker endpoint serves diagnosis and enforces backend configuration', asyn
   assert.equal(missingSecretResponse.status, 503);
   const json = await missingSecretResponse.json();
   assert.match(json.message, /not configured/i);
+});
+
+test('worker supports health and constrains CORS preflight routes', async () => {
+  const health = await worker.fetch(new Request('https://backend.example/api/health', { method: 'GET' }), {});
+  assert.equal(health.status, 200);
+
+  const unknownOptions = await worker.fetch(
+    new Request('https://backend.example/unknown', { method: 'OPTIONS', headers: { Origin: 'https://atozwiseai.com' } }),
+    { ALLOWED_ORIGINS: 'https://atozwiseai.com' }
+  );
+  assert.equal(unknownOptions.status, 404);
+
+  const deniedPreflight = await worker.fetch(
+    new Request('https://backend.example/api/diagnose', { method: 'OPTIONS', headers: { Origin: 'https://evil.example' } }),
+    { ALLOWED_ORIGINS: 'https://atozwiseai.com' }
+  );
+  assert.equal(deniedPreflight.status, 403);
+});
+
+test('worker multipart guardrails enforce request size and file-like uploads', async () => {
+  const tooLargeMultipartRequest = {
+    method: 'POST',
+    url: 'https://backend.example/api/diagnose',
+    headers: {
+      get(name) {
+        const key = String(name).toLowerCase();
+        if (key === 'content-type') return 'multipart/form-data; boundary=----demo';
+        if (key === 'content-length') return String(26 * 1024 * 1024);
+        return null;
+      }
+    },
+    async formData() {
+      throw new Error('should not parse oversized body');
+    }
+  };
+
+  const tooLargeResponse = await worker.fetch(tooLargeMultipartRequest, {});
+  assert.equal(tooLargeResponse.status, 413);
+
+  const badPhotosMultipartRequest = {
+    method: 'POST',
+    url: 'https://backend.example/api/diagnose',
+    headers: {
+      get(name) {
+        const key = String(name).toLowerCase();
+        if (key === 'content-type') return 'multipart/form-data; boundary=----demo';
+        if (key === 'content-length') return '1024';
+        return null;
+      }
+    },
+    async formData() {
+      return {
+        get(field) {
+          if (field !== 'request') return null;
+          return JSON.stringify(createBasePayload());
+        },
+        getAll(field) {
+          if (field !== 'photos') return [];
+          return ['not-a-file'];
+        }
+      };
+    }
+  };
+
+  const badPhotosResponse = await worker.fetch(badPhotosMultipartRequest, {});
+  assert.equal(badPhotosResponse.status, 400);
 });

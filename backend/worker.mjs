@@ -8,35 +8,47 @@ import {
 
 const MAX_PHOTOS = 6;
 const MAX_PHOTO_SIZE_BYTES = 8 * 1024 * 1024;
+const MAX_TOTAL_PHOTO_BYTES = 20 * 1024 * 1024;
+const MAX_MULTIPART_REQUEST_BYTES = 25 * 1024 * 1024;
 
 function getAllowedOrigin(request, env) {
   const origin = request.headers.get('Origin');
   const configured = String(env?.ALLOWED_ORIGINS || '').trim();
 
-  if (!configured) return '*';
+  if (!origin || !configured) return '';
 
   const allowed = configured.split(',').map(value => value.trim()).filter(Boolean);
   if (allowed.includes('*')) return '*';
   if (origin && allowed.includes(origin)) return origin;
-  return allowed[0] || 'null';
+  return '';
 }
 
-function corsHeaders(request, env) {
-  return {
-    'Access-Control-Allow-Origin': getAllowedOrigin(request, env),
-    'Access-Control-Allow-Methods': 'POST, OPTIONS, GET',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+function corsHeaders(request, env, allowMethods = 'POST, OPTIONS') {
+  const allowedOrigin = getAllowedOrigin(request, env);
+  const requestedHeaders = request.headers.get('Access-Control-Request-Headers');
+  const headers = {
+    'Access-Control-Allow-Methods': allowMethods,
+    'Access-Control-Allow-Headers': requestedHeaders || 'Content-Type, Authorization',
     'Access-Control-Max-Age': '86400',
     Vary: 'Origin'
   };
+  if (allowedOrigin) headers['Access-Control-Allow-Origin'] = allowedOrigin;
+
+  return headers;
 }
 
-function jsonResponse(body, status, request, env) {
+function isDisallowedCorsPreflight(request, env) {
+  return request.method === 'OPTIONS'
+    && Boolean(request.headers.get('Origin'))
+    && !getAllowedOrigin(request, env);
+}
+
+function jsonResponse(body, status, request, env, allowMethods) {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
-      ...corsHeaders(request, env)
+      ...corsHeaders(request, env, allowMethods)
     }
   });
 }
@@ -45,6 +57,12 @@ async function parseDiagnosisRequest(request) {
   const contentType = request.headers.get('content-type') || '';
 
   if (contentType.includes('multipart/form-data')) {
+    const contentLength = Number(request.headers.get('content-length') || 0);
+    if (contentLength && contentLength > MAX_MULTIPART_REQUEST_BYTES) {
+      const err = new Error('Upload is too large for this diagnosis endpoint.');
+      err.status = 413;
+      throw err;
+    }
     const formData = await request.formData();
     const requestField = formData.get('request');
     if (!requestField) {
@@ -53,20 +71,42 @@ async function parseDiagnosisRequest(request) {
       throw err;
     }
 
-    const payload = JSON.parse(String(requestField));
+    let payload;
+    try {
+      payload = JSON.parse(String(requestField));
+    } catch {
+      const err = new Error('Invalid JSON in multipart request field.');
+      err.status = 400;
+      throw err;
+    }
     const photos = formData.getAll('photos').filter(Boolean);
     if (photos.length > MAX_PHOTOS) {
       const err = new Error(`Too many photos. Maximum allowed is ${MAX_PHOTOS}.`);
       err.status = 413;
       throw err;
     }
-    photos.forEach(file => {
+    let totalPhotoBytes = 0;
+    for (const file of photos) {
+      const isFileLike = file && typeof file === 'object' && typeof file.arrayBuffer === 'function' && typeof file.size === 'number';
+      if (!isFileLike) {
+        const err = new Error('Each photos item must be a file upload.');
+        err.status = 400;
+        throw err;
+      }
       if (typeof file?.size === 'number' && file.size > MAX_PHOTO_SIZE_BYTES) {
         const err = new Error('One or more photos exceed the maximum allowed size (8MB).');
         err.status = 413;
         throw err;
       }
-    });
+      if (typeof file?.size === 'number') {
+        totalPhotoBytes += file.size;
+        if (totalPhotoBytes > MAX_TOTAL_PHOTO_BYTES) {
+          const err = new Error('Total photo upload size exceeds the maximum allowed limit (20MB).');
+          err.status = 413;
+          throw err;
+        }
+      }
+    }
 
     if (!payload.attachmentSummary || typeof payload.attachmentSummary !== 'object') {
       payload.attachmentSummary = {};
@@ -76,7 +116,13 @@ async function parseDiagnosisRequest(request) {
   }
 
   if (contentType.includes('application/json')) {
-    return await request.json();
+    try {
+      return await request.json();
+    } catch {
+      const err = new Error('Invalid JSON request body.');
+      err.status = 400;
+      throw err;
+    }
   }
 
   const err = new Error('Unsupported content type. Use multipart/form-data or application/json.');
@@ -87,24 +133,41 @@ async function parseDiagnosisRequest(request) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    const normalizedPath = url.pathname.endsWith('/') && url.pathname.length > 1
+      ? url.pathname.slice(0, -1)
+      : url.pathname;
 
     if (request.method === 'OPTIONS') {
+      if (!['/api/diagnose', '/api/health'].includes(normalizedPath)) {
+        return new Response(null, { status: 404 });
+      }
+      if (isDisallowedCorsPreflight(request, env)) {
+        return new Response(null, { status: 403 });
+      }
+      const allowMethods = normalizedPath === '/api/health' ? 'GET, OPTIONS' : 'POST, OPTIONS';
       return new Response(null, {
         status: 204,
-        headers: corsHeaders(request, env)
+        headers: corsHeaders(request, env, allowMethods)
       });
     }
 
-    if (url.pathname === '/api/health' && request.method === 'GET') {
-      return jsonResponse({ ok: true, service: 'a-to-z-wise-ai-diagnosis-backend' }, 200, request, env);
+    if (normalizedPath === '/api/health' && request.method === 'GET') {
+      return jsonResponse({ ok: true, service: 'a-to-z-wise-ai-diagnosis-backend' }, 200, request, env, 'GET, OPTIONS');
     }
 
-    if (url.pathname !== '/api/diagnose') {
+    if (normalizedPath !== '/api/diagnose') {
       return jsonResponse({ error: 'not_found', message: 'Endpoint not found.' }, 404, request, env);
     }
 
     if (request.method !== 'POST') {
-      return jsonResponse({ error: 'method_not_allowed', message: 'Use POST /api/diagnose.' }, 405, request, env);
+      return new Response(JSON.stringify({ error: 'method_not_allowed', message: 'Use POST /api/diagnose.' }), {
+        status: 405,
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          Allow: 'POST, OPTIONS',
+          ...corsHeaders(request, env)
+        }
+      });
     }
 
     try {

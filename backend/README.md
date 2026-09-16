@@ -37,4 +37,4 @@ The frontend already calls `${backendUrl}/api/diagnose` and safely falls back to
 
 ## Local smoke check (Node 20+)
 
-You can import and test backend helpers directly via `node --test tests/regression-secure-backend-service.mjs`.
+You can import and test backend helpers directly via `node tests/regression-secure-backend-service.mjs`.
