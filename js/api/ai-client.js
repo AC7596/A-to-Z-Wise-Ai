@@ -300,10 +300,7 @@ function refineIssueWithFacts(issueData, facts) {
 
 function localDemoDiagnosis({ category, problem, seen, heard, smell, otherSymptoms, conversationHistory }) {
   const categoryKey = (category || '').toLowerCase();
-  const normalizedCategoryKey = categoryKey === 'home equipment'
-    ? 'automotive / home equipment'
-    : categoryKey;
-  const categoryData = diagnosisDatabase[normalizedCategoryKey];
+  const categoryData = diagnosisDatabase[categoryKey];
 
   const followUpText = (conversationHistory || [])
     .map(entry => entry.answer)

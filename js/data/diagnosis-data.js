@@ -766,7 +766,7 @@ export const diagnosisDatabase = {
       }
     }
   },
-  'automotive / home equipment': {
+  'home equipment': {
     dangers: {
       keywords: ['carbon monoxide', 'fuel leak', 'gas smell', 'battery acid', 'sparking', 'fire', 'smoke'],
       message: 'This may involve fuel, battery, or exhaust hazards. Do not run the engine or equipment in an enclosed space.',
@@ -778,15 +778,15 @@ export const diagnosisDatabase = {
         otherCauses: ['Empty fuel tank or stale fuel', 'Blown fuse'],
         clarifyingQuestions: ['Do the lights or dashboard turn on at all?', 'Do you hear clicking, or nothing at all, when you try to start it?'],
         nextCheck: 'Check the battery connections and charge level first',
-        steps: ['Check that battery terminals are clean and tightly connected.', 'Try a jump start if the battery is suspected (car) or check the equipment\'s battery/fuel per its manual.', 'Check for blown fuses if accessible.'],
-        tools: ['Multimeter (optional)', 'Jumper cables or jump box (for vehicles)', 'Gloves'],
+        steps: ['Check that battery terminals are clean and tightly connected.', 'Check the equipment\'s battery, power source, or fuel level using the manufacturer\'s manual.', 'Check for blown fuses or resettable breakers if they are safely accessible.'],
+        tools: ['Multimeter (optional)', 'Work gloves', 'Owner\'s manual'],
         parts: ['Replacement battery, if testing confirms it is dead'],
         time: '15–45 minutes',
         difficulty: LEVELS.BEGINNER.slug,
         tips: ['Never bring an open flame near a battery — batteries can emit flammable hydrogen gas.'],
         stopWhen: 'You smell fuel, see smoke, notice battery swelling/leaking, or sparking occurs.',
         safety: 'Wear eye protection around batteries; avoid sparks near batteries or fuel',
-        pro: 'If jump-starting or checking the battery/fuses doesn\'t resolve it, a mechanic or equipment technician can diagnose the starter, ignition, or fuel system.'
+        pro: 'If checking the battery, power source, fuel, or fuses doesn\'t resolve it, a qualified appliance or equipment technician can diagnose the motor, ignition, or power system.'
       },
       'won\'t run|stalls|shuts off|overheating': {
         causes: ['Low fluid levels', 'Clogged air filter', 'Overheating engine or motor'],
