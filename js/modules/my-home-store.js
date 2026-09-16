@@ -173,9 +173,11 @@ export function updateHomeInfo(homeInfoPatch, storage) {
 
 export function addEquipment(entry, storage) {
   const profile = loadMyHomeProfile(storage);
+  const normalizedEntry = normalizeEquipmentEntry(entry);
+  if (!normalizedEntry.type) return profile;
   return saveMyHomeProfile({
     ...profile,
-    equipment: [...profile.equipment, normalizeEquipmentEntry(entry)]
+    equipment: [...profile.equipment, normalizedEntry]
   }, storage);
 }
 
@@ -189,9 +191,11 @@ export function removeEquipment(equipmentId, storage) {
 
 export function addMaintenanceRecord(entry, storage) {
   const profile = loadMyHomeProfile(storage);
+  const normalizedEntry = normalizeMaintenanceEntry(entry);
+  if (!normalizedEntry.equipment || !normalizedEntry.servicePerformed) return profile;
   return saveMyHomeProfile({
     ...profile,
-    maintenanceRecords: [...profile.maintenanceRecords, normalizeMaintenanceEntry(entry)]
+    maintenanceRecords: [...profile.maintenanceRecords, normalizedEntry]
   }, storage);
 }
 
@@ -205,9 +209,11 @@ export function removeMaintenanceRecord(recordId, storage) {
 
 export function addUpcomingMaintenance(entry, storage) {
   const profile = loadMyHomeProfile(storage);
+  const normalizedEntry = normalizeReminderEntry(entry);
+  if (!normalizedEntry.task) return profile;
   return saveMyHomeProfile({
     ...profile,
-    upcomingMaintenance: [...profile.upcomingMaintenance, normalizeReminderEntry(entry)]
+    upcomingMaintenance: [...profile.upcomingMaintenance, normalizedEntry]
   }, storage);
 }
 

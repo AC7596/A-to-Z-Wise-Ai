@@ -180,19 +180,19 @@ function renderReminderList() {
       <div class="my-home-inline-grid">
         <label>
           Reminder
-          <input name="task" type="text" value="${escapeHtml(item.task)}" required />
+          <input id="my-home-reminder-task-${escapeHtml(item.id)}" name="task" type="text" value="${escapeHtml(item.task)}" required />
         </label>
         <label>
           Equipment / area
-          <input name="target" type="text" value="${escapeHtml(item.target)}" list="myHomeEquipmentOptions" />
+          <input id="my-home-reminder-target-${escapeHtml(item.id)}" name="target" type="text" value="${escapeHtml(item.target)}" list="myHomeEquipmentOptions" />
         </label>
         <label>
           Due date
-          <input name="dueDate" type="date" value="${escapeHtml(item.dueDate)}" />
+          <input id="my-home-reminder-date-${escapeHtml(item.id)}" name="dueDate" type="date" value="${escapeHtml(item.dueDate)}" />
         </label>
         <label class="my-home-full">
           Notes
-          <textarea name="notes" rows="3">${escapeHtml(item.notes)}</textarea>
+          <textarea id="my-home-reminder-notes-${escapeHtml(item.id)}" name="notes" rows="3">${escapeHtml(item.notes)}</textarea>
         </label>
       </div>
       <div class="my-home-card-actions">

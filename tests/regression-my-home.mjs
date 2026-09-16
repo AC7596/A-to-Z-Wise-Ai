@@ -9,6 +9,7 @@ import {
   addUpcomingMaintenance,
   createDefaultMyHomeProfile,
   loadMyHomeProfile,
+  normalizeMyHomeProfile,
   removeEquipment,
   removeMaintenanceRecord,
   removeUpcomingMaintenance,
@@ -28,6 +29,13 @@ function createMemoryStorage(initial = {}) {
     removeItem(key) {
       map.delete(key);
     }
+  };
+}
+
+function stripReminderIds(profile) {
+  return {
+    ...profile,
+    upcomingMaintenance: profile.upcomingMaintenance.map(({ id, ...rest }) => rest)
   };
 }
 
@@ -101,6 +109,36 @@ test('My Home profile regression checks', async (t) => {
     assert.match(reloaded.updatedAt, /^\d{4}-\d{2}-\d{2}T/);
   });
 
+  await t.test('normalization drops incomplete persisted entries and keeps starter reminders when needed', () => {
+    const normalized = normalizeMyHomeProfile({
+      homeInfo: { nickname: 'Lake House', bathrooms: '2' },
+      equipment: [
+        { id: 'good-equipment', type: 'Furnace', manufacturer: 'Trane' },
+        { id: 'bad-equipment', type: '   ', manufacturer: 'Unknown' }
+      ],
+      maintenanceRecords: [
+        { id: 'good-record', equipment: 'Furnace', servicePerformed: 'Tune-up', date: '2026-07-01' },
+        { id: 'bad-record', equipment: 'Dryer', servicePerformed: '   ' }
+      ],
+      upcomingMaintenance: [
+        { id: 'good-reminder', task: 'Gutter cleaning', target: 'Gutters' },
+        { id: 'bad-reminder', task: '   ', target: 'Roof' }
+      ]
+    });
+
+    assert.equal(normalized.homeInfo.nickname, 'Lake House');
+    assert.equal(normalized.homeInfo.bathrooms, '2');
+    assert.equal(normalized.equipment.length, 1);
+    assert.equal(normalized.equipment[0].id, 'good-equipment');
+    assert.equal(normalized.maintenanceRecords.length, 1);
+    assert.equal(normalized.maintenanceRecords[0].id, 'good-record');
+    assert.equal(normalized.upcomingMaintenance.length, 1);
+    assert.equal(normalized.upcomingMaintenance[0].id, 'good-reminder');
+
+    const starterFallback = normalizeMyHomeProfile({ upcomingMaintenance: [] });
+    assert.equal(starterFallback.upcomingMaintenance.length, STARTER_REMINDERS.length);
+  });
+
   await t.test('remove operations delete saved items and missing reminder updates stay unchanged', () => {
     const storage = createMemoryStorage();
 
@@ -115,8 +153,6 @@ test('My Home profile regression checks', async (t) => {
     const recordId = profile.maintenanceRecords[0].id;
 
     const reminderId = profile.upcomingMaintenance[0].id;
-    const unchangedUpdatedAt = profile.updatedAt;
-
     profile = removeEquipment(equipmentId, storage);
     profile = removeMaintenanceRecord(recordId, storage);
     profile = removeUpcomingMaintenance(reminderId, storage);
@@ -124,10 +160,21 @@ test('My Home profile regression checks', async (t) => {
     assert.equal(profile.equipment.length, 0);
     assert.equal(profile.maintenanceRecords.length, 0);
     assert.equal(profile.upcomingMaintenance.some(item => item.id === reminderId), false);
-
     const afterMiss = updateUpcomingMaintenance('missing-reminder', { dueDate: '2026-12-01' }, storage);
-    assert.equal(afterMiss.updatedAt, profile.updatedAt);
-    assert.notEqual(afterMiss.updatedAt, unchangedUpdatedAt);
+    assert.deepEqual(afterMiss, profile);
+  });
+
+  await t.test('empty add operations are ignored instead of creating transient invalid state', () => {
+    const storage = createMemoryStorage();
+    const baseline = loadMyHomeProfile(storage);
+
+    const afterEquipment = addEquipment({ type: '   ' }, storage);
+    const afterMaintenance = addMaintenanceRecord({ equipment: 'Dryer', servicePerformed: '   ' }, storage);
+    const afterReminder = addUpcomingMaintenance({ task: '   ' }, storage);
+
+    assert.deepEqual(stripReminderIds(afterEquipment), stripReminderIds(baseline));
+    assert.deepEqual(stripReminderIds(afterMaintenance), stripReminderIds(baseline));
+    assert.deepEqual(stripReminderIds(afterReminder), stripReminderIds(baseline));
   });
 
   await t.test('homepage and navigation expose the My Home experience', () => {
