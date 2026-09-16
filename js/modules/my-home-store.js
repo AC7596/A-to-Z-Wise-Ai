@@ -123,7 +123,7 @@ function isRepairLikeRecord(record) {
     record?.partsUsed
   ].filter(Boolean).join(' '));
 
-  return /(repair|replaced|replacement|fixed|fix|installed|install|service call|diagnosed|troubleshoot)/.test(text);
+  return /(repair|repaired|replace|replacement|fixed|fix|service call|diagnos|troubleshoot)/.test(text);
 }
 
 export function getEquipmentById(profile, equipmentId) {

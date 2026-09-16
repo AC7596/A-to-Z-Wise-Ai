@@ -1,6 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
 import {
+  DIAGNOSIS_REQUEST_VERSION,
+  DIAGNOSIS_SCOPE,
   buildDiagnosisRequest,
   buildDiagnosisTransportPayload,
   normalizeDiagnosisResponse
@@ -101,6 +105,12 @@ test('Diagnosis backend-ready contract and fallback regression checks', async (t
     assert.equal(request.myHomeContext.maintenanceHistory.length, 2);
     assert.equal(request.myHomeContext.previousRepairs.length, 1);
     assert.match(request.symptomSummary, /main problem/i);
+  });
+
+  await t.test('backend documentation stays aligned with exported contract constants', () => {
+    const backendDoc = fs.readFileSync(path.resolve(process.cwd(), 'BACKEND.md'), 'utf8');
+    assert.ok(backendDoc.includes(`"version": "${DIAGNOSIS_REQUEST_VERSION}"`));
+    assert.ok(backendDoc.includes(`"scope": "${DIAGNOSIS_SCOPE}"`));
   });
 
   await t.test('transport payload requests backend-safe home-only outputs', () => {

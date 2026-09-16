@@ -412,20 +412,35 @@ function syncSelectedEquipmentFields() {
   const context = getEquipmentDiagnosisContext(profile, els.myHomeEquipmentSelect?.value);
   const item = context.selectedEquipment;
   if (!item) {
+    [
+      [els.areaOrEquipment, 'areaOrEquipment'],
+      [els.equipmentMake, 'make'],
+      [els.equipmentModel, 'model']
+    ].forEach(([field, key]) => {
+      if (!field) return;
+      if (field.dataset.autofilledValue && field.value.trim() === field.dataset.autofilledValue) {
+        field.value = '';
+      }
+      delete field.dataset.autofilledValue;
+      session[key] = field.value.trim();
+    });
     if (els.myHomeContextHint) els.myHomeContextHint.textContent = buildMyHomeHint(profile, context);
     return;
   }
 
   if (!els.areaOrEquipment.value.trim()) {
     els.areaOrEquipment.value = item.type || '';
+    els.areaOrEquipment.dataset.autofilledValue = els.areaOrEquipment.value.trim();
     session.areaOrEquipment = els.areaOrEquipment.value.trim();
   }
   if (!els.equipmentMake.value.trim()) {
     els.equipmentMake.value = item.manufacturer || '';
+    els.equipmentMake.dataset.autofilledValue = els.equipmentMake.value.trim();
     session.make = els.equipmentMake.value.trim();
   }
   if (!els.equipmentModel.value.trim()) {
     els.equipmentModel.value = item.modelNumber || '';
+    els.equipmentModel.dataset.autofilledValue = els.equipmentModel.value.trim();
     session.model = els.equipmentModel.value.trim();
   }
   if (els.myHomeContextHint) els.myHomeContextHint.textContent = buildMyHomeHint(profile, context);

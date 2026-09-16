@@ -1,4 +1,4 @@
-const DIAGNOSIS_SCOPE = 'home-diy-only';
+export const DIAGNOSIS_SCOPE = 'home-diy-only';
 export const DIAGNOSIS_REQUEST_VERSION = '2026-09-home-diy-v1';
 
 function toTrimmedString(value) {
@@ -98,6 +98,7 @@ function extractIssue(raw = {}) {
     causes: normalizeList(issue.causes),
     otherCauses: normalizeList(issue.otherCauses),
     clarifyingQuestions: normalizeList(issue.clarifyingQuestions),
+    steps: normalizeList(issue.steps),
     safeChecks: normalizeList(raw.safeChecks || issue.safeChecks),
     nextActions: normalizeList(raw.nextActions || issue.nextActions || issue.steps),
     tools: normalizeList(raw.tools || issue.tools),
@@ -250,6 +251,7 @@ export function buildDiagnosisTransportPayload(request) {
 export function normalizeDiagnosisResponse(rawResponse = {}, request = {}, meta = {}) {
   const issue = extractIssue(rawResponse);
   const symptomSummary = request.symptomSummary || summarizeSymptoms(request);
+  const photoCount = Array.isArray(request.photos) ? request.photos.length : 0;
   const inferredMatched = typeof rawResponse.matched === 'boolean'
     ? rawResponse.matched
     : Boolean(rawResponse.needsFollowUp || issue.possibleCauses.length || issue.otherPossibleCauses.length || issue.nextActions?.length);
@@ -270,7 +272,7 @@ export function normalizeDiagnosisResponse(rawResponse = {}, request = {}, meta 
     request.problem || request.areaOrEquipment || request.seen || request.heard || request.smell
     || request.leakDetails || request.errorCode || request.intermittentBehavior
     || request.problemStart || request.otherSymptoms ? 'Homeowner description' : '',
-    request.photos.length ? 'Attached photos' : '',
+    photoCount ? 'Attached photos' : '',
     request.useMyHomeContext && request.myHomeContext?.selectedEquipment ? 'My Home equipment record' : '',
     request.useMyHomeContext && request.myHomeContext?.maintenanceHistory?.length ? 'My Home maintenance history' : '',
     request.useMyHomeContext && request.myHomeContext?.previousRepairs?.length ? 'My Home previous repairs' : '',
