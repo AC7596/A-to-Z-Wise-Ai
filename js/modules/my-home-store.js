@@ -504,10 +504,7 @@ export function removeUpcomingMaintenance(reminderId, storage) {
 }
 
 export function exportMyHomeProfile(storage) {
-  const profile = typeof storage === 'string'
-    ? normalizeMyHomeProfile(JSON.parse(storage))
-    : loadMyHomeProfile(storage);
-
+  const profile = loadMyHomeProfile(storage);
   return JSON.stringify({
     ...profile,
     exportedAt: nowIso()
