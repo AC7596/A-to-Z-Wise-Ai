@@ -128,7 +128,7 @@ test('My Home profile regression checks', async t => {
     assert.equal(reloaded.equipment[0].documents.ownerManual.url, 'https://example.com/owner-manual');
     assert.equal(reloaded.equipment[0].documents.receipt.name, 'Install invoice');
     assert.equal(getWarrantyStatus(reloaded.equipment[0].warranty, '2026-09-16'), 'Active');
-    assert.equal(getWarrantyStatus({ expirationDate: '2026-09-16' }, '2026-09-16'), 'Expired');
+    assert.equal(getWarrantyStatus({ expirationDate: '2026-09-16' }, '2026-09-16'), 'Active');
     assert.match(reloaded.updatedAt, /^\d{4}-\d{2}-\d{2}T/);
 
     profile = removeEquipment(equipmentId, storage);

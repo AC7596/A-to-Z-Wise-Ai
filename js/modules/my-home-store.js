@@ -212,7 +212,7 @@ export function createDefaultMyHomeProfile() {
 export function getWarrantyStatus(warranty, referenceDate = todayIso()) {
   const normalized = normalizeWarranty(warranty);
   if (!normalized.expirationDate) return 'Unknown';
-  return normalized.expirationDate <= referenceDate ? 'Expired' : 'Active';
+  return normalized.expirationDate < referenceDate ? 'Expired' : 'Active';
 }
 
 export function getMaintenanceTaskStatus(task, referenceDate = todayIso()) {
