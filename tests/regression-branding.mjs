@@ -29,8 +29,7 @@ test('Branding rebrand regression checks', async (t) => {
 
   await t.test('homepage shows new brand, slogan, and family section copy', () => {
     assert.ok(homepage.includes('A to Z Wise AI'));
-    assert.ok(homepage.includes('We\'ve got DIY covered.'));
-    assert.ok(homepage.includes('Know what\'s wrong before you call a pro.'));
+    assert.ok(homepage.includes('We\'ve Got DIY Covered.'));
     assert.ok(homepage.includes('DIY Together'));
     assert.ok(homepage.includes('ZEE'));
   });
@@ -42,6 +41,34 @@ test('Branding rebrand regression checks', async (t) => {
       assert.ok(content.includes(`<link rel="canonical" href="${expectedUrl}" />`), `${page} should set the canonical URL`);
       assert.ok(content.includes(`<meta property="og:url" content="${expectedUrl}" />`), `${page} should set the Open Graph URL`);
       assert.equal(oldDomainPattern.test(content), false, `${page} should not reference the GitHub Pages URL`);
+    }
+  });
+
+  await t.test('public pages use launch robots directives', () => {
+    for (const page of publicPages) {
+      const content = fs.readFileSync(path.resolve(repoRoot, page), 'utf8');
+      if (page === 'success.html') {
+        assert.ok(content.includes('<meta name="robots" content="noindex,follow" />'), 'success.html should stay out of search results');
+      } else {
+        assert.ok(content.includes('<meta name="robots" content="index,follow" />'), `${page} should opt into indexing`);
+      }
+    }
+  });
+
+  await t.test('public pages standardize the footer slogan', () => {
+    for (const page of publicPages) {
+      const content = fs.readFileSync(path.resolve(repoRoot, page), 'utf8');
+      assert.ok(
+        content.includes('<p><a href="https://atozwiseai.com">atozwiseai.com</a> · We’ve Got DIY Covered.</p>'),
+        `${page} should use the launch slogan in the footer`
+      );
+    }
+  });
+
+  await t.test('sub-page navigation links back to the roadmap section', () => {
+    for (const page of publicPages.filter(page => page !== 'index.html')) {
+      const content = fs.readFileSync(path.resolve(repoRoot, page), 'utf8');
+      assert.ok(content.includes('href="index.html#roadmap"'), `${page} should link to the roadmap`);
     }
   });
 

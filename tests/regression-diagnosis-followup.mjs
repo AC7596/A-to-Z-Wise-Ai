@@ -112,6 +112,15 @@ await check('A squeaky floor report links to the squeaky-floorboard repair guide
   assert.equal(r.relatedGuideId, 'squeaky-floorboard');
 });
 
+await check('Home Equipment no-start reports still resolve through the live diagnosis flow', async () => {
+  const r = await diagnoseProblem({ ...baseRequest, category: 'Home Equipment', problem: 'My generator will not start.' });
+  assert.equal(r.matched, true);
+  assert.equal(r.needsFollowUp, false);
+  assert.ok(r.issue);
+  assert.ok(r.issue.causes.includes('Dead or weak battery'));
+  assert.ok(r.issue.steps.some(step => /battery|power source|fuel level/i.test(step)));
+});
+
 await check('Genuinely unrecognizable input gets an honest "figure it out together" follow-up, never a dead end', async () => {
   const r = await diagnoseProblem({ ...baseRequest, category: 'Other', problem: 'xyz zzz qqq' });
   assert.equal(r.matched, true);
