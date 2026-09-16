@@ -22,6 +22,20 @@ test('Monetization Configuration & Integration Checks', async (t) => {
     }
   });
 
+  await t.test('success page keeps paypal messaging but links back through local site paths', () => {
+    const content = fs.readFileSync(path.resolve(process.cwd(), 'success.html'), 'utf8');
+    assert.ok(content.includes('started through PayPal'));
+    assert.ok(content.includes('href="index.html" class="btn primary"'));
+    assert.ok(content.includes('href="index.html#diagnosis" class="btn secondary"'));
+  });
+
+  await t.test('robots.txt advertises the atozwiseai.com sitemap', () => {
+    const robotsPath = path.resolve(process.cwd(), 'robots.txt');
+    const robots = fs.readFileSync(robotsPath, 'utf8');
+    assert.ok(robots.includes('User-agent: *'));
+    assert.ok(robots.includes('Sitemap: https://atozwiseai.com/sitemap.xml'));
+  });
+
   await t.test('index.html contains pricing section and founding member offer', () => {
     const indexPath = path.resolve(process.cwd(), 'index.html');
     const indexContent = fs.readFileSync(indexPath, 'utf8');
