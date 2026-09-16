@@ -212,7 +212,7 @@ export function createDefaultMyHomeProfile() {
 export function getWarrantyStatus(warranty, referenceDate = todayIso()) {
   const normalized = normalizeWarranty(warranty);
   if (!normalized.expirationDate) return 'Unknown';
-  return normalized.expirationDate < referenceDate ? 'Expired' : 'Active';
+  return normalized.expirationDate <= referenceDate ? 'Expired' : 'Active';
 }
 
 export function getMaintenanceTaskStatus(task, referenceDate = todayIso()) {
@@ -230,7 +230,10 @@ export function getMaintenanceTaskStatus(task, referenceDate = todayIso()) {
 function hasRecognizedImportShape(profile) {
   if (!isPlainObject(profile)) return false;
   if (profile.appId === APP_ID && profile.recordType === RECORD_TYPE) return true;
-  return ['homeInfo', 'equipment', 'maintenanceRecords', 'upcomingMaintenance'].some(key => key in profile);
+  return isPlainObject(profile.homeInfo)
+    && Array.isArray(profile.equipment)
+    && Array.isArray(profile.maintenanceRecords)
+    && Array.isArray(profile.upcomingMaintenance);
 }
 
 export function normalizeMyHomeProfile(rawProfile) {

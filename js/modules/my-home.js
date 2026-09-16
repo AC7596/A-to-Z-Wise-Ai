@@ -762,8 +762,7 @@ function bindCollectionActions() {
     if (btn.dataset.action === 'complete-reminder') {
       profile = updateUpcomingMaintenance(btn.dataset.id, {
         completed: true,
-        lastCompletedDate: new Date().toISOString().slice(0, 10),
-        nextDueDate: ''
+        lastCompletedDate: new Date().toISOString().slice(0, 10)
       });
       renderAll();
       setSaveMessage('Property reminder marked completed.');

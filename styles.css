@@ -210,6 +210,7 @@
 .my-home-document-list a{color:#1f7a58;word-break:break-word}
 .my-home-subentry{border-radius:16px;padding:16px}
 .my-home-reminders-card .my-home-collection{margin-top:16px}
+#myHomeImportFeedback[data-state=success]{color:#1f6a4d}
 #myHomeImportFeedback[data-state=error]{color:#a53030}
 
 /* ======= MONETIZATION & PRICING STYLES ======= */
