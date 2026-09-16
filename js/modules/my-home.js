@@ -230,13 +230,17 @@ function dateDetailRow(label, value) {
 function renderDocumentItem(label, documentLink) {
   if (!documentLink.name && !documentLink.url) return '';
   const link = documentLink.url
-    ? `<a href="${escapeHtml(documentLink.url)}" target="_blank" rel="noreferrer noopener">${escapeHtml(documentLink.url)}</a>`
-    : '<span>No URL added</span>';
+    ? `
+      <a href="${escapeHtml(documentLink.url)}" target="_blank" rel="noreferrer noopener">
+        ${escapeHtml(documentLink.name || documentLink.url)}
+      </a>
+      ${documentLink.name ? `<span>${escapeHtml(documentLink.url)}</span>` : ''}
+    `
+    : `<span>${escapeHtml(documentLink.name || 'Name not added')}</span>`;
 
   return `
     <li>
       <strong>${escapeHtml(label)}</strong>
-      <span>${formatText(documentLink.name, 'Name not added')}</span>
       ${link}
     </li>
   `;
@@ -758,7 +762,8 @@ function bindCollectionActions() {
     if (btn.dataset.action === 'complete-reminder') {
       profile = updateUpcomingMaintenance(btn.dataset.id, {
         completed: true,
-        lastCompletedDate: new Date().toISOString().slice(0, 10)
+        lastCompletedDate: new Date().toISOString().slice(0, 10),
+        nextDueDate: ''
       });
       renderAll();
       setSaveMessage('Property reminder marked completed.');

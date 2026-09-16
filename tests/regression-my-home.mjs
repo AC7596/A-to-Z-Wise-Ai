@@ -115,7 +115,7 @@ test('My Home profile regression checks', async t => {
         notes: 'Registration confirmed by homeowner.'
       },
       documents: {
-        ownerManual: { name: 'Updated owner manual', url: 'https://example.com/owner-manual-v2' }
+        ownerManual: { name: 'Updated owner manual' }
       }
     }, storage);
 
@@ -125,6 +125,7 @@ test('My Home profile regression checks', async t => {
     assert.equal(reloaded.equipment[0].location, 'Finished basement utility room');
     assert.equal(reloaded.equipment[0].warranty.provider, 'Carrier Extended Care');
     assert.equal(reloaded.equipment[0].documents.ownerManual.name, 'Updated owner manual');
+    assert.equal(reloaded.equipment[0].documents.ownerManual.url, 'https://example.com/owner-manual');
     assert.equal(reloaded.equipment[0].documents.receipt.name, 'Install invoice');
     assert.equal(getWarrantyStatus(reloaded.equipment[0].warranty, '2026-09-16'), 'Active');
     assert.match(reloaded.updatedAt, /^\d{4}-\d{2}-\d{2}T/);
@@ -196,6 +197,7 @@ test('My Home profile regression checks', async t => {
     assert.equal(equipment.serviceHistory[0].performedBy, 'DIY');
     assert.equal(equipment.maintenanceTasks.length, 1);
     assert.equal(getMaintenanceTaskStatus(equipment.maintenanceTasks[0], '2026-09-16'), 'Completed');
+    assert.equal(equipment.maintenanceTasks[0].nextDueDate, '');
     assert.equal(getMaintenanceTaskStatus(reloaded.upcomingMaintenance.find(item => item.id === reminderId), '2026-09-16'), 'Due');
     assert.equal(getWarrantyStatus(equipment.warranty, '2026-09-16'), 'Expired');
     assert.equal(getWarrantyStatus({}, '2026-09-16'), 'Unknown');

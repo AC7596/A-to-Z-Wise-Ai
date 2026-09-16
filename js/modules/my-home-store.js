@@ -217,7 +217,10 @@ export function getWarrantyStatus(warranty, referenceDate = todayIso()) {
 
 export function getMaintenanceTaskStatus(task, referenceDate = todayIso()) {
   const normalized = normalizeTaskEntry(task);
-  if (normalized.completed) return 'Completed';
+  if (
+    normalized.completed &&
+    (!normalized.nextDueDate || !normalized.lastCompletedDate || normalized.nextDueDate <= normalized.lastCompletedDate)
+  ) return 'Completed';
   if (!normalized.nextDueDate) return 'Upcoming';
   if (normalized.nextDueDate < referenceDate) return 'Overdue';
   if (normalized.nextDueDate === referenceDate) return 'Due';
@@ -330,7 +333,23 @@ export function updateEquipment(equipmentId, patch, storage) {
     },
     documents: {
       ...existing.documents,
-      ...(isPlainObject(patch?.documents) ? patch.documents : {})
+      ...(isPlainObject(patch?.documents) ? patch.documents : {}),
+      ownerManual: {
+        ...existing.documents.ownerManual,
+        ...(isPlainObject(patch?.documents?.ownerManual) ? patch.documents.ownerManual : {})
+      },
+      installationManual: {
+        ...existing.documents.installationManual,
+        ...(isPlainObject(patch?.documents?.installationManual) ? patch.documents.installationManual : {})
+      },
+      warrantyDocument: {
+        ...existing.documents.warrantyDocument,
+        ...(isPlainObject(patch?.documents?.warrantyDocument) ? patch.documents.warrantyDocument : {})
+      },
+      receipt: {
+        ...existing.documents.receipt,
+        ...(isPlainObject(patch?.documents?.receipt) ? patch.documents.receipt : {})
+      }
     }
   });
 
@@ -420,7 +439,8 @@ export function removeEquipmentMaintenanceTask(equipmentId, taskId, storage) {
 export function markEquipmentMaintenanceTaskCompleted(equipmentId, taskId, completedAt = todayIso(), storage) {
   return updateEquipmentMaintenanceTask(equipmentId, taskId, {
     completed: true,
-    lastCompletedDate: completedAt
+    lastCompletedDate: completedAt,
+    nextDueDate: ''
   }, storage);
 }
 
