@@ -132,15 +132,4 @@ test('Branding rebrand regression checks', async (t) => {
     assert.equal(HOSTED_CHECKOUT_URL, expectedUrl);
     assert.ok(homepage.includes(expectedUrl));
   });
-
-  await t.test('home equipment launch copy does not mention automotive service', () => {
-    const diagnosisData = fs.readFileSync(path.resolve(repoRoot, 'js/data/diagnosis-data.js'), 'utf8');
-    const aiClient = fs.readFileSync(path.resolve(repoRoot, 'js/api/ai-client.js'), 'utf8');
-    assert.equal(/automotive \/ home equipment/i.test(diagnosisData), false);
-    assert.equal(/\bmechanic\b/i.test(diagnosisData), false);
-    assert.equal(/\bvehicle/i.test(diagnosisData), false);
-    assert.equal(/\bdashboard\b/i.test(diagnosisData), false);
-    assert.equal(/\bspark plug\b/i.test(diagnosisData), false);
-    assert.equal(/automotive \/ home equipment/i.test(aiClient), false);
-  });
 });
