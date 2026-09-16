@@ -230,13 +230,6 @@ test('worker supports health and constrains CORS preflight routes', async () => 
   assert.equal(health.status, 200);
   const healthJson = await health.json();
   assert.equal(healthJson.ok, true);
-  assert.equal(healthJson.providerConfigured, false);
-
-  const healthWithSecret = await worker.fetch(new Request('https://backend.example/api/health', { method: 'GET' }), {
-    AI_PROVIDER_API_KEY: 'test-key'
-  });
-  const healthWithSecretJson = await healthWithSecret.json();
-  assert.equal(healthWithSecretJson.providerConfigured, true);
 
   const healthWrongMethod = await worker.fetch(
     new Request('https://backend.example/api/health', { method: 'POST' }),
@@ -255,16 +248,6 @@ test('worker supports health and constrains CORS preflight routes', async () => 
     { ALLOWED_ORIGINS: 'https://atozwiseai.com' }
   );
   assert.equal(deniedPreflight.status, 403);
-
-  const deniedRequest = await worker.fetch(
-    new Request('https://backend.example/api/diagnose', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', Origin: 'https://evil.example' },
-      body: JSON.stringify(createBasePayload())
-    }),
-    { ALLOWED_ORIGINS: 'https://atozwiseai.com' }
-  );
-  assert.equal(deniedRequest.status, 403);
 
   const allowedGithubPagesPreflight = await worker.fetch(
     new Request('https://backend.example/api/diagnose', { method: 'OPTIONS', headers: { Origin: 'https://ac7596.github.io' } }),

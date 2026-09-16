@@ -41,7 +41,8 @@ The frontend already calls `${backendUrl}/api/diagnose` and safely falls back to
 
 1. `cd backend`
 2. Review `wrangler.toml` (name, allowed origins, optional model/base URL).
-   - Keep `https://ac7596.github.io` in `ALLOWED_ORIGINS` during testing.
+   - Keep production origins only by default: `https://atozwiseai.com,https://www.atozwiseai.com`.
+   - If needed for GitHub Pages testing, temporarily add `https://ac7596.github.io`, then remove it after testing.
 3. Set secret:
    - `wrangler secret put AI_PROVIDER_API_KEY`
 4. Deploy:

@@ -64,18 +64,15 @@ function isDisallowedCorsPreflight(request, env) {
     && !getAllowedOrigin(request, env);
 }
 
-function isDisallowedCorsRequest(request, env) {
-  return Boolean(request.headers.get('Origin')) && !getAllowedOrigin(request, env);
-}
-
-function jsonResponse(body, status, request, env, allowMethods) {
+function jsonResponse(body, status, request, env, allowMethods, extraHeaders = {}) {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
       'Cache-Control': 'no-store',
       'X-Content-Type-Options': 'nosniff',
-      ...corsHeaders(request, env, allowMethods)
+      ...corsHeaders(request, env, allowMethods),
+      ...extraHeaders
     }
   });
 }
@@ -178,29 +175,22 @@ export default {
       });
     }
 
-    if (API_ROUTES.has(normalizedPath) && isDisallowedCorsRequest(request, env)) {
-      return jsonResponse({ error: 'cors_forbidden', message: 'Origin is not allowed for this backend.' }, 403, request, env, normalizedPath === '/api/health' ? 'GET, OPTIONS' : 'POST, OPTIONS');
-    }
-
     if (normalizedPath === '/api/health' && request.method === 'GET') {
       return jsonResponse({
       ok: true,
-      service: 'a-to-z-wise-ai-diagnosis-backend',
-      providerConfigured: Boolean(String(env?.AI_PROVIDER_API_KEY || env?.OPENAI_API_KEY || '').trim())
+      service: 'a-to-z-wise-ai-diagnosis-backend'
       }, 200, request, env, 'GET, OPTIONS');
     }
 
     if (normalizedPath === '/api/health' && request.method !== 'GET') {
-      return new Response(JSON.stringify({ error: 'method_not_allowed', message: 'Use GET /api/health.' }), {
-      status: 405,
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Cache-Control': 'no-store',
-        'X-Content-Type-Options': 'nosniff',
-        Allow: 'GET, OPTIONS',
-        ...corsHeaders(request, env, 'GET, OPTIONS')
-      }
-      });
+      return jsonResponse(
+      { error: 'method_not_allowed', message: 'Use GET /api/health.' },
+      405,
+      request,
+      env,
+      'GET, OPTIONS',
+      { Allow: 'GET, OPTIONS' }
+      );
     }
 
     if (normalizedPath !== '/api/diagnose') {

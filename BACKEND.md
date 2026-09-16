@@ -82,7 +82,8 @@ From the repository root:
 1. `cd backend`
 2. Confirm `wrangler.toml` values:
    - `name = "a-to-z-wise-ai-diagnosis-backend"`
-   - `ALLOWED_ORIGINS = "https://atozwiseai.com,https://www.atozwiseai.com,https://ac7596.github.io"` (keep GitHub Pages origin during testing)
+   - Production default: `ALLOWED_ORIGINS = "https://atozwiseai.com,https://www.atozwiseai.com"`
+   - Optional testing-only temporary value: add `,https://ac7596.github.io` while testing from GitHub Pages, then remove it for full production lock-down
 3. Set secret key (never in git):
    - `wrangler secret put AI_PROVIDER_API_KEY`
 4. (Optional) set alternate non-secret vars in `wrangler.toml`:

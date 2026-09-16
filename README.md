@@ -236,7 +236,7 @@ The repo is prepared for a Cloudflare Workers deployment while keeping this webs
    - `AI_PROVIDER_API_KEY` (required)
    - `AI_PROVIDER_MODEL` (optional)
    - `AI_PROVIDER_BASE_URL` (optional)
-   - `ALLOWED_ORIGINS` (set to `https://atozwiseai.com,https://www.atozwiseai.com,https://ac7596.github.io` while testing)
+   - `ALLOWED_ORIGINS` (production: `https://atozwiseai.com,https://www.atozwiseai.com`; add `https://ac7596.github.io` only temporarily while GitHub Pages testing)
 3. Bind an HTTPS backend domain (recommended `https://api.atozwiseai.com`).
 4. Set that URL in the `atozwiseai-backend-url` meta tag in `index.html` (or
    via `window.ATOZWISEAI_CONFIG.backendUrl`). No rebuild is required.
