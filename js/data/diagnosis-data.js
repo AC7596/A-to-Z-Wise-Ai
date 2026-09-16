@@ -791,17 +791,17 @@ export const diagnosisDatabase = {
       'won\'t run|stalls|shuts off|overheating': {
         causes: ['Low fluid levels', 'Clogged air filter', 'Overheating engine or motor'],
         otherCauses: ['Fuel system issue', 'Worn belt or spark plug'],
-        clarifyingQuestions: ['Are any warning lights or gauges showing a problem?', 'Does it happen right away or only after running a while?'],
-        nextCheck: 'Check fluid levels and let the engine/equipment cool before inspecting further',
-        steps: ['Let the engine/equipment cool down completely before opening anything.', 'Check oil, coolant, and fuel levels per the owner\'s manual.', 'Inspect the air filter for clogging.'],
+        clarifyingQuestions: ['Are any warning indicators or gauges showing a problem?', 'Does it happen right away or only after running a while?'],
+        nextCheck: 'Check fluid levels and let the equipment cool before inspecting further',
+        steps: ['Let the equipment cool down completely before opening anything.', 'Check oil, coolant, or fuel levels per the owner\'s manual, if your equipment uses them.', 'Inspect the air filter for clogging.'],
         tools: ['Owner\'s manual', 'Gloves'],
         parts: ['Air filter', 'Fluids as specified by the manual'],
         time: '20–40 minutes',
         difficulty: LEVELS.BEGINNER.slug,
         tips: [],
-        stopWhen: 'The engine is overheating, you see steam/smoke, or there is a strong fuel smell — let it cool and do not open a hot radiator or fuel system.',
-        safety: 'Never open a hot radiator/cooling system; work in a ventilated area away from fuel sources',
-        pro: 'Persistent stalling, overheating, or warning lights should be checked by a qualified mechanic or equipment technician.'
+        stopWhen: 'The equipment is overheating, you see steam/smoke, or there is a strong fuel smell — let it cool and do not open a hot cooling or fuel system.',
+        safety: 'Never open a hot cooling system; work in a ventilated area away from fuel sources',
+        pro: 'Persistent stalling, overheating, or warning indicators should be checked by a qualified equipment technician.'
       }
     }
   }
