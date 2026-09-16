@@ -30,8 +30,10 @@ are also accepted.
 
 After deployment, set your backend base URL in:
 
-- `<meta name="fixwise-backend-url" content="https://your-backend-domain">` in `index.html`, or
-- `window.FIXWISE_CONFIG.backendUrl` at runtime.
+- `<meta name="atozwiseai-backend-url" content="https://your-backend-domain">` in `index.html`, or
+- `window.ATOZWISEAI_CONFIG.backendUrl` at runtime.
+
+Legacy `fixwise-backend-url` and `window.FIXWISE_CONFIG.backendUrl` are still supported.
 
 The frontend already calls `${backendUrl}/api/diagnose` and safely falls back to Demo Mode if unavailable.
 
@@ -39,6 +41,8 @@ The frontend already calls `${backendUrl}/api/diagnose` and safely falls back to
 
 1. `cd backend`
 2. Review `wrangler.toml` (name, allowed origins, optional model/base URL).
+   - Keep production origins only by default: `https://atozwiseai.com,https://www.atozwiseai.com`.
+   - If needed for GitHub Pages testing, temporarily add `https://ac7596.github.io`, then remove it after testing.
 3. Set secret:
    - `wrangler secret put AI_PROVIDER_API_KEY`
 4. Deploy:
@@ -47,7 +51,7 @@ The frontend already calls `${backendUrl}/api/diagnose` and safely falls back to
 6. Validate:
    - `GET https://<your-backend-domain>/api/health`
 7. Point frontend to backend:
-   - In `/index.html`, set `<meta name="fixwise-backend-url" content="https://<your-backend-domain>">`
+   - In `/index.html`, set `<meta name="atozwiseai-backend-url" content="https://<your-backend-domain>">`
 
 If the backend is unavailable or misconfigured, frontend remains safe and transparent by falling back to Demo Mode.
 

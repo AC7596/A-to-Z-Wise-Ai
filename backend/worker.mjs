@@ -10,16 +10,37 @@ const MAX_PHOTOS = 6;
 const MAX_PHOTO_SIZE_BYTES = 8 * 1024 * 1024;
 const MAX_TOTAL_PHOTO_BYTES = 20 * 1024 * 1024;
 const MAX_MULTIPART_REQUEST_BYTES = 25 * 1024 * 1024;
+const API_ROUTES = new Set(['/api/diagnose', '/api/health']);
+
+function normalizeOrigin(value) {
+  const text = String(value || '').trim();
+  if (!text) return '';
+  try {
+    return new URL(text).origin;
+  } catch {
+    return '';
+  }
+}
+
+function getConfiguredOrigins(env) {
+  const configured = String(env?.ALLOWED_ORIGINS || '').trim();
+  if (!configured) return new Set();
+  return new Set(
+    configured
+      .split(',')
+      .map(value => value.trim())
+      .filter(Boolean)
+      .map(value => (value === '*' ? '*' : normalizeOrigin(value)))
+      .filter(Boolean)
+  );
+}
 
 function getAllowedOrigin(request, env) {
-  const origin = request.headers.get('Origin');
-  const configured = String(env?.ALLOWED_ORIGINS || '').trim();
-
-  if (!origin || !configured) return '';
-
-  const allowed = configured.split(',').map(value => value.trim()).filter(Boolean);
-  if (allowed.includes('*')) return '*';
-  if (origin && allowed.includes(origin)) return origin;
+  const origin = normalizeOrigin(request.headers.get('Origin'));
+  if (!origin) return '';
+  const allowed = getConfiguredOrigins(env);
+  if (allowed.has('*')) return '*';
+  if (allowed.has(origin)) return origin;
   return '';
 }
 
@@ -43,12 +64,15 @@ function isDisallowedCorsPreflight(request, env) {
     && !getAllowedOrigin(request, env);
 }
 
-function jsonResponse(body, status, request, env, allowMethods) {
+function jsonResponse(body, status, request, env, allowMethods, extraHeaders = {}) {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
-      ...corsHeaders(request, env, allowMethods)
+      'Cache-Control': 'no-store',
+      'X-Content-Type-Options': 'nosniff',
+      ...corsHeaders(request, env, allowMethods),
+      ...extraHeaders
     }
   });
 }
@@ -138,7 +162,7 @@ export default {
       : url.pathname;
 
     if (request.method === 'OPTIONS') {
-      if (!['/api/diagnose', '/api/health'].includes(normalizedPath)) {
+      if (!API_ROUTES.has(normalizedPath)) {
         return new Response(null, { status: 404 });
       }
       if (isDisallowedCorsPreflight(request, env)) {
@@ -152,7 +176,21 @@ export default {
     }
 
     if (normalizedPath === '/api/health' && request.method === 'GET') {
-      return jsonResponse({ ok: true, service: 'a-to-z-wise-ai-diagnosis-backend' }, 200, request, env, 'GET, OPTIONS');
+      return jsonResponse({
+      ok: true,
+      service: 'a-to-z-wise-ai-diagnosis-backend'
+      }, 200, request, env, 'GET, OPTIONS');
+    }
+
+    if (normalizedPath === '/api/health' && request.method !== 'GET') {
+      return jsonResponse(
+      { error: 'method_not_allowed', message: 'Use GET /api/health.' },
+      405,
+      request,
+      env,
+      'GET, OPTIONS',
+      { Allow: 'GET, OPTIONS' }
+      );
     }
 
     if (normalizedPath !== '/api/diagnose') {

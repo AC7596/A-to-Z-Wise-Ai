@@ -60,8 +60,10 @@ Frontend code already posts to `${backendUrl}/api/diagnose` in `js/api/ai-client
 
 Set backend URL in one non-secret place:
 
-- `<meta name="fixwise-backend-url" content="https://your-backend-domain">` in `index.html`, or
-- `window.FIXWISE_CONFIG.backendUrl` at runtime.
+- `<meta name="atozwiseai-backend-url" content="https://your-backend-domain">` in `index.html`, or
+- `window.ATOZWISEAI_CONFIG.backendUrl` at runtime.
+
+Legacy `fixwise-backend-url` and `window.FIXWISE_CONFIG.backendUrl` are still supported for compatibility.
 
 If backend is not reachable or is not configured correctly, frontend automatically falls back to Demo Mode and clearly reports fallback status.
 
@@ -73,14 +75,15 @@ If backend is not reachable or is not configured correctly, frontend automatical
 4. Install Wrangler locally (`npm i -g wrangler`) and log in (`wrangler login`).
 5. Deploy the Worker from the `backend/` folder and set secrets.
 
-## Exact deployment steps
+## Exact deployment steps (beginner-friendly)
 
 From the repository root:
 
 1. `cd backend`
 2. Confirm `wrangler.toml` values:
    - `name = "a-to-z-wise-ai-diagnosis-backend"`
-   - `ALLOWED_ORIGINS = "https://atozwiseai.com,https://www.atozwiseai.com"`
+   - Production default: `ALLOWED_ORIGINS = "https://atozwiseai.com,https://www.atozwiseai.com"`
+   - Optional testing-only temporary value: add `,https://ac7596.github.io` while testing from GitHub Pages, then remove it for full production lock-down
 3. Set secret key (never in git):
    - `wrangler secret put AI_PROVIDER_API_KEY`
 4. (Optional) set alternate non-secret vars in `wrangler.toml`:
@@ -94,11 +97,23 @@ From the repository root:
    - `GET https://api.atozwiseai.com/api/health` → should return `{ "ok": true, ... }`
 8. Update frontend backend URL:
    - Edit `/index.html`
-   - Set `<meta name="fixwise-backend-url" content="https://api.atozwiseai.com">`
+   - Set `<meta name="atozwiseai-backend-url" content="https://api.atozwiseai.com">`
 9. Commit and publish the frontend change to GitHub Pages.
 10. Verify in browser:
    - Diagnosis result shows backend-connected mode.
    - If backend is down/misconfigured, UI safely falls back to Demo Mode with a clear message.
+
+## What you personally need to do next (simple checklist)
+
+1. In Cloudflare, open your Worker settings and run `wrangler secret put AI_PROVIDER_API_KEY` so the API key stays server-side.
+2. Deploy from `backend/` with `wrangler deploy`.
+3. In Cloudflare routes/domains, connect `api.atozwiseai.com/*` to this Worker.
+4. Open `https://api.atozwiseai.com/api/health` and confirm you see `"ok": true`.
+5. In `/index.html`, set `<meta name="atozwiseai-backend-url" content="https://api.atozwiseai.com">`.
+6. Commit that frontend meta-tag change and publish GitHub Pages.
+7. Test one diagnosis on the live site:
+   - Success path: mode shows backend connected.
+   - Safety path: if backend is unavailable, it clearly falls back to Demo Mode.
 
 ## Security and safety requirements kept in place
 

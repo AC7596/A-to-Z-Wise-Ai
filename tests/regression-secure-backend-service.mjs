@@ -228,6 +228,14 @@ test('worker endpoint serves diagnosis and enforces backend configuration', asyn
 test('worker supports health and constrains CORS preflight routes', async () => {
   const health = await worker.fetch(new Request('https://backend.example/api/health', { method: 'GET' }), {});
   assert.equal(health.status, 200);
+  const healthJson = await health.json();
+  assert.equal(healthJson.ok, true);
+
+  const healthWrongMethod = await worker.fetch(
+    new Request('https://backend.example/api/health', { method: 'POST' }),
+    {}
+  );
+  assert.equal(healthWrongMethod.status, 405);
 
   const unknownOptions = await worker.fetch(
     new Request('https://backend.example/unknown', { method: 'OPTIONS', headers: { Origin: 'https://atozwiseai.com' } }),
@@ -240,6 +248,12 @@ test('worker supports health and constrains CORS preflight routes', async () => 
     { ALLOWED_ORIGINS: 'https://atozwiseai.com' }
   );
   assert.equal(deniedPreflight.status, 403);
+
+  const allowedGithubPagesPreflight = await worker.fetch(
+    new Request('https://backend.example/api/diagnose', { method: 'OPTIONS', headers: { Origin: 'https://ac7596.github.io' } }),
+    { ALLOWED_ORIGINS: 'https://atozwiseai.com,https://www.atozwiseai.com,https://ac7596.github.io' }
+  );
+  assert.equal(allowedGithubPagesPreflight.status, 204);
 });
 
 test('worker multipart guardrails enforce request size and file-like uploads', async () => {
