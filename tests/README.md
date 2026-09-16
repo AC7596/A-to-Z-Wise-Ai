@@ -90,9 +90,9 @@ without any additional tooling.
   the hosted subscription URL, required public pages, pricing copy, robots
   sitemap reference, and absence of payment secrets in the core monetization
   files.
-- **regression-my-home.mjs** — the first browser-only `My Home` digital
-  profile foundation: default profile state includes starter maintenance
-  reminders; home info, equipment, maintenance history, and reminder updates
-  persist through storage-backed operations in `js/modules/my-home-store.js`;
-  and the homepage/public-page navigation exposes the `My Home` experience
-  without implying accounts or cloud backup.
+- **regression-my-home.mjs** — the browser-only `My Home` property-record
+  system: exact equipment records, warranty/details/manual URLs, per-equipment
+  service history, per-equipment maintenance schedules, property-wide reminders
+  and service logs, JSON export/import validation, legacy-data normalization,
+  and the homepage/public-page navigation for the expanded `My Home`
+  experience.
