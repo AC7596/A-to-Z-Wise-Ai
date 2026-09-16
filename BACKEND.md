@@ -1,167 +1,133 @@
-# Connecting a Secure AI Backend to A to Z Wise AI
+# Secure AI backend foundation for A to Z Wise AI
 
-A to Z Wise AI's front end is currently hosted on **GitHub Pages**, which only
-serves static files (HTML, CSS, JavaScript, images). Static hosting **cannot
-securely hold API keys or secrets** — anything placed in browser-side code
-is publicly visible to anyone who views the page source. This document
-explains what is needed to connect a real AI diagnosis and photo-analysis
-service without exposing credentials.
+A to Z Wise AI now includes a **server-side backend foundation** for AI diagnosis in `backend/worker.mjs` and `backend/diagnosis-service.mjs`.
 
-## Why this matters
+GitHub Pages stays static and public. **No AI provider key belongs in the frontend or repository files shipped to browsers.**
 
-If an AI provider API key were placed directly in `js/api/ai-client.js` (or
-any other HTML/CSS/JS file), anyone visiting the site could copy it and use
-it — potentially running up usage costs or abusing the account. This is why
-A to Z Wise AI's diagnosis logic currently runs entirely client-side as a demo,
-with no network calls and no keys anywhere in the repository.
+## What is implemented in this repository
 
-## What a production backend needs
+- `POST /api/diagnose` backend endpoint for diagnosis requests.
+- Accepts the existing frontend contract (`multipart/form-data` with `request` JSON and optional `photos`).
+- Enforces `scope: "home-diy-only"` and rejects unsupported categories.
+- Uses server-side environment variables for AI provider credentials.
+- Applies safety-first hazard detection and returns immediate STOP/CALL guidance for high-risk inputs.
+- Returns structured diagnosis output compatible with the existing UI rendering.
+- Keeps the existing frontend demo fallback behavior if backend is unavailable.
 
-1. **A backend service that is not GitHub Pages.** Options include:
-   - A serverless function (Azure Functions, AWS Lambda, Cloudflare
-     Workers, Vercel/Netlify functions).
-   - A small dedicated API server (Node.js/Express, Python/FastAPI, etc.)
-     hosted somewhere that supports server-side secrets.
-2. **Secret storage on the backend**, such as environment variables or a
-   secrets manager, holding the AI provider's API key. The key is never
-   sent to or stored in the browser.
-3. **An HTTPS API endpoint** the front end can call, for example:
-   - `POST /api/diagnose` — accepts category, problem description, and
-     symptom fields (what the user sees/hears/smells) and optionally photo
-     files; returns a diagnosis object.
-   - `POST /api/analyze-photos` — accepts one or more images and returns
-     image-analysis results (once real image analysis is available).
-4. **Input validation and rate limiting** on the backend to prevent abuse
-   and control cost (e.g. limit request size, photo count/size, and
-   requests per user/IP).
-5. **CORS configuration** on the backend to allow requests from the
-   GitHub Pages origin (e.g. `https://<user>.github.io`).
-6. **(Optional, for future features) A database and authentication
-   provider** for user accounts, saved repair projects, repair history,
-   and parent/child linked Zee activities. This is not required to launch
-   basic AI diagnosis, but is needed for the "Product Foundation" roadmap
-   items described in the README.
+## Backend files
 
-## Request shape the front end sends
+- `backend/worker.mjs` — HTTP routing, CORS, payload parsing, response handling.
+- `backend/diagnosis-service.mjs` — request validation, guardrails, provider call, response normalization.
+- `backend/wrangler.example.toml` — example Cloudflare Worker config (no secrets).
+- `backend/README.md` — deployment and configuration quick-start.
+
+## Required backend environment variables
+
+Set these on your backend platform (not in git):
+
+- `AI_PROVIDER_API_KEY` (required secret)
+- `AI_PROVIDER_MODEL` (optional, default `gpt-4o-mini`)
+- `AI_PROVIDER_BASE_URL` (optional, default `https://api.openai.com/v1`)
+- `ALLOWED_ORIGINS` (recommended CORS allowlist)
+
+OpenAI-compatible aliases are also supported:
+
+- `OPENAI_API_KEY`
+- `OPENAI_MODEL`
+- `OPENAI_BASE_URL`
+
+## Frontend-to-backend connection
+
+Frontend code already posts to `${backendUrl}/api/diagnose` in `js/api/ai-client.js`.
+
+Set backend URL in one non-secret place:
+
+- `<meta name="fixwise-backend-url" content="https://your-backend-domain">` in `index.html`, or
+- `window.FIXWISE_CONFIG.backendUrl` at runtime.
+
+If backend is not reachable, frontend automatically falls back to Demo Mode so the public site keeps working.
+
+## Frontend diagnosis request shape
 
 ```jsonc
 {
- "version": "2026-09-home-diy-v1",
- "scope": "home-diy-only",
- "category": "string (Plumbing | Electrical | Heating & Cooling | Appliance | Structural | Home Equipment | Doors & Windows | Other)",
- "areaOrEquipment": "string",
- "equipment": {
-   "make": "string",
-   "model": "string"
- },
- "problem": "string",
- "symptoms": {
-   "seen": "string",
-   "heard": "string",
-   "smell": "string",
-   "leakDetails": "string",
-   "errorCode": "string",
-   "intermittentBehavior": "string",
-   "problemStart": "string",
-   "otherSymptoms": "string"
- },
- "conversationHistory": [
-   { "answer": "string", "timestamp": "ISO 8601 string" }
- ],
- "useMyHomeContext": true,
- "myHomeContext": {
-   "profileUpdatedAt": "ISO 8601 string",
-   "selectedEquipment": {
-     "type": "string",
-     "manufacturer": "string",
-     "modelNumber": "string",
-     "serialNumber": "string",
-     "installationDateOrAge": "string",
-     "warrantyExpiration": "string",
-     "notes": "string"
-   },
-   "maintenanceHistory": [{ "recordType": "maintenance", "servicePerformed": "string", "date": "string", "partsUsed": "string", "notes": "string" }],
-   "previousRepairs": [{ "recordType": "repair", "servicePerformed": "string", "date": "string", "partsUsed": "string", "notes": "string" }],
-   "homeSummary": {
-     "nickname": "string",
-     "yearBuilt": "string",
-     "homeType": "string"
-   }
- },
- "requestedOutputs": {
-   "possibleCauses": true,
-   "causeExplanations": true,
-   "safeChecks": true,
-   "tools": true,
-   "parts": true,
-   "nextActions": true,
-   "safetyWarnings": true,
-   "whenToStopDIY": true,
-   "whenToCallProfessional": true,
-   "followUpQuestions": true
- },
- "disclaimers": {
-   "scope": "home-diy-only",
-   "requireVerifiedManufacturerClaims": true,
-   "neverClaimCertainty": true
- },
- "attachmentSummary": {
-   "photoCount": 2
- }
+  "version": "2026-09-home-diy-v1",
+  "scope": "home-diy-only",
+  "category": "Plumbing | Electrical | Heating & Cooling | Appliance | Structural | Home Equipment | Doors & Windows | Other",
+  "areaOrEquipment": "string",
+  "equipment": {
+    "make": "string",
+    "model": "string"
+  },
+  "problem": "string",
+  "symptoms": {
+    "seen": "string",
+    "heard": "string",
+    "smell": "string",
+    "leakDetails": "string",
+    "errorCode": "string",
+    "intermittentBehavior": "string",
+    "problemStart": "string",
+    "otherSymptoms": "string"
+  },
+  "conversationHistory": [
+    { "answer": "string", "timestamp": "ISO 8601 string" }
+  ],
+  "useMyHomeContext": true,
+  "myHomeContext": {
+    "profileUpdatedAt": "ISO 8601 string",
+    "selectedEquipment": {
+      "id": "string",
+      "type": "string",
+      "manufacturer": "string",
+      "modelNumber": "string",
+      "serialNumber": "string",
+      "installationDateOrAge": "string",
+      "warrantyExpiration": "string",
+      "warrantyDetails": "string",
+      "notes": "string"
+    },
+    "maintenanceHistory": [{ "recordType": "maintenance", "servicePerformed": "string", "date": "string", "partsUsed": "string", "notes": "string" }],
+    "previousRepairs": [{ "recordType": "repair", "servicePerformed": "string", "date": "string", "partsUsed": "string", "notes": "string" }],
+    "homeSummary": {
+      "nickname": "string",
+      "yearBuilt": "string",
+      "homeType": "string"
+    }
+  }
 }
 ```
 
-The browser sends this JSON inside a multipart `FormData` field named
-`request`, and appends each actual photo file separately under the `photos`
-field. The backend should therefore read structured request data from the
-JSON field and uploaded image binaries from the multipart files.
-
-`conversationHistory` carries every follow-up answer the homeowner has
-given so far in the current browser session (see "Follow-up conversation"
-in the README), so the backend can progressively narrow the diagnosis
-instead of treating each request as unrelated to the last.
-
-`scope: "home-diy-only"` is intentional. Do not use this endpoint for
-automotive diagnosis yet.
-
-## Response shape the front end expects
-
-To avoid reworking the UI when a real backend is connected, keep the same
-shape currently used by the demo logic in `js/api/ai-client.js`:
+## Response shape expected by frontend UI
 
 ```jsonc
 {
   "matched": true,
   "needsFollowUp": false,
-  "confidence": {
-    "level": "high | medium | low",
-    "label": "string, e.g. \"Likely cause, based on the details you provided\""
-  },
+  "confidence": { "level": "high | medium | low", "label": "string" },
   "hasDanger": false,
-  "dangerConfig": { "message": "string", "badge": "string" },
-  "possibleCauses": [
-    { "title": "string", "whyPossible": "string" }
-  ],
-  "otherPossibleCauses": [
-    { "title": "string", "whyPossible": "string" }
-  ],
-  "safeChecks": ["string", "..."],
-  "nextActions": ["string", "..."],
-  "safetyWarnings": ["string", "..."],
-  "whenToStopDIY": ["string", "..."],
-  "whenToCallProfessional": ["string", "..."],
-  "followUpQuestions": ["string", "..."],
+  "dangerConfig": { "level": "caution|stop", "badge": "string", "message": "string", "action": "string" },
+  "possibleCauses": [{ "title": "string", "whyPossible": "string" }],
+  "otherPossibleCauses": [{ "title": "string", "whyPossible": "string" }],
+  "safeChecks": ["string"],
+  "nextActions": ["string"],
+  "tools": ["string"],
+  "parts": ["string"],
+  "safetyWarnings": ["string"],
+  "whenToStopDIY": ["string"],
+  "whenToCallProfessional": ["string"],
+  "followUpQuestions": ["string"],
   "issue": {
-    "causes": ["string", "..."],
-    "otherCauses": ["string", "..."],
-    "clarifyingQuestions": ["string", "..."],
+    "causes": ["string"],
+    "otherCauses": ["string"],
+    "clarifyingQuestions": ["string"],
     "nextCheck": "string",
-    "steps": ["string", "..."],
-    "tools": ["string", "..."],
-    "parts": ["string", "..."],
+    "steps": ["string"],
+    "tools": ["string"],
+    "parts": ["string"],
     "time": "string",
     "difficulty": "easy-check | beginner | intermediate | advanced | professional | emergency",
-    "tips": ["string", "..."],
+    "tips": ["string"],
     "stopWhen": "string",
     "safety": "string",
     "pro": "string"
@@ -170,50 +136,17 @@ shape currently used by the demo logic in `js/api/ai-client.js`:
 }
 ```
 
-`confidence` is optional (omit or set to `null` when there isn't enough
-signal for even a rough estimate) and must always be phrased as a
-likelihood ("possible cause", "likely cause") — never as a certainty.
+## Safety and scope requirements enforced
 
-Additional optional fields the demo engine already produces (a real
-backend may do the same; the UI ignores them when absent):
+- Home/DIY only (`home-diy-only`) — no automotive diagnosis.
+- Do not provide unsafe guidance for fire, gas, CO, electrical shock, structural, hazardous-material, sewage, or major flooding conditions.
+- Return clear STOP/CALL guidance whenever risk is high.
+- Use My Home context only when provided; never invent equipment details.
 
-- `knownFacts`: an object of session facts extracted from the homeowner's
-  own words so far, e.g. `{ "runs": true, "heats": false,
-  "powerType": "electric" }` — the backend should reason from these rather
-  than re-asking already-answered questions.
-- `subject`: the specific item/system detected (e.g. `"dryer"`).
-- `hasContradiction`: `true` when the latest follow-up answer conflicts
-  with an earlier established fact; in that case the response should be a
-  `needsFollowUp: true` clarification question rather than a silent
-  re-diagnosis.
+## What still must be configured outside GitHub
 
-## Steps to connect the real backend
-
-1. Build and deploy the backend endpoint(s) described above.
-2. Set the backend's HTTPS URL non-secretly — either the
-   `fixwise-backend-url` `<meta>` tag in `index.html`, or a
-   `window.FIXWISE_CONFIG.backendUrl` global (see `resolveBackendBaseUrl()`
-   in `js/api/ai-client.js`). No secrets are involved in this step; the URL
-   itself is not sensitive.
-3. Replace the body of `diagnoseProblem()` and `analyzePhotos()` with
-   `fetch()` calls to the backend (example code is already sketched in
-   comments in that file).
-4. Remove or keep `localDemoDiagnosis()` as an offline fallback — your
-   choice, but make sure the UI never claims a real AI analyzed something
-   when it did not.
-5. Test thoroughly, especially error states (network failure, backend
-   downtime, invalid responses) since `js/api/ai-client.js` now supports an
-   honest demo fallback and `js/modules/diagnosis.js` already has loading/
-   error handling wired up to support this.
-
-## What is intentionally NOT built yet
-
-- No AI provider integration code (this requires choosing a provider and
-  backend platform, which is a product/infrastructure decision).
-- No authentication/user accounts backend.
-- No database for saved projects, repair history, or Zee progress.
-- No real image analysis — this requires an image-capable AI model and
-  the same secure-backend pattern described above.
-
-These are deliberately left as documented next steps rather than partial,
-insecure implementations.
+1. Deploy backend runtime (for example Cloudflare Workers).
+2. Set provider secret(s) in backend platform environment.
+3. Set production `ALLOWED_ORIGINS`.
+4. Configure frontend backend URL metadata to point at deployed backend.
+5. Monitor usage, rate limit, and logging policies at hosting platform level.

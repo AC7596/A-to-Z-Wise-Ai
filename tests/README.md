@@ -20,6 +20,7 @@ node tests/regression-diagnosis-backend.mjs
 node tests/regression-branding.mjs
 node tests/regression-monetization.mjs
 node tests/regression-my-home.mjs
+node tests/regression-secure-backend-service.mjs
 ```
 
 Each script exits with a non-zero status (via Node's built-in
@@ -102,3 +103,8 @@ without any additional tooling.
   persist through storage-backed operations in `js/modules/my-home-store.js`;
   and the homepage/public-page navigation exposes the `My Home` experience
   without implying accounts or cloud backup.
+- **regression-secure-backend-service.mjs** — secure backend foundation checks:
+  validates `home-diy-only` request scope, verifies My Home context handling,
+  confirms immediate STOP safety responses, verifies provider-response
+  normalization into the existing UI contract, and checks missing backend
+  credentials return a safe configuration error.
