@@ -114,10 +114,9 @@ function normalizeMaintenanceEntry(entry) {
 }
 
 function normalizeTaskEntry(entry, { includeTarget = false } = {}) {
-  return {
+  const normalized = {
     id: toStringValue(entry?.id) || createId('reminder'),
     task: toStringValue(entry?.task),
-    target: includeTarget ? toStringValue(entry?.target) : '',
     recommendedInterval: toStringValue(entry?.recommendedInterval),
     intervalBasis: toStringValue(entry?.intervalBasis) === 'manufacturer' ? 'manufacturer' : 'general',
     lastCompletedDate: toDateOnly(entry?.lastCompletedDate),
@@ -125,6 +124,12 @@ function normalizeTaskEntry(entry, { includeTarget = false } = {}) {
     notes: toStringValue(entry?.notes),
     completed: toBooleanValue(entry?.completed)
   };
+
+  if (includeTarget) {
+    normalized.target = toStringValue(entry?.target);
+  }
+
+  return normalized;
 }
 
 function normalizeEquipmentEntry(entry) {

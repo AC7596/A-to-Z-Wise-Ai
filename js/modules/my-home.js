@@ -634,8 +634,8 @@ function readEquipmentFormValues() {
         url: values.installationManualUrl
       },
       warrantyDocument: {
-        name: values.warrantyDocumentName,
-        url: values.warrantyDocumentUrl
+        name: values.warrantyDocName,
+        url: values.warrantyDocUrl
       },
       receipt: {
         name: values.receiptName,
