@@ -769,14 +769,14 @@ export const diagnosisDatabase = {
   'home equipment': {
     dangers: {
       keywords: ['carbon monoxide', 'fuel leak', 'gas smell', 'battery acid', 'sparking', 'fire', 'smoke'],
-      message: 'This may involve fuel, battery, or exhaust hazards. Do not run the engine or equipment in an enclosed space.',
+      message: 'This may involve fuel, battery, or exhaust hazards. Do not run fuel-burning equipment in an enclosed space.',
       badge: 'Stop & Seek Qualified Service'
     },
     issues: {
       'won\'t start|will not start|no start': {
-        causes: ['Dead or weak battery', 'Corroded battery terminals', 'Faulty starter or ignition switch'],
-        otherCauses: ['Empty fuel tank or stale fuel', 'Blown fuse'],
-        clarifyingQuestions: ['Do the lights or dashboard turn on at all?', 'Do you hear clicking, or nothing at all, when you try to start it?'],
+        causes: ['Dead or weak battery', 'Loose or corroded power connection', 'Failed power switch or starter control'],
+        otherCauses: ['Empty fuel tank or stale fuel', 'Blown fuse or tripped breaker'],
+        clarifyingQuestions: ['Do any power indicators, lights, or displays turn on at all?', 'Do you hear a click, hum, or nothing at all when you try to start it?'],
         nextCheck: 'Check the battery connections and charge level first',
         steps: ['Check that battery terminals are clean and tightly connected.', 'Check the equipment\'s battery, power source, or fuel level using the manufacturer\'s manual.', 'Check for blown fuses or resettable breakers if they are safely accessible.'],
         tools: ['Multimeter (optional)', 'Work gloves', 'Owner\'s manual'],
@@ -789,8 +789,8 @@ export const diagnosisDatabase = {
         pro: 'If checking the battery, power source, fuel, or fuses doesn\'t resolve it, a qualified appliance or equipment technician can diagnose the motor, ignition, or power system.'
       },
       'won\'t run|stalls|shuts off|overheating': {
-        causes: ['Low fluid levels', 'Clogged air filter', 'Overheating engine or motor'],
-        otherCauses: ['Fuel system issue', 'Worn belt or spark plug'],
+        causes: ['Low fluid levels', 'Clogged air filter or intake', 'Overheating motor or thermal overload'],
+        otherCauses: ['Restricted fuel or power supply', 'Worn belt or seized moving part'],
         clarifyingQuestions: ['Are any warning indicators or gauges showing a problem?', 'Does it happen right away or only after running a while?'],
         nextCheck: 'Check fluid levels and let the equipment cool before inspecting further',
         steps: ['Let the equipment cool down completely before opening anything.', 'Check oil, coolant, or fuel levels per the owner\'s manual, if your equipment uses them.', 'Inspect the air filter for clogging.'],

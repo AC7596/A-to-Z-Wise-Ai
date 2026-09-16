@@ -139,6 +139,8 @@ test('Branding rebrand regression checks', async (t) => {
     assert.equal(/automotive \/ home equipment/i.test(diagnosisData), false);
     assert.equal(/\bmechanic\b/i.test(diagnosisData), false);
     assert.equal(/\bvehicle/i.test(diagnosisData), false);
+    assert.equal(/\bdashboard\b/i.test(diagnosisData), false);
+    assert.equal(/\bspark plug\b/i.test(diagnosisData), false);
     assert.equal(/automotive \/ home equipment/i.test(aiClient), false);
   });
 });
