@@ -243,7 +243,7 @@ The repo is prepared for a Cloudflare Workers deployment while keeping this webs
    - diagnosis shows backend-connected mode when healthy
    - diagnosis safely falls back to Demo Mode when backend is unavailable/misconfigured
 
-See `BACKEND.md` for exact command-by-command deployment instructions and required external accounts/API keys.
+See `BACKEND.md` and `backend/README.md` for exact command-by-command deployment instructions and required external accounts/API keys.
 
 ## Brand note
 
