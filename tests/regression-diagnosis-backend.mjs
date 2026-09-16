@@ -104,6 +104,7 @@ test('Diagnosis backend-ready contract and fallback regression checks', async (t
     assert.equal(request.myHomeContext.selectedEquipment.serialNumber, 'SER12345');
     assert.equal(request.myHomeContext.maintenanceHistory.length, 2);
     assert.equal(request.myHomeContext.previousRepairs.length, 1);
+    assert.equal('address' in request.myHomeContext.homeSummary, false);
     assert.match(request.symptomSummary, /main problem/i);
   });
 

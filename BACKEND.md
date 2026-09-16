@@ -70,6 +70,7 @@ with no network calls and no keys anywhere in the repository.
  ],
  "useMyHomeContext": true,
  "myHomeContext": {
+   "profileUpdatedAt": "ISO 8601 string",
    "selectedEquipment": {
      "type": "string",
      "manufacturer": "string",
@@ -79,8 +80,13 @@ with no network calls and no keys anywhere in the repository.
      "warrantyExpiration": "string",
      "notes": "string"
    },
-   "maintenanceHistory": [{ "servicePerformed": "string", "date": "string", "partsUsed": "string", "notes": "string" }],
-   "previousRepairs": [{ "servicePerformed": "string", "date": "string", "partsUsed": "string", "notes": "string" }]
+   "maintenanceHistory": [{ "recordType": "maintenance", "servicePerformed": "string", "date": "string", "partsUsed": "string", "notes": "string" }],
+   "previousRepairs": [{ "recordType": "repair", "servicePerformed": "string", "date": "string", "partsUsed": "string", "notes": "string" }],
+   "homeSummary": {
+     "nickname": "string",
+     "yearBuilt": "string",
+     "homeType": "string"
+   }
  },
  "requestedOutputs": {
    "possibleCauses": true,

@@ -186,7 +186,6 @@ export function buildDiagnosisRequest(rawRequest = {}) {
       })).filter(Boolean),
       homeSummary: compactRecord({
         nickname: toTrimmedString(profile?.homeInfo?.nickname),
-        address: toTrimmedString(profile?.homeInfo?.address),
         yearBuilt: toTrimmedString(profile?.homeInfo?.yearBuilt),
         homeType: toTrimmedString(profile?.homeInfo?.homeType)
       })

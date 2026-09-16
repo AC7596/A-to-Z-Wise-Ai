@@ -263,6 +263,36 @@ function buildMyHomeHint(profile, context) {
   ].filter(Boolean).join(' ');
 }
 
+function releaseAutofillState(field) {
+  if (!field) return;
+  delete field.dataset.autofilledManaged;
+  delete field.dataset.autofilledSource;
+  delete field.dataset.autofilledValue;
+}
+
+function resyncManagedEquipmentField(field, sessionKey, nextValue = '', sourceId = '') {
+  if (!field) return;
+  const currentValue = field.value.trim();
+  const wasManaged = field.dataset.autofilledManaged === 'true';
+  const previousSource = field.dataset.autofilledSource || '';
+  const previousValue = field.dataset.autofilledValue || '';
+
+  if (wasManaged && previousSource !== sourceId && currentValue === previousValue) {
+    field.value = '';
+  }
+
+  releaseAutofillState(field);
+
+  if (!field.value.trim() && nextValue) {
+    field.value = nextValue;
+    field.dataset.autofilledManaged = 'true';
+    field.dataset.autofilledSource = sourceId;
+    field.dataset.autofilledValue = field.value.trim();
+  }
+
+  session[sessionKey] = field.value.trim();
+}
+
 function renderResults(diagnosis, photoResult) {
   els.resultCard.classList.remove('is-loading');
   resetResultSections();
@@ -409,40 +439,21 @@ function populateMyHomeEquipmentSelect() {
 
 function syncSelectedEquipmentFields() {
   const profile = loadMyHomeProfile();
-  const context = getEquipmentDiagnosisContext(profile, els.myHomeEquipmentSelect?.value);
+  const context = els.useMyHomeContext?.checked
+    ? getEquipmentDiagnosisContext(profile, els.myHomeEquipmentSelect?.value)
+    : { selectedEquipment: null, maintenanceHistory: [], previousRepairs: [] };
   const item = context.selectedEquipment;
   if (!item) {
-    [
-      [els.areaOrEquipment, 'areaOrEquipment'],
-      [els.equipmentMake, 'make'],
-      [els.equipmentModel, 'model']
-    ].forEach(([field, key]) => {
-      if (!field) return;
-      if (field.dataset.autofilledValue && field.value.trim() === field.dataset.autofilledValue) {
-        field.value = '';
-      }
-      delete field.dataset.autofilledValue;
-      session[key] = field.value.trim();
-    });
+    resyncManagedEquipmentField(els.areaOrEquipment, 'areaOrEquipment');
+    resyncManagedEquipmentField(els.equipmentMake, 'make');
+    resyncManagedEquipmentField(els.equipmentModel, 'model');
     if (els.myHomeContextHint) els.myHomeContextHint.textContent = buildMyHomeHint(profile, context);
     return;
   }
 
-  if (!els.areaOrEquipment.value.trim()) {
-    els.areaOrEquipment.value = item.type || '';
-    els.areaOrEquipment.dataset.autofilledValue = els.areaOrEquipment.value.trim();
-    session.areaOrEquipment = els.areaOrEquipment.value.trim();
-  }
-  if (!els.equipmentMake.value.trim()) {
-    els.equipmentMake.value = item.manufacturer || '';
-    els.equipmentMake.dataset.autofilledValue = els.equipmentMake.value.trim();
-    session.make = els.equipmentMake.value.trim();
-  }
-  if (!els.equipmentModel.value.trim()) {
-    els.equipmentModel.value = item.modelNumber || '';
-    els.equipmentModel.dataset.autofilledValue = els.equipmentModel.value.trim();
-    session.model = els.equipmentModel.value.trim();
-  }
+  resyncManagedEquipmentField(els.areaOrEquipment, 'areaOrEquipment', item.type || '', item.id || '');
+  resyncManagedEquipmentField(els.equipmentMake, 'make', item.manufacturer || '', item.id || '');
+  resyncManagedEquipmentField(els.equipmentModel, 'model', item.modelNumber || '', item.id || '');
   if (els.myHomeContextHint) els.myHomeContextHint.textContent = buildMyHomeHint(profile, context);
 }
 
@@ -598,10 +609,22 @@ export function initDiagnosisForm() {
     showEmptyState('Enter a repair problem and press "Analyze problem." This demo shows how the future A to Z Wise AI diagnosis flow can respond.');
   });
 
+  [
+    [els.areaOrEquipment, 'areaOrEquipment'],
+    [els.equipmentMake, 'make'],
+    [els.equipmentModel, 'model']
+  ].forEach(([field, key]) => {
+    field?.addEventListener('input', () => {
+      releaseAutofillState(field);
+      session[key] = field.value.trim();
+      saveSession();
+    });
+  });
+
   els.useMyHomeContext?.addEventListener('change', () => {
     session.useMyHomeContext = Boolean(els.useMyHomeContext.checked);
     populateMyHomeEquipmentSelect();
-    if (els.useMyHomeContext.checked) syncSelectedEquipmentFields();
+    syncSelectedEquipmentFields();
     saveSession();
   });
 
