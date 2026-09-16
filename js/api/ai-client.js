@@ -27,6 +27,11 @@ import { assessRisk, RISK_LEVEL, RISK_BADGE_LABEL, matchesKeyword } from '../dat
 import {
   buildSessionFacts, applyFactsToCauses, filterAnsweredQuestions, conditionMatches
 } from '../data/fact-data.js';
+import {
+  buildDiagnosisRequest,
+  buildDiagnosisTransportPayload,
+  normalizeDiagnosisResponse
+} from './diagnosis-contract.js';
 
 // ----------------------------------------------------------------------
 // CONFIG: how the backend URL is resolved (no secrets, GitHub-Pages-safe)
@@ -52,19 +57,53 @@ function resolveBackendBaseUrl() {
   return null;
 }
 
-const BACKEND_BASE_URL = resolveBackendBaseUrl(); // null = Demo Mode
+function getBackendBaseUrl() {
+  return resolveBackendBaseUrl();
+}
 
-export const isBackendConnected = () => Boolean(BACKEND_BASE_URL);
+export const isBackendConnected = () => Boolean(getBackendBaseUrl());
+
+const DIAGNOSIS_ENDPOINT = '/api/diagnose';
+const REQUEST_TIMEOUT_MS = 15000;
+
+function buildResponseMessage(mode, backendUrl, details = '') {
+  if (mode === 'live') {
+    return details || `Connected to the secure diagnosis backend at ${backendUrl}.`;
+  }
+  if (backendUrl && details) return details;
+  return 'Running in safe Demo Mode on the public GitHub Pages site. No provider keys are stored in the browser.';
+}
+
+async function fetchJson(url, options = {}) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    if (!response.ok) {
+      throw new Error(`Diagnosis backend request failed (${response.status})`);
+    }
+    return await response.json();
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
 
 /**
  * Analyze a described home repair problem.
  * @param {object} request
  * @param {string} request.category
+ * @param {string} request.areaOrEquipment
  * @param {string} request.problem
  * @param {string} request.seen
  * @param {string} request.heard
  * @param {string} request.smell
+ * @param {string} request.leakDetails
+ * @param {string} request.errorCode
+ * @param {string} request.intermittentBehavior
+ * @param {string} request.problemStart
  * @param {string} request.otherSymptoms
+ * @param {string} request.make
+ * @param {string} request.model
  * @param {File[]} request.photos
  * @param {Array<{answer: string, timestamp: string}>} [request.conversationHistory]
  *   Prior follow-up answers from this diagnosis session (with an ISO 8601
@@ -73,32 +112,41 @@ export const isBackendConnected = () => Boolean(BACKEND_BASE_URL);
  * @returns {Promise<object>} diagnosis result object
  */
 export async function diagnoseProblem(request) {
-  if (isBackendConnected()) {
-    // ------------------------------------------------------------------
-    // REAL AI BACKEND CALL GOES HERE.
-    // Example (uncomment and adapt once BACKEND_BASE_URL is set):
-    //
-    // const formData = new FormData();
-    // formData.append('category', request.category);
-    // formData.append('problem', request.problem);
-    // formData.append('seen', request.seen);
-    // formData.append('heard', request.heard);
-    // formData.append('smell', request.smell);
-    // formData.append('otherSymptoms', request.otherSymptoms);
-    // formData.append('conversationHistory', JSON.stringify(request.conversationHistory || []));
-    // request.photos.forEach(photo => formData.append('photos', photo));
-    //
-    // const response = await fetch(`${BACKEND_BASE_URL}/api/diagnose`, {
-    //   method: 'POST',
-    //   body: formData
-    // });
-    // if (!response.ok) throw new Error('Diagnosis request failed');
-    // return await response.json();
-    // ------------------------------------------------------------------
+  const normalizedRequest = buildDiagnosisRequest(request);
+  const backendUrl = getBackendBaseUrl();
+
+  if (backendUrl) {
+    try {
+      const { formData } = buildDiagnosisTransportPayload(normalizedRequest);
+      const response = await fetchJson(`${backendUrl}${DIAGNOSIS_ENDPOINT}`, {
+        method: 'POST',
+        body: formData
+      });
+      return normalizeDiagnosisResponse(response, normalizedRequest, {
+        sourceMode: 'live',
+        backendUrl,
+        message: buildResponseMessage('live', backendUrl)
+      });
+    } catch (err) {
+      const fallbackResponse = localDemoDiagnosis(normalizedRequest);
+      return normalizeDiagnosisResponse(fallbackResponse, normalizedRequest, {
+        sourceMode: 'demo',
+        usingFallback: true,
+        backendUrl,
+        message: buildResponseMessage(
+          'demo',
+          backendUrl,
+          'The secure diagnosis backend could not be reached, so A to Z Wise AI safely fell back to Demo Mode. No browser-side secret key was used.'
+        )
+      });
+    }
   }
 
-  // ---- DEMO MODE: local keyword-matching stand-in (no AI, no network) ----
-  return localDemoDiagnosis(request);
+  return normalizeDiagnosisResponse(localDemoDiagnosis(normalizedRequest), normalizedRequest, {
+    sourceMode: 'demo',
+    backendUrl: '',
+    message: buildResponseMessage('demo')
+  });
 }
 
 /**
@@ -110,7 +158,13 @@ export async function diagnoseProblem(request) {
  */
 export async function analyzePhotos({ photos }) {
   if (isBackendConnected()) {
-    // Real backend photo analysis call would go here.
+    return {
+      analyzed: false,
+      photoCount: photos.length,
+      note: photos.length
+        ? `${photos.length} photo(s) will be included with the secure diagnosis request. Separate automated image analysis can be added on the backend later without exposing any provider keys in GitHub Pages.`
+        : 'No photos attached.'
+    };
   }
   return {
     analyzed: false,
@@ -298,16 +352,50 @@ function refineIssueWithFacts(issueData, facts) {
   return source;
 }
 
-function localDemoDiagnosis({ category, problem, seen, heard, smell, otherSymptoms, conversationHistory }) {
+function localDemoDiagnosis({
+  category,
+  areaOrEquipment,
+  problem,
+  seen,
+  heard,
+  smell,
+  leakDetails,
+  errorCode,
+  intermittentBehavior,
+  problemStart,
+  otherSymptoms,
+  make,
+  model,
+  myHomeContext,
+  conversationHistory
+}) {
   const categoryKey = (category || '').toLowerCase();
   const categoryData = diagnosisDatabase[categoryKey];
+  const selectedEquipment = myHomeContext?.selectedEquipment || null;
 
   const followUpText = (conversationHistory || [])
     .map(entry => entry.answer)
     .filter(Boolean)
     .join(' ');
 
-  const fields = [problem, seen, heard, smell, otherSymptoms, followUpText].filter(Boolean);
+  const fields = [
+    areaOrEquipment,
+    problem,
+    seen,
+    heard,
+    smell,
+    leakDetails,
+    errorCode,
+    intermittentBehavior,
+    problemStart,
+    otherSymptoms,
+    make,
+    model,
+    selectedEquipment?.type,
+    selectedEquipment?.manufacturer,
+    selectedEquipment?.modelNumber,
+    followUpText
+  ].filter(Boolean);
   const combinedText = fields.join(' ').toLowerCase();
 
   if (!combinedText.trim()) {
@@ -320,7 +408,12 @@ function localDemoDiagnosis({ category, problem, seen, heard, smell, otherSympto
   // known instead of re-asking it. `contradiction` is set when the LATEST
   // message conflicts with an earlier established fact.
   const { facts, subject, contradiction, clarification } = buildSessionFacts({
-    problem, seen, heard, smell, otherSymptoms, conversationHistory
+    problem: [areaOrEquipment, problem].filter(Boolean).join(' '),
+    seen,
+    heard,
+    smell,
+    otherSymptoms: [leakDetails, errorCode, intermittentBehavior, problemStart, otherSymptoms].filter(Boolean).join(' '),
+    conversationHistory
   });
 
   // ---- 1. Symptom-based risk assessment (independent of category/intent) ----
