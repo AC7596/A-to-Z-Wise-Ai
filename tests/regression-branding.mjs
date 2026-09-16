@@ -44,7 +44,7 @@ test('Branding rebrand regression checks', async (t) => {
     }
   });
 
-  await t.test('public pages use launch robots directives and the new slogan', () => {
+  await t.test('public pages use launch robots directives', () => {
     for (const page of publicPages) {
       const content = fs.readFileSync(path.resolve(repoRoot, page), 'utf8');
       if (page === 'success.html') {
@@ -52,7 +52,16 @@ test('Branding rebrand regression checks', async (t) => {
       } else {
         assert.ok(content.includes('<meta name="robots" content="index,follow" />'), `${page} should opt into indexing`);
       }
-      assert.ok(content.includes('We’ve Got DIY Covered.') || content.includes('We\'ve Got DIY Covered.'), `${page} should use the launch slogan where shown`);
+    }
+  });
+
+  await t.test('public pages standardize the footer slogan', () => {
+    for (const page of publicPages) {
+      const content = fs.readFileSync(path.resolve(repoRoot, page), 'utf8');
+      assert.ok(
+        content.includes('<p><a href="https://atozwiseai.com">atozwiseai.com</a> · We’ve Got DIY Covered.</p>'),
+        `${page} should use the launch slogan in the footer`
+      );
     }
   });
 
