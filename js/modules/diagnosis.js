@@ -624,6 +624,10 @@ export function initDiagnosisForm() {
 
   els.useMyHomeContext?.addEventListener('change', () => {
     session.useMyHomeContext = Boolean(els.useMyHomeContext.checked);
+    if (!session.useMyHomeContext) {
+      session.selectedHomeEquipmentId = '';
+      if (els.myHomeEquipmentSelect) els.myHomeEquipmentSelect.value = '';
+    }
     populateMyHomeEquipmentSelect();
     syncSelectedEquipmentFields();
     saveSession();

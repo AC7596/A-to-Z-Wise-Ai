@@ -1,5 +1,6 @@
 export const DIAGNOSIS_SCOPE = 'home-diy-only';
 export const DIAGNOSIS_REQUEST_VERSION = '2026-09-home-diy-v1';
+import { getEquipmentById, normalizeMyHomeProfile } from '../modules/my-home-store.js';
 
 function toTrimmedString(value) {
   return typeof value === 'string' ? value.trim() : '';
@@ -115,11 +116,12 @@ function extractIssue(raw = {}) {
 
 export function buildDiagnosisRequest(rawRequest = {}) {
   const profile = rawRequest.myHomeProfile && typeof rawRequest.myHomeProfile === 'object'
-    ? rawRequest.myHomeProfile
+    ? normalizeMyHomeProfile(rawRequest.myHomeProfile)
     : null;
+  const requestedEquipmentId = toTrimmedString(rawRequest.selectedHomeEquipmentId);
   const selectedEquipment = rawRequest.selectedHomeEquipment && typeof rawRequest.selectedHomeEquipment === 'object'
     ? rawRequest.selectedHomeEquipment
-    : null;
+    : getEquipmentById(profile, requestedEquipmentId);
   const selectedEquipmentHistory = rawRequest.selectedHomeEquipmentHistory && typeof rawRequest.selectedHomeEquipmentHistory === 'object'
     ? rawRequest.selectedHomeEquipmentHistory
     : null;
@@ -149,7 +151,7 @@ export function buildDiagnosisRequest(rawRequest = {}) {
   };
 
   request.selectedHomeEquipmentId = request.useMyHomeContext
-    ? toTrimmedString(selectedEquipment?.id || rawRequest.selectedHomeEquipmentId)
+    ? toTrimmedString(selectedEquipment?.id || requestedEquipmentId)
     : '';
 
   if (request.useMyHomeContext && selectedEquipment) {

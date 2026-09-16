@@ -114,6 +114,22 @@ test('Diagnosis backend-ready contract and fallback regression checks', async (t
     assert.ok(backendDoc.includes(`"scope": "${DIAGNOSIS_SCOPE}"`));
   });
 
+  await t.test('request builder resolves selected equipment from profile + id alone', () => {
+    const profile = createProfile();
+    const request = buildDiagnosisRequest({
+      category: 'Appliance',
+      selectedHomeEquipmentId: 'dryer-1',
+      useMyHomeContext: true,
+      myHomeProfile: profile,
+      photos: []
+    });
+
+    assert.equal(request.useMyHomeContext, true);
+    assert.equal(request.selectedHomeEquipmentId, 'dryer-1');
+    assert.equal(request.areaOrEquipment, 'Dryer');
+    assert.equal(request.make, 'Whirlpool');
+  });
+
   await t.test('transport payload requests backend-safe home-only outputs', () => {
     const profile = createProfile();
     const homeContext = getEquipmentDiagnosisContext(profile, 'dryer-1');
