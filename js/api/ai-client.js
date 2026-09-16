@@ -382,7 +382,7 @@ function localDemoDiagnosis({ category, problem, seen, heard, smell, otherSympto
     hasDanger,
     dangerConfig,
     riskLevel: risk.level,
-    clarifyingQuestions: getIntentFollowUpQuestions(normalizedCategoryKey, intent),
+    clarifyingQuestions: getIntentFollowUpQuestions(categoryKey, intent),
     category
   });
 
