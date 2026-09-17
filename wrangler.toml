@@ -1,10 +1,10 @@
 name = "a-to-z-wise-ai-diagnosis-backend"
-main = "worker.mjs"
+main = "backend/worker.mjs"
 compatibility_date = "2026-09-16"
 
-# Manual/local Wrangler deploy config for use from the backend/ folder.
-# Cloudflare Git-connected Worker deploys should use the repository-root
-# wrangler.toml, which points at backend/worker.mjs from the repo root.
+# This root config is for Cloudflare Git-connected Worker deployments.
+# It intentionally points at backend runtime code and does not declare static assets,
+# so Cloudflare treats this project as a real Worker and allows runtime secrets.
 
 [vars]
 # Set exactly to your public website origins (comma-separated).

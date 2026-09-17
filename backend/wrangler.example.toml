@@ -2,6 +2,10 @@ name = "a-to-z-wise-ai-diagnosis-backend"
 main = "worker.mjs"
 compatibility_date = "2026-09-16"
 
+# Manual/local Wrangler deploy config for use from the backend/ folder.
+# Cloudflare Git-connected Worker deploys should use the repository-root
+# wrangler.toml, which points at backend/worker.mjs from the repo root.
+
 [vars]
 # Comma-separated list of allowed site origins for CORS.
 # Keep production domains only by default.
