@@ -16,9 +16,12 @@ node tests/regression-co-vs-co2-followup.mjs
 node tests/regression-kids-progress.mjs
 node tests/regression-diagnosis-followup.mjs
 node tests/regression-diagnosis-facts.mjs
+node tests/regression-diagnosis-backend.mjs
 node tests/regression-branding.mjs
 node tests/regression-monetization.mjs
 node tests/regression-my-home.mjs
+node tests/regression-secure-backend-service.mjs
+node tests/regression-cloudflare-worker-config.mjs
 ```
 
 Each script exits with a non-zero status (via Node's built-in
@@ -82,6 +85,11 @@ without any additional tooling.
   dripping faucet) surfaces `relatedGuideId` for the "Guide me through it"
   hand-off; and genuinely unrecognizable input still gets an honest,
   Zee-style follow-up instead of a dead end.
+- **regression-diagnosis-backend.mjs** — the backend-ready diagnosis
+  foundation: request shaping in `js/api/diagnosis-contract.js`, secure
+  home-only payload fields, My Home equipment/maintenance context inclusion,
+  structured cause normalization, successful live backend calls, and honest
+  fallback back to Demo Mode when a configured backend is unavailable.
 - **regression-branding.mjs** — launch-branding and SEO regression coverage
   for A to Z Wise AI: canonical/Open Graph URLs, robots directives, footer
   slogan, Zee/DIY Together wording, and the unchanged hosted PayPal
@@ -94,5 +102,14 @@ without any additional tooling.
   system: exact equipment records, warranty/details/manual URLs, per-equipment
   service history, per-equipment maintenance schedules, property-wide reminders
   and service logs, JSON export/import validation, legacy-data normalization,
-  and the homepage/public-page navigation for the expanded `My Home`
-  experience.
+  diagnosis-context compatibility, and the homepage/public-page navigation for
+  the expanded `My Home` experience without implying accounts or cloud backup.
+- **regression-secure-backend-service.mjs** — secure backend foundation checks:
+  validates `home-diy-only` request scope, verifies My Home context handling,
+  confirms immediate STOP safety responses, verifies provider-response
+  normalization into the existing UI contract, and checks missing backend
+  credentials return a safe configuration error.
+- **regression-cloudflare-worker-config.mjs** — deployment-config checks:
+  verifies repository-root `wrangler.toml` points Cloudflare at
+  `backend/worker.mjs` and does not declare static-assets-only config, so
+  runtime secrets remain available.

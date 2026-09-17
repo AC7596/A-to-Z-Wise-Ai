@@ -1,25 +1,13 @@
 // ========================================
-// AI BACKEND INTEGRATION LAYER (placeholder)
+// AI BACKEND INTEGRATION LAYER
 // ========================================
 // GitHub Pages only serves static files, so this file MUST NEVER contain
-// API keys, tokens, or secrets. Real AI calls belong on a secure backend
-// (serverless function, small API server, etc.) that this file will call
-// over HTTPS once it exists.
+// API keys, tokens, or secrets. Real AI calls must stay server-side in a
+// secure backend. This module only sends the diagnosis contract to that
+// backend URL (if configured) and safely falls back to local Demo Mode if
+// the backend is unavailable.
 //
-// HOW TO CONNECT A REAL BACKEND LATER:
-// 1. Stand up a backend endpoint (e.g. a serverless function such as
-//    Azure Functions, AWS Lambda, Cloudflare Workers, or a small Node/
-//    Python API) that holds the real AI provider key server-side only.
-// 2. Set BACKEND_BASE_URL below (or load it from a non-secret config file)
-//    to point at that backend's public HTTPS URL.
-// 3. Replace the body of diagnoseProblem() / analyzePhotos() with a
-//    fetch() call to that backend, and remove the local demo logic.
-// 4. The backend should accept the same request shape used here and
-//    return the same response shape so the UI code above this layer
-//    (js/modules/diagnosis.js) does not need to change.
-//
-// See BACKEND.md in the project root for a full description of the
-// backend pieces required for a production AI diagnosis service.
+// See BACKEND.md and backend/README.md for deployment/configuration details.
 
 import { diagnosisDatabase } from '../data/diagnosis-data.js';
 import { classifyIntent, INTENT, INTENT_META, INTENTIONAL_ACTION_INTENTS, getIntentFollowUpQuestions } from '../data/intent-data.js';
@@ -27,6 +15,11 @@ import { assessRisk, RISK_LEVEL, RISK_BADGE_LABEL, matchesKeyword } from '../dat
 import {
   buildSessionFacts, applyFactsToCauses, filterAnsweredQuestions, conditionMatches
 } from '../data/fact-data.js';
+import {
+  buildDiagnosisRequest,
+  buildDiagnosisTransportPayload,
+  normalizeDiagnosisResponse
+} from './diagnosis-contract.js';
 
 // ----------------------------------------------------------------------
 // CONFIG: how the backend URL is resolved (no secrets, GitHub-Pages-safe)
@@ -34,37 +27,98 @@ import {
 // The backend URL itself is not sensitive (it's just an endpoint address,
 // not a credential), so it is safe to read from either of these
 // non-secret, static-hosting-friendly sources:
-//   1. A global `window.FIXWISE_CONFIG.backendUrl` set by a small,
+//   1. A global `window.ATOZWISEAI_CONFIG.backendUrl` set by a small,
 //      un-committed config script (useful for local/staging overrides).
-//   2. A `<meta name="fixwise-backend-url" content="...">` tag in
+//   2. A `<meta name="atozwiseai-backend-url" content="...">` tag in
 //      index.html (the default, checked-in mechanism — see the <head>).
+// Legacy `FIXWISE_CONFIG` and `fixwise-backend-url` are still accepted for
+// backward compatibility with existing deployments.
 // If neither is set, the app runs in Demo Mode using local logic only.
 function resolveBackendBaseUrl() {
   if (typeof window === 'undefined') return null;
+  const normalizeUrl = value => String(value || '').trim().replace(/\/+$/, '');
+  if (window.ATOZWISEAI_CONFIG && window.ATOZWISEAI_CONFIG.backendUrl) {
+    return normalizeUrl(window.ATOZWISEAI_CONFIG.backendUrl) || null;
+  }
   if (window.FIXWISE_CONFIG && window.FIXWISE_CONFIG.backendUrl) {
-    return String(window.FIXWISE_CONFIG.backendUrl).trim() || null;
+    return normalizeUrl(window.FIXWISE_CONFIG.backendUrl) || null;
   }
   if (typeof document !== 'undefined') {
+    const brandedMeta = document.querySelector('meta[name="atozwiseai-backend-url"]');
+    const brandedContent = brandedMeta && brandedMeta.getAttribute('content');
+    if (brandedContent && brandedContent.trim()) return normalizeUrl(brandedContent);
     const meta = document.querySelector('meta[name="fixwise-backend-url"]');
     const content = meta && meta.getAttribute('content');
-    if (content && content.trim()) return content.trim();
+    if (content && content.trim()) return normalizeUrl(content);
   }
   return null;
 }
 
-const BACKEND_BASE_URL = resolveBackendBaseUrl(); // null = Demo Mode
+function getBackendBaseUrl() {
+  return resolveBackendBaseUrl();
+}
 
-export const isBackendConnected = () => Boolean(BACKEND_BASE_URL);
+export const isBackendConnected = () => Boolean(getBackendBaseUrl());
+
+const DIAGNOSIS_ENDPOINT = '/api/diagnose';
+const REQUEST_TIMEOUT_MS = 15000;
+
+function buildResponseMessage(mode, backendUrl, details = '') {
+  if (mode === 'live') {
+    return details || `Connected to the secure diagnosis backend at ${backendUrl}.`;
+  }
+  if (backendUrl && details) return details;
+  return 'Running in safe Demo Mode on the public GitHub Pages site. No provider keys are stored in the browser.';
+}
+
+async function fetchJson(url, options = {}) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    let response;
+    try {
+      response = await fetch(url, { ...options, signal: controller.signal });
+    } catch (error) {
+      if (error?.name === 'AbortError') {
+        throw new Error('Diagnosis backend request timed out.');
+      }
+      throw new Error('Diagnosis backend request could not reach the server.');
+    }
+    if (!response.ok) {
+      let backendMessage = '';
+      try {
+        const payload = await response.json();
+        backendMessage = payload && typeof payload.message === 'string'
+          ? payload.message.trim()
+          : '';
+      } catch {
+        backendMessage = '';
+      }
+      const suffix = backendMessage ? `: ${backendMessage}` : '';
+      throw new Error(`Diagnosis backend request failed (${response.status})${suffix}`);
+    }
+    return await response.json();
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
 
 /**
  * Analyze a described home repair problem.
  * @param {object} request
  * @param {string} request.category
+ * @param {string} request.areaOrEquipment
  * @param {string} request.problem
  * @param {string} request.seen
  * @param {string} request.heard
  * @param {string} request.smell
+ * @param {string} request.leakDetails
+ * @param {string} request.errorCode
+ * @param {string} request.intermittentBehavior
+ * @param {string} request.problemStart
  * @param {string} request.otherSymptoms
+ * @param {string} request.make
+ * @param {string} request.model
  * @param {File[]} request.photos
  * @param {Array<{answer: string, timestamp: string}>} [request.conversationHistory]
  *   Prior follow-up answers from this diagnosis session (with an ISO 8601
@@ -73,32 +127,44 @@ export const isBackendConnected = () => Boolean(BACKEND_BASE_URL);
  * @returns {Promise<object>} diagnosis result object
  */
 export async function diagnoseProblem(request) {
-  if (isBackendConnected()) {
-    // ------------------------------------------------------------------
-    // REAL AI BACKEND CALL GOES HERE.
-    // Example (uncomment and adapt once BACKEND_BASE_URL is set):
-    //
-    // const formData = new FormData();
-    // formData.append('category', request.category);
-    // formData.append('problem', request.problem);
-    // formData.append('seen', request.seen);
-    // formData.append('heard', request.heard);
-    // formData.append('smell', request.smell);
-    // formData.append('otherSymptoms', request.otherSymptoms);
-    // formData.append('conversationHistory', JSON.stringify(request.conversationHistory || []));
-    // request.photos.forEach(photo => formData.append('photos', photo));
-    //
-    // const response = await fetch(`${BACKEND_BASE_URL}/api/diagnose`, {
-    //   method: 'POST',
-    //   body: formData
-    // });
-    // if (!response.ok) throw new Error('Diagnosis request failed');
-    // return await response.json();
-    // ------------------------------------------------------------------
+  const normalizedRequest = buildDiagnosisRequest(request);
+  const backendUrl = getBackendBaseUrl();
+
+  if (backendUrl) {
+    try {
+      const { formData } = buildDiagnosisTransportPayload(normalizedRequest);
+      const response = await fetchJson(`${backendUrl}${DIAGNOSIS_ENDPOINT}`, {
+        method: 'POST',
+        body: formData
+      });
+      return normalizeDiagnosisResponse(response, normalizedRequest, {
+        sourceMode: 'live',
+        backendUrl,
+        message: buildResponseMessage('live', backendUrl)
+      });
+    } catch (err) {
+      const fallbackResponse = localDemoDiagnosis(normalizedRequest);
+      const fallbackReason = err && typeof err.message === 'string' ? err.message : '';
+      return normalizeDiagnosisResponse(fallbackResponse, normalizedRequest, {
+        sourceMode: 'demo',
+        usingFallback: true,
+        backendUrl,
+        message: buildResponseMessage(
+          'demo',
+          backendUrl,
+          fallbackReason
+            ? `The secure diagnosis backend is configured but not ready (${fallbackReason}), so A to Z Wise AI safely fell back to Demo Mode. No browser-side secret key was used.`
+            : 'The secure diagnosis backend could not be reached, so A to Z Wise AI safely fell back to Demo Mode. No browser-side secret key was used.'
+        )
+      });
+    }
   }
 
-  // ---- DEMO MODE: local keyword-matching stand-in (no AI, no network) ----
-  return localDemoDiagnosis(request);
+  return normalizeDiagnosisResponse(localDemoDiagnosis(normalizedRequest), normalizedRequest, {
+    sourceMode: 'demo',
+    backendUrl: '',
+    message: buildResponseMessage('demo')
+  });
 }
 
 /**
@@ -110,7 +176,13 @@ export async function diagnoseProblem(request) {
  */
 export async function analyzePhotos({ photos }) {
   if (isBackendConnected()) {
-    // Real backend photo analysis call would go here.
+    return {
+      analyzed: false,
+      photoCount: photos.length,
+      note: photos.length
+        ? `${photos.length} photo(s) will be included with the secure diagnosis request. Separate automated image analysis can be added on the backend later without exposing any provider keys in GitHub Pages.`
+        : 'No photos attached.'
+    };
   }
   return {
     analyzed: false,
@@ -161,7 +233,7 @@ function estimateConfidence(filledFieldCount, matchedKeywordHits, hasFollowUp) {
 // Malfunction-signal words that suggest something is actually failing, even
 // when the sentence is primarily phrased as an intentional action (e.g.
 // "I want to replace my outlet because it sparks"). When these are present
-// alongside an intentional-action intent, FixWise treats it as a repair-
+// alongside an intentional-action intent, A to Z Wise AI treats it as a repair-
 // driven replacement rather than asking purely exploratory questions.
 const MALFUNCTION_SIGNAL_WORDS = [
   'not working', "isn't working", 'broken', 'stopped working', 'failed', 'failing',
@@ -178,8 +250,8 @@ function hasMalfunctionSignal(text) {
   return MALFUNCTION_SIGNAL_WORDS.some(word => matchesKeyword(text, word));
 }
 
-// Fixy's philosophy in practice: when nothing is recognized at all (no risk
-// signal, no intent, no knowledge-base match), FixWise should say so
+// Zee's philosophy in practice: when nothing is recognized at all (no risk
+// signal, no intent, no knowledge-base match), A to Z Wise AI should say so
 // honestly and ask a useful, general question rather than invent an answer
 // or simply dead-end with "no specific match". See README/BACKEND.md for
 // the broader "ask, don't guess" principle applied throughout this file.
@@ -298,16 +370,50 @@ function refineIssueWithFacts(issueData, facts) {
   return source;
 }
 
-function localDemoDiagnosis({ category, problem, seen, heard, smell, otherSymptoms, conversationHistory }) {
+function localDemoDiagnosis({
+  category,
+  areaOrEquipment,
+  problem,
+  seen,
+  heard,
+  smell,
+  leakDetails,
+  errorCode,
+  intermittentBehavior,
+  problemStart,
+  otherSymptoms,
+  make,
+  model,
+  myHomeContext,
+  conversationHistory
+}) {
   const categoryKey = (category || '').toLowerCase();
   const categoryData = diagnosisDatabase[categoryKey];
+  const selectedEquipment = myHomeContext?.selectedEquipment || null;
 
   const followUpText = (conversationHistory || [])
     .map(entry => entry.answer)
     .filter(Boolean)
     .join(' ');
 
-  const fields = [problem, seen, heard, smell, otherSymptoms, followUpText].filter(Boolean);
+  const fields = [
+    areaOrEquipment,
+    problem,
+    seen,
+    heard,
+    smell,
+    leakDetails,
+    errorCode,
+    intermittentBehavior,
+    problemStart,
+    otherSymptoms,
+    make,
+    model,
+    selectedEquipment?.type,
+    selectedEquipment?.manufacturer,
+    selectedEquipment?.modelNumber,
+    followUpText
+  ].filter(Boolean);
   const combinedText = fields.join(' ').toLowerCase();
 
   if (!combinedText.trim()) {
@@ -320,7 +426,12 @@ function localDemoDiagnosis({ category, problem, seen, heard, smell, otherSympto
   // known instead of re-asking it. `contradiction` is set when the LATEST
   // message conflicts with an earlier established fact.
   const { facts, subject, contradiction, clarification } = buildSessionFacts({
-    problem, seen, heard, smell, otherSymptoms, conversationHistory
+    problem: [areaOrEquipment, problem].filter(Boolean).join(' '),
+    seen,
+    heard,
+    smell,
+    otherSymptoms: [leakDetails, errorCode, intermittentBehavior, problemStart, otherSymptoms].filter(Boolean).join(' '),
+    conversationHistory
   });
 
   // ---- 1. Symptom-based risk assessment (independent of category/intent) ----
@@ -362,7 +473,7 @@ function localDemoDiagnosis({ category, problem, seen, heard, smell, otherSympto
 
   // ---- 3. Does this look like an intentional action (replace/install/
   // maintenance/inspection/upgrade/how-it-works) rather than a malfunction
-  // report? If so, and there's no malfunction language mixed in, FixWise
+  // report? If so, and there's no malfunction language mixed in, A to Z Wise AI
   // should ask a clarifying question rather than assume a failure. This is
   // the fix for "I want to replace my outlets" being treated like "my
   // outlet isn't working".
@@ -394,7 +505,7 @@ function localDemoDiagnosis({ category, problem, seen, heard, smell, otherSympto
   // itself isn't in the local knowledge base and when it is but nothing
   // inside it matched.
   //
-  // `matched` intentionally stays `true` here (it means "FixWise has a
+  // `matched` intentionally stays `true` here (it means "A to Z Wise AI has a
   // useful response to show", which the UI in js/modules/diagnosis.js
   // relies on to avoid its own flat "No specific match yet" dead end —
   // see the `!diagnosis.matched` check there). `recognized: false` is the

@@ -101,12 +101,14 @@ function normalizeWarranty(entry) {
 }
 
 function normalizeMaintenanceEntry(entry) {
+  const parts = toStringValue(entry?.partsReplaced || entry?.partsUsed);
   return {
     id: toStringValue(entry?.id) || createId('maintenance'),
     equipment: toStringValue(entry?.equipment),
     servicePerformed: toStringValue(entry?.servicePerformed),
     date: toDateOnly(entry?.date),
-    partsReplaced: toStringValue(entry?.partsReplaced || entry?.partsUsed),
+    partsReplaced: parts,
+    partsUsed: parts,
     performedBy: toStringValue(entry?.performedBy),
     cost: toStringValue(entry?.cost),
     notes: toStringValue(entry?.notes)
@@ -135,6 +137,16 @@ function normalizeTaskEntry(entry, { includeTarget = false } = {}) {
 function normalizeEquipmentEntry(entry) {
   const installationDate = toDateOnly(entry?.installationDate);
   const legacyInstallOrAge = toStringValue(entry?.installationDateOrAge);
+  const warranty = normalizeWarranty(entry?.warranty || {
+    expirationDate: entry?.warrantyExpiration
+  });
+  const warrantyDetails = formatLegacyWarrantyDetails({
+    ...warranty,
+    notes: toStringValue(entry?.warrantyDetails) || warranty.notes
+  });
+  const installationDateOrAge = toStringValue(entry?.installationDateOrAge)
+    || toStringValue(entry?.approximateAge)
+    || (installationDate ? `Installed ${installationDate}` : '');
 
   return {
     id: toStringValue(entry?.id) || createId('equipment'),
@@ -145,13 +157,14 @@ function normalizeEquipmentEntry(entry) {
     installationDate,
     manufactureDate: toDateOnly(entry?.manufactureDate),
     approximateAge: toStringValue(entry?.approximateAge) || (!installationDate ? legacyInstallOrAge : ''),
+    installationDateOrAge,
     location: toStringValue(entry?.location),
     installer: toStringValue(entry?.installer),
     notes: toStringValue(entry?.notes),
     partsInformation: toStringValue(entry?.partsInformation),
-    warranty: normalizeWarranty(entry?.warranty || {
-      expirationDate: entry?.warrantyExpiration
-    }),
+    warranty,
+    warrantyExpiration: warranty.expirationDate,
+    warrantyDetails,
     documents: {
       ownerManual: normalizeDocumentLink(entry?.documents?.ownerManual || {
         name: entry?.ownerManualName,
@@ -198,6 +211,116 @@ export function createEmptyHomeInfo() {
 
 export function createReminderTemplate(task, target = '') {
   return normalizeTaskEntry({ task, target }, { includeTarget: true });
+}
+
+export function buildEquipmentLabel(item) {
+  const manufacturerModel = [item?.manufacturer, item?.modelNumber].map(toStringValue).filter(Boolean).join(' · ');
+  const type = toStringValue(item?.type);
+  return manufacturerModel ? `${type} — ${manufacturerModel}` : type;
+}
+
+function normalizeSearchText(value) {
+  return toStringValue(value).toLowerCase();
+}
+
+function getRecordParts(record) {
+  return toStringValue(record?.partsUsed || record?.partsReplaced);
+}
+
+function recordMentionsEquipment(record, equipment) {
+  const haystack = normalizeSearchText([
+    record?.equipment,
+    record?.servicePerformed,
+    record?.notes,
+    getRecordParts(record)
+  ].filter(Boolean).join(' '));
+
+  if (!haystack) return false;
+
+  const exactLabels = [
+    buildEquipmentLabel(equipment),
+    equipment?.type,
+    equipment?.manufacturer,
+    equipment?.modelNumber,
+    equipment?.serialNumber
+  ].map(normalizeSearchText).filter(Boolean);
+
+  return exactLabels.some(label => haystack.includes(label));
+}
+
+function isRepairLikeRecord(record) {
+  const text = normalizeSearchText([
+    record?.servicePerformed,
+    record?.notes,
+    getRecordParts(record)
+  ].filter(Boolean).join(' '));
+
+  return /(repair|repaired|replace|replacement|fixed|fix|service call|diagnos|troubleshoot)/.test(text);
+}
+
+function formatLegacyInstallationDateOrAge(entry) {
+  const explicit = toStringValue(entry?.installationDateOrAge);
+  if (explicit) return explicit;
+  if (toStringValue(entry?.approximateAge)) return toStringValue(entry?.approximateAge);
+  const installationDate = toDateOnly(entry?.installationDate);
+  return installationDate ? `Installed ${installationDate}` : '';
+}
+
+function formatLegacyWarrantyDetails(warranty) {
+  return [
+    toStringValue(warranty?.provider),
+    toStringValue(warranty?.number),
+    toStringValue(warranty?.notes)
+  ].filter(Boolean).join(' · ');
+}
+
+function buildDiagnosisHistoryEntry(record, recordType = 'maintenance') {
+  return {
+    ...record,
+    recordType,
+    partsUsed: getRecordParts(record)
+  };
+}
+
+export function getEquipmentById(profile, equipmentId) {
+  if (!equipmentId) return null;
+  return (profile?.equipment || []).find(item => item.id === equipmentId) || null;
+}
+
+export function getEquipmentDiagnosisContext(profile, equipmentId) {
+  const normalizedProfile = normalizeMyHomeProfile(profile);
+  const selectedEquipment = getEquipmentById(normalizedProfile, equipmentId);
+
+  if (!selectedEquipment) {
+    return {
+      selectedEquipment: null,
+      maintenanceHistory: [],
+      previousRepairs: []
+    };
+  }
+
+  const normalizedSelectedEquipment = {
+    ...selectedEquipment,
+    installationDateOrAge: formatLegacyInstallationDateOrAge(selectedEquipment),
+    warrantyExpiration: selectedEquipment.warranty?.expirationDate || '',
+    warrantyDetails: formatLegacyWarrantyDetails(selectedEquipment.warranty)
+  };
+
+  const exactServiceHistory = selectedEquipment.serviceHistory
+    .map(record => buildDiagnosisHistoryEntry(record, 'maintenance'));
+  const propertyMaintenanceHistory = normalizedProfile.maintenanceRecords
+    .filter(record => recordMentionsEquipment(record, selectedEquipment))
+    .map(record => buildDiagnosisHistoryEntry(record, 'maintenance'));
+  const maintenanceHistory = [...exactServiceHistory, ...propertyMaintenanceHistory]
+    .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+  return {
+    selectedEquipment: normalizedSelectedEquipment,
+    maintenanceHistory,
+    previousRepairs: maintenanceHistory
+      .filter(isRepairLikeRecord)
+      .map(record => ({ ...record, recordType: 'repair' }))
+  };
 }
 
 export function createDefaultMyHomeProfile() {

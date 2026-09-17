@@ -18,11 +18,11 @@ designed to run on **GitHub Pages**.
 
 ## What A to Z Wise AI currently does
 
-- **AI Home Diagnosis (front-end demo):** homeowners pick a category
-  (Plumbing, Electrical, HVAC, Appliance, Structural, Home Equipment, Doors & Windows, or Other) and describe what they see, hear,
-  smell, and notice, optionally attach photos, and get a structured result:
+- **AI Home Diagnosis (frontend + backend-ready):** homeowners pick a category
+  (Plumbing, Electrical, HVAC, Appliance, Structural, Home Equipment, Doors & Windows, or Other), name the area/system/equipment involved, describe what they see, hear,
+  smell, and notice, optionally add leak details, error codes, intermittent behavior, when the problem started, make/model information, reuse a saved My Home equipment record, attach photos, and get a structured result:
   a confidence/likelihood label, most likely causes, other possible causes,
-  clarifying questions, step-by-step troubleshooting, tools/parts needed,
+  why each cause is possible, safe checks, clarifying questions, step-by-step next actions, tools/parts needed,
   estimated time, DIY difficulty, safety warnings, stop conditions, and
   when to call a professional. Results are always phrased as "possible" or
   "likely" — never as a guaranteed fact.
@@ -46,7 +46,7 @@ designed to run on **GitHub Pages**.
 - **Photo upload:** click to select or drag-and-drop multiple photos,
   preview them, and remove any before submitting. Photos are attached to
   the request/demo response but are **not** analyzed by AI yet (see below).
-- **Demo Mode indicator:** a badge next to the diagnosis result clearly
+- **Demo Mode indicator + backend fallback:** a badge next to the diagnosis result clearly
   shows whether the app is running in **Demo Mode** (no backend configured)
   or is connected to a real backend, so users are never misled about what
   produced a result.
@@ -74,8 +74,9 @@ designed to run on **GitHub Pages**.
 User fills form + optional photos
         │
         ▼
-js/modules/diagnosis.js  ── builds a request (category, problem, seen,
-        │                    heard, smell, otherSymptoms, photos,
+js/modules/diagnosis.js  ── builds a request (category, area/equipment,
+        │                    problem, symptom details, make/model,
+        │                    optional My Home context, photos,
         │                    conversationHistory) and shows loading state
         ▼
 js/api/ai-client.js       ── the ONLY place that knows whether a backend
@@ -125,38 +126,43 @@ interactive repair mode (`js/modules/repair-mode.js`).
 
 ## Demo Mode & backend configuration
 
-A to Z Wise AI ships with **no backend configured**, so it runs in **Demo
-Mode**: `js/api/ai-client.js` uses local, keyword-matching logic instead of
-calling a network API. The UI shows a "Demo Mode" badge next to diagnosis
-results so this is never presented as a real AI analysis.
+A to Z Wise AI now includes a **secure backend foundation** in the
+`backend/` folder, while the public GitHub Pages site still defaults to
+**Demo Mode** until a deployed backend URL and server-side provider
+credentials are configured.
 
-To connect a real backend later, no code changes or rebuild are required —
-just set its HTTPS URL in **one** of these non-secret places:
+The browser never receives an AI provider key. The frontend sends structured
+diagnosis requests to the configured backend URL, and if the backend cannot
+be reached it falls back honestly to Demo Mode with an explicit status
+message so the site never breaks.
 
-- The `content` attribute of `<meta name="fixwise-backend-url" content="">`
+To connect a deployed backend without code changes or rebuilds, set its HTTPS
+URL in **one** of these non-secret places:
+
+- The `content` attribute of `<meta name="atozwiseai-backend-url" content="">`
   in `index.html`'s `<head>`, **or**
-- A global `window.FIXWISE_CONFIG = { backendUrl: 'https://...' }` (e.g. via
+- A global `window.ATOZWISEAI_CONFIG = { backendUrl: 'https://...' }` (e.g. via
   a small, un-committed config script for local overrides).
 
+Legacy `window.FIXWISE_CONFIG` and `fixwise-backend-url` are still accepted for compatibility.
+
 Once either is set, `isBackendConnected()` becomes `true`, the badge switches
-to "Backend connected", and `diagnoseProblem()`/`analyzePhotos()` will call
-that backend instead of the local demo logic (see the commented example
-`fetch()` calls in `js/api/ai-client.js`).
+to "Backend connected", and `diagnoseProblem()` will call the secure backend
+endpoint (`/api/diagnose`).
 
 **Why not just put an API key here instead?** GitHub Pages only serves
 static files — anything in this repository or shipped to the browser is
 publicly visible to anyone who views the page source. A backend *URL* is
 not sensitive (it's just an address), but an AI provider *API key* is a
-secret that must stay server-side. See [BACKEND.md](BACKEND.md) for the
-full explanation and the request/response contract the backend should
-implement.
+secret that must stay server-side. See [BACKEND.md](BACKEND.md) and
+`backend/README.md` for the full explanation and the backend
+request/response contract plus deployment flow.
 
-## What is a front-end demonstration (no AI backend yet)
+## What is still demo/public-preview behavior
 
-- The diagnosis engine (`js/api/ai-client.js` → `localDemoDiagnosis`) is a
-  **keyword-matching stand-in**, not a real AI model. It mirrors the shape
-  of a response a real AI backend would return (including a synthetic
-  confidence label) so it can be swapped later without changing the UI code.
+- The local diagnosis engine (`js/api/ai-client.js` → `localDemoDiagnosis`) is
+  still a **keyword-matching stand-in** whenever backend configuration is
+  missing or unreachable.
 - Photo analysis is **not performed**. Photos are previewed, attached, and
   passed along in the request, but `analyzePhotos()` honestly reports that
   automatic image analysis is not yet connected — the site never pretends
@@ -168,13 +174,12 @@ implement.
   parts recommendations, and cost estimates are represented as roadmap
   cards only.
 
-## What requires a secure backend
+## What requires deployed backend configuration
 
-See **[BACKEND.md](BACKEND.md)** for full details. In short: real AI
-diagnosis, real photo analysis, user accounts, saved data, and any feature
-that needs an API key or persistent storage requires a secure backend that
-GitHub Pages (static hosting) cannot provide directly. **No API keys or
-secrets are stored in this repository or any browser-side file.**
+See **[BACKEND.md](BACKEND.md)** and `backend/README.md` for full details. In
+short: real AI diagnosis requires deploying the backend service and setting
+provider credentials in the backend environment. **No API keys or secrets are
+stored in this repository or any browser-side file.**
 
 ## Project structure
 
@@ -194,7 +199,10 @@ js/
     diagnosis-data.js        Diagnosis knowledge base (demo logic)
     guides-data.js            Repair guide content (easy to extend)
   api/
-    ai-client.js              Placeholder API layer for a future AI backend
+    ai-client.js              Frontend client for secure diagnosis backend + demo fallback
+backend/
+  worker.mjs                  Server-side /api/diagnose endpoint
+  diagnosis-service.mjs       Validation, safety guardrails, provider call, normalization
 ```
 
 Adding a new repair guide is a matter of adding one object to the array in
@@ -219,17 +227,31 @@ GitHub Pages serves `index.html`, `styles.css`, and the `js/` folder as-is.
 All scripts are loaded as ES modules (`<script type="module" src="js/main.js">`),
 which GitHub Pages supports without any additional configuration.
 
-## Connecting real AI diagnosis (next step)
+## Activating live AI diagnosis (next step)
 
-1. Build a small secure backend (serverless function or API) that holds the
-   real AI provider key **server-side only**.
-2. Set the backend's HTTPS URL in the `fixwise-backend-url` meta tag in
-   `index.html` (or via `window.FIXWISE_CONFIG.backendUrl`) — see "Demo Mode
-   & backend configuration" above. No rebuild is required.
-3. Replace the demo logic in `diagnoseProblem()` / `analyzePhotos()` with a
-   `fetch()` call to that backend, keeping the same request/response shape
-   already used by `js/modules/diagnosis.js` so no UI code needs to change.
-4. See [BACKEND.md](BACKEND.md) for the full checklist.
+The repo is prepared for a Cloudflare Workers deployment while keeping this website on GitHub Pages.
+
+1. For Cloudflare Git-connected Worker deploys, use the repository-root `wrangler.toml`, which points `main` at `backend/worker.mjs` and avoids static-assets-only deployment mode. For manual/local Wrangler deploys, `backend/wrangler.toml` still works from the `backend/` folder.
+2. Set backend secret/environment variables on Cloudflare:
+   - `AI_PROVIDER_API_KEY` (required)
+   - `AI_PROVIDER_MODEL` (optional)
+   - `AI_PROVIDER_BASE_URL` (optional)
+   - `ALLOWED_ORIGINS` (production: `https://atozwiseai.com,https://www.atozwiseai.com`; add `https://ac7596.github.io` only temporarily while GitHub Pages testing)
+3. In Cloudflare Workers Builds / Git settings, deploy the Worker runtime instead of static assets:
+   - Root directory: repository root
+   - Wrangler config: `wrangler.toml`
+   - Build command: `echo "No build step required"`
+   - Deploy command: `npx wrangler deploy`
+   - Runtime secret: add `AI_PROVIDER_API_KEY` in **Settings → Variables and Secrets**
+4. Bind an HTTPS backend domain (recommended `https://api.atozwiseai.com`).
+5. Set that URL in the `atozwiseai-backend-url` meta tag in `index.html` (or
+   via `window.ATOZWISEAI_CONFIG.backendUrl`). No rebuild is required.
+6. Verify:
+   - `/api/health` responds from the backend
+   - diagnosis shows backend-connected mode when healthy
+   - diagnosis safely falls back to Demo Mode when backend is unavailable/misconfigured
+
+See `BACKEND.md` and `backend/README.md` for exact command-by-command deployment instructions and required external accounts/API keys.
 
 ## Brand note
 

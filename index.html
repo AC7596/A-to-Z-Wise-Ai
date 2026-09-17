@@ -20,6 +20,8 @@
     function endpoint) and the site will start sending real requests
     instead of using the local demo diagnosis engine.
   -->
+  <meta name="atozwiseai-backend-url" content="" />
+  <!-- Legacy compatibility key; safe to keep empty. -->
   <meta name="fixwise-backend-url" content="" />
   <!--
     Hosted checkout configuration (no secret keys — static hosting safe).
@@ -92,7 +94,7 @@
             <span>Vent issue</span>
             <span>P-trap buildup</span>
           </div>
-          <small>Demo only — this version does not send your problem to an AI service yet.</small>
+          <small>Public site defaults to Demo Mode until secure backend deployment and provider credentials are configured.</small>
         </div>
       </div>
     </section>
@@ -590,6 +592,10 @@
 
         <div class="diagnosis-layout">
           <form class="diagnosis-card" id="diagnosisForm" novalidate>
+            <p class="diagnosis-home-only-note">
+              Home/DIY only for now — automotive diagnosis is not included in this launch scope.
+            </p>
+
             <label for="category">What kind of problem is it?</label>
             <select id="category">
               <option value="Plumbing">Plumbing</option>
@@ -602,8 +608,22 @@
               <option value="Other">Other / General Home Repair</option>
             </select>
 
+            <label for="areaOrEquipment">What area, system, or equipment is involved?</label>
+            <input id="areaOrEquipment" type="text" list="myHomeEquipmentOptions" placeholder="Example: Dryer, kitchen sink, furnace, bathroom outlet, garage door opener" />
+
             <label for="problem">Describe the problem in detail</label>
             <textarea id="problem" rows="3" placeholder="Example: The bathroom faucet drips even when both handles are fully off."></textarea>
+
+            <div class="diagnosis-inline-grid">
+              <label for="equipmentMake">
+                Make / manufacturer (when applicable)
+                <input id="equipmentMake" type="text" placeholder="Example: Carrier, Whirlpool, AO Smith" />
+              </label>
+              <label for="equipmentModel">
+                Model number (when applicable)
+                <input id="equipmentModel" type="text" placeholder="Example: 58STA, WDT730HAMZ, GCV-40" />
+              </label>
+            </div>
 
             <label for="seen">What do you see?</label>
             <textarea id="seen" rows="2" placeholder="Example: Water pooling near the base of the faucet."></textarea>
@@ -614,8 +634,53 @@
             <label for="smell">Any unusual smells?</label>
             <textarea id="smell" rows="2" placeholder="Example: Musty smell under the sink."></textarea>
 
-            <label for="otherSymptoms">Leaks, movement, temperature changes, damage, or other symptoms</label>
-            <textarea id="otherSymptoms" rows="2" placeholder="Example: The cabinet floor feels soft near the pipe."></textarea>
+            <div class="diagnosis-inline-grid">
+              <label for="leakDetails">
+                Leaks, moisture, or drips
+                <textarea id="leakDetails" rows="2" placeholder="Example: It leaks only while the washer drains."></textarea>
+              </label>
+              <label for="errorCode">
+                Error code, light pattern, or display message
+                <input id="errorCode" type="text" placeholder="Example: F21, blinking red light, pressure fault" />
+              </label>
+            </div>
+
+            <div class="diagnosis-inline-grid">
+              <label for="intermittentBehavior">
+                Is it intermittent?
+                <textarea id="intermittentBehavior" rows="2" placeholder="Example: It only fails after running for 10 minutes."></textarea>
+              </label>
+              <label for="problemStart">
+                When did it start?
+                <input id="problemStart" type="text" placeholder="Example: Started yesterday after a storm" />
+              </label>
+            </div>
+
+            <label for="otherSymptoms">Other symptoms, movement, temperature changes, or damage</label>
+            <textarea id="otherSymptoms" rows="2" placeholder="Example: The cabinet floor feels soft near the pipe and the handle feels loose."></textarea>
+
+            <section class="diagnosis-context-card" aria-labelledby="myHomeDiagnosisContextTitle">
+              <div class="diagnosis-context-top">
+                <div>
+                  <h3 id="myHomeDiagnosisContextTitle">Optional: use My Home details</h3>
+                  <p>If you already saved a home system or appliance in My Home, A to Z Wise AI can include that browser-stored record in the diagnosis request.</p>
+                </div>
+                <span class="status-pill">Browser-only profile</span>
+              </div>
+              <label class="diagnosis-checkbox-row" for="useMyHomeContext">
+                <input id="useMyHomeContext" type="checkbox" />
+                <span>Include a saved My Home equipment record in this diagnosis</span>
+              </label>
+              <label for="myHomeEquipmentSelect">
+                Saved equipment / system
+                <select id="myHomeEquipmentSelect" disabled>
+                  <option value="">No saved My Home equipment yet</option>
+                </select>
+              </label>
+              <p id="myHomeContextHint" class="diagnosis-context-hint">
+                Add equipment in My Home above if you want to reuse manufacturer, model, age, warranty, notes, and service history here.
+              </p>
+            </section>
 
             <label class="upload-box" for="photoUpload" id="uploadBox">
               <span class="upload-icon">＋</span>
@@ -651,6 +716,8 @@
               </div>
             </div>
 
+            <p id="backendStatusText" class="backend-status-note" style="display:none;"></p>
+
             <div id="dangerWarning" class="danger-warning" style="display: none;">
               <div class="warning-icon-col" aria-hidden="true"><span class="warning-icon">⚠️</span></div>
               <div class="warning-body">
@@ -669,6 +736,12 @@
               Enter a repair problem and press Analyze problem. A to Z Wise AI will share current troubleshooting guidance based on the details you provide.
             </p>
 
+            <div id="requestContextSection" class="request-context-section" style="display:none;">
+              <h4>What this diagnosis used</h4>
+              <p id="requestContextSummary"></p>
+              <ul id="requestContextList"></ul>
+            </div>
+
             <div id="mostLikelyCauses" style="display: none;" class="causes-section">
               <h4>Most likely causes <span id="confidenceBadge" class="confidence-badge"></span></h4>
               <ul id="mostLikelyList"></ul>
@@ -684,6 +757,11 @@
               <ul id="clarifyingList"></ul>
             </div>
 
+            <div id="safeChecksSection" style="display: none;" class="causes-section">
+              <h4>Safe checks you can perform</h4>
+              <ul id="safeChecksList"></ul>
+            </div>
+
             <div id="followUpSection" class="followup-section" style="display: none;">
               <h4>Answer a question to help narrow this down</h4>
               <p class="followup-hint">
@@ -696,7 +774,7 @@
             </div>
 
             <div id="stepsSection" style="display: none;" class="causes-section">
-              <h4>Step-by-step troubleshooting</h4>
+              <h4>Step-by-step next actions</h4>
               <ol id="stepsList"></ol>
             </div>
 

@@ -1,0 +1,21 @@
+name = "a-to-z-wise-ai-diagnosis-backend"
+main = "worker.mjs"
+compatibility_date = "2026-09-16"
+
+# Manual/local Wrangler deploy config for use from the backend/ folder.
+# Cloudflare Git-connected Worker deploys should use the repository-root
+# wrangler.toml, which points at backend/worker.mjs from the repo root.
+
+[vars]
+# Set exactly to your public website origins (comma-separated).
+# If you need GitHub Pages testing, temporarily add `https://ac7596.github.io`.
+# Example:
+# ALLOWED_ORIGINS = "https://atozwiseai.com,https://www.atozwiseai.com,https://ac7596.github.io"
+ALLOWED_ORIGINS = "https://atozwiseai.com,https://www.atozwiseai.com"
+
+# Optional provider configuration (safe to keep non-secret defaults in git).
+AI_PROVIDER_MODEL = "gpt-4o-mini"
+AI_PROVIDER_BASE_URL = "https://api.openai.com/v1"
+
+# Required secret (set outside git):
+# wrangler secret put AI_PROVIDER_API_KEY
