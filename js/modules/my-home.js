@@ -38,6 +38,23 @@ function formatText(value, fallback = 'Not added yet') {
   return value ? escapeHtml(value) : fallback;
 }
 
+function equipmentDisplayName(item) {
+  return item.customName || item.type;
+}
+
+function equipmentSubtitle(item) {
+  const summary = [item.manufacturer, item.modelNumber].filter(Boolean).join(' · ');
+  if (item.customName) {
+    return [item.type, summary].filter(Boolean).join(' · ') || 'Category not added yet';
+  }
+  return summary || 'Manufacturer and model not added yet';
+}
+
+function confirmDestructiveAction(message) {
+  if (typeof window === 'undefined' || typeof window.confirm !== 'function') return true;
+  return window.confirm(message);
+}
+
 function cacheEls() {
   [
     'myHomeInfoForm',
@@ -51,9 +68,11 @@ function cacheEls() {
     'myHomeEquipmentForm',
     'myHomeEquipmentEditingId',
     'myHomeEquipmentType',
+    'myHomeEquipmentCustomName',
     'myHomeEquipmentManufacturer',
     'myHomeEquipmentModel',
     'myHomeEquipmentSerial',
+    'myHomeEquipmentPurchaseDate',
     'myHomeEquipmentInstallDate',
     'myHomeEquipmentManufactureDate',
     'myHomeEquipmentApproximateAge',
@@ -73,6 +92,7 @@ function cacheEls() {
     'myHomeEquipmentWarrantyDocUrl',
     'myHomeEquipmentReceiptName',
     'myHomeEquipmentReceiptUrl',
+    'myHomeEquipmentPartsReferenceUrl',
     'myHomeEquipmentModelNotes',
     'myHomeEquipmentNotes',
     'myHomeEquipmentSubmit',
@@ -153,9 +173,11 @@ function populateEquipmentForm() {
 
   els.myHomeEquipmentEditingId.value = equipment.id;
   els.myHomeEquipmentType.value = equipment.type;
+  els.myHomeEquipmentCustomName.value = equipment.customName;
   els.myHomeEquipmentManufacturer.value = equipment.manufacturer;
   els.myHomeEquipmentModel.value = equipment.modelNumber;
   els.myHomeEquipmentSerial.value = equipment.serialNumber;
+  els.myHomeEquipmentPurchaseDate.value = equipment.purchaseDate;
   els.myHomeEquipmentInstallDate.value = equipment.installationDate;
   els.myHomeEquipmentManufactureDate.value = equipment.manufactureDate;
   els.myHomeEquipmentApproximateAge.value = equipment.approximateAge;
@@ -175,6 +197,7 @@ function populateEquipmentForm() {
   els.myHomeEquipmentWarrantyDocUrl.value = equipment.documents.warrantyDocument.url;
   els.myHomeEquipmentReceiptName.value = equipment.documents.receipt.name;
   els.myHomeEquipmentReceiptUrl.value = equipment.documents.receipt.url;
+  els.myHomeEquipmentPartsReferenceUrl.value = equipment.documents.partsReference?.url || '';
   els.myHomeEquipmentModelNotes.value = equipment.documents.modelSpecificNotes;
   els.myHomeEquipmentNotes.value = equipment.notes;
   if (els.myHomeEquipmentSubmit) els.myHomeEquipmentSubmit.textContent = 'Save equipment changes';
@@ -255,7 +278,7 @@ function renderServiceHistoryList(serviceHistory, equipmentId) {
           <article class="my-home-subentry">
             <div class="my-home-entry-header">
               <div>
-                <h5>${escapeHtml(item.servicePerformed)}</h5>
+               <h5>${escapeHtml(item.workType || item.servicePerformed)}</h5>
                 <p>${escapeHtml(formatDate(item.date))}</p>
               </div>
               <button
@@ -267,9 +290,10 @@ function renderServiceHistoryList(serviceHistory, equipmentId) {
               >Remove</button>
             </div>
             <div class="my-home-entry-grid">
-              ${detailRow('Parts replaced', item.partsReplaced)}
-              ${detailRow('Contractor / DIY', item.performedBy)}
-              ${detailRow('Cost', item.cost)}
+             ${detailRow('Description', item.description)}
+             ${detailRow('Parts used', item.partsReplaced)}
+             ${detailRow('Service provider / DIY', item.performedBy)}
+             ${detailRow('Cost', item.cost)}
             </div>
             ${item.notes ? `<p class="my-home-entry-note">${escapeHtml(item.notes)}</p>` : ''}
           </article>
@@ -332,7 +356,8 @@ function renderEquipmentCard(item) {
     renderDocumentItem('Owner manual', item.documents.ownerManual),
     renderDocumentItem('Installation manual', item.documents.installationManual),
     renderDocumentItem('Warranty documentation', item.documents.warrantyDocument),
-    renderDocumentItem('Receipt', item.documents.receipt)
+    renderDocumentItem('Receipt', item.documents.receipt),
+    renderDocumentItem('Parts / reference link', item.documents.partsReference || {})
   ].filter(Boolean);
 
   return `
@@ -340,10 +365,10 @@ function renderEquipmentCard(item) {
       <div class="my-home-entry-header">
         <div>
           <div class="my-home-status-line">
-            <h4>${escapeHtml(item.type)}</h4>
+            <h4>${escapeHtml(equipmentDisplayName(item))}</h4>
             <span class="my-home-status-pill ${escapeHtml(warrantyStatus.toLowerCase())}">${escapeHtml(warrantyStatus)} warranty</span>
           </div>
-          <p>${escapeHtml([item.manufacturer, item.modelNumber].filter(Boolean).join(' · ') || 'Manufacturer and model not added yet')}</p>
+          <p>${escapeHtml(equipmentSubtitle(item))}</p>
         </div>
         <div class="my-home-inline-actions">
           <button type="button" class="btn secondary" data-action="edit-equipment" data-id="${escapeHtml(item.id)}">Edit</button>
@@ -352,7 +377,10 @@ function renderEquipmentCard(item) {
       </div>
 
       <div class="my-home-entry-grid">
+        ${detailRow('Equipment type', item.type)}
+        ${detailRow('Custom name', item.customName)}
         ${detailRow('Serial number', item.serialNumber)}
+        ${dateDetailRow('Purchase date', item.purchaseDate)}
         ${dateDetailRow('Installation date', item.installationDate)}
         ${dateDetailRow('Manufacture date', item.manufactureDate)}
         ${detailRow('Approximate age', item.approximateAge)}
@@ -397,15 +425,19 @@ function renderEquipmentCard(item) {
               <input name="date" type="date" required />
             </label>
             <label>
-              Maintenance or repair performed
-              <input name="servicePerformed" type="text" placeholder="Annual tune-up, capacitor replacement..." required />
+              Type of work
+              <input name="workType" type="text" placeholder="Annual tune-up, repair, inspection..." required />
+            </label>
+            <label class="my-home-full">
+              Description
+              <textarea name="description" rows="3" placeholder="What was done, what was found, and what this visit addressed"></textarea>
             </label>
             <label>
-              Parts replaced
-              <input name="partsReplaced" type="text" placeholder="Filter, igniter, capacitor..." />
+              Parts used
+              <input name="partsUsed" type="text" placeholder="Filter, igniter, capacitor..." />
             </label>
             <label>
-              Contractor or DIY
+              Service provider or DIY
               <input name="performedBy" type="text" placeholder="DIY, ABC HVAC, warranty visit..." />
             </label>
             <label>
@@ -516,7 +548,7 @@ function renderMaintenanceList() {
 function renderGeneralReminderForm(item) {
   const status = getMaintenanceTaskStatus(item);
   return `
-    <form class="my-home-entry my-home-inline-form" data-reminder-id="${escapeHtml(item.id)}">
+    <form class="my-home-entry my-home-inline-form my-home-reminder-entry" data-reminder-id="${escapeHtml(item.id)}">
       <div class="my-home-entry-header">
         <div>
           <div class="my-home-status-line">
@@ -530,7 +562,7 @@ function renderGeneralReminderForm(item) {
           <button type="button" class="btn secondary my-home-remove-btn" data-action="delete-reminder" data-id="${escapeHtml(item.id)}">Remove</button>
         </div>
       </div>
-      <div class="my-home-inline-grid">
+      <div class="my-home-inline-grid my-home-reminder-grid">
         <label for="my-home-reminder-task-${escapeHtml(item.id)}">
           Task
           <input id="my-home-reminder-task-${escapeHtml(item.id)}" name="task" type="text" value="${escapeHtml(item.task)}" required />
@@ -602,9 +634,11 @@ function readEquipmentFormValues() {
   const values = readFormValues(els.myHomeEquipmentForm);
   return {
     type: values.type,
+    customName: values.customName,
     manufacturer: values.manufacturer,
     modelNumber: values.modelNumber,
     serialNumber: values.serialNumber,
+    purchaseDate: values.purchaseDate,
     installationDate: values.installationDate,
     manufactureDate: values.manufactureDate,
     approximateAge: values.approximateAge,
@@ -629,12 +663,15 @@ function readEquipmentFormValues() {
         url: values.installationManualUrl
       },
       warrantyDocument: {
-        name: values.warrantyDocName,
-        url: values.warrantyDocUrl
+        name: values.warrantyDocumentName || values.warrantyDocName,
+        url: values.warrantyDocumentUrl || values.warrantyDocUrl
       },
       receipt: {
         name: values.receiptName,
         url: values.receiptUrl
+      },
+      partsReference: {
+        url: values.partsReferenceUrl
       },
       modelSpecificNotes: values.modelSpecificNotes
     }
@@ -733,6 +770,10 @@ function bindCollectionActions() {
     }
 
     if (btn.dataset.action === 'delete-equipment') {
+      const equipment = profile.equipment.find(item => item.id === btn.dataset.id);
+      if (!confirmDestructiveAction(`Remove the equipment record for "${buildEquipmentLabel(equipment)}"? This also removes its attached service history and maintenance tasks from this browser copy of My Home.`)) {
+        return;
+      }
       if (editingEquipmentId === btn.dataset.id) editingEquipmentId = '';
       profile = removeEquipment(btn.dataset.id);
       renderAll();
@@ -741,6 +782,9 @@ function bindCollectionActions() {
     }
 
     if (btn.dataset.action === 'delete-maintenance') {
+      if (!confirmDestructiveAction('Remove this property service record from your My Home timeline?')) {
+        return;
+      }
       profile = removeMaintenanceRecord(btn.dataset.id);
       renderAll();
       setSaveMessage('Property service record removed from your My Home timeline.');
@@ -748,6 +792,9 @@ function bindCollectionActions() {
     }
 
     if (btn.dataset.action === 'delete-reminder') {
+      if (!confirmDestructiveAction('Remove this property reminder from your My Home maintenance list?')) {
+        return;
+      }
       profile = removeUpcomingMaintenance(btn.dataset.id);
       renderAll();
       setSaveMessage('Property reminder removed from your My Home maintenance list.');
@@ -766,6 +813,9 @@ function bindCollectionActions() {
     }
 
     if (btn.dataset.action === 'delete-equipment-history') {
+      if (!confirmDestructiveAction('Remove this equipment service-history entry?')) {
+        return;
+      }
       profile = removeEquipmentServiceHistory(btn.dataset.equipmentId, btn.dataset.id);
       renderAll();
       setSaveMessage('Equipment service history entry removed.');
@@ -773,6 +823,9 @@ function bindCollectionActions() {
     }
 
     if (btn.dataset.action === 'delete-equipment-task') {
+      if (!confirmDestructiveAction('Remove this equipment maintenance task?')) {
+        return;
+      }
       profile = removeEquipmentMaintenanceTask(btn.dataset.equipmentId, btn.dataset.id);
       renderAll();
       setSaveMessage('Equipment maintenance task removed.');
