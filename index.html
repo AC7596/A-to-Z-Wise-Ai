@@ -250,6 +250,10 @@
                     <option value="Other home equipment">Other home equipment</option>
                   </select>
                 </label>
+                <label for="myHomeEquipmentCustomName">
+                  Custom equipment name
+                  <input id="myHomeEquipmentCustomName" name="customName" type="text" placeholder="Upstairs hall furnace, kitchen fridge, guest bath fan..." />
+                </label>
                 <label for="myHomeEquipmentManufacturer">
                   Manufacturer / brand
                   <input id="myHomeEquipmentManufacturer" name="manufacturer" type="text" placeholder="Carrier" />
@@ -261,6 +265,10 @@
                 <label for="myHomeEquipmentSerial">
                   Serial number
                   <input id="myHomeEquipmentSerial" name="serialNumber" type="text" placeholder="Serial number" />
+                </label>
+                <label for="myHomeEquipmentPurchaseDate">
+                  Purchase date
+                  <input id="myHomeEquipmentPurchaseDate" name="purchaseDate" type="date" />
                 </label>
                 <label for="myHomeEquipmentInstallDate">
                   Installation date
@@ -279,7 +287,7 @@
                   <input id="myHomeEquipmentLocation" name="location" type="text" placeholder="Basement utility room" />
                 </label>
                 <label for="myHomeEquipmentInstaller">
-                  Installer or contractor
+                  Installer / service company
                   <input id="myHomeEquipmentInstaller" name="installer" type="text" placeholder="ABC Heating & Cooling" />
                 </label>
                 <label for="myHomeEquipmentWarrantyStart">
@@ -334,6 +342,10 @@
                   Receipt URL
                   <input id="myHomeEquipmentReceiptUrl" name="receiptUrl" type="url" inputmode="url" placeholder="https://retailer.example/receipt" />
                 </label>
+                <label for="myHomeEquipmentPartsReferenceUrl">
+                  Parts / reference URL
+                  <input id="myHomeEquipmentPartsReferenceUrl" name="partsReferenceUrl" type="url" inputmode="url" placeholder="https://manufacturer.example/parts-or-reference" />
+                </label>
                 <label for="myHomeEquipmentWarrantyNotes" class="my-home-full">
                   Warranty notes
                   <textarea id="myHomeEquipmentWarrantyNotes" name="warrantyNotes" rows="3" placeholder="Coverage details, proof needed, registration notes, or unknown items"></textarea>
@@ -370,7 +382,7 @@
             <form id="myHomeMaintenanceForm" class="my-home-form">
               <fieldset class="my-home-fieldset">
                 <legend>Property service record details</legend>
-                <div class="my-home-form-grid">
+                <div class="my-home-form-grid my-home-reminder-grid">
                   <label for="myHomeMaintenanceEquipment">
                     Equipment / area
                     <input id="myHomeMaintenanceEquipment" name="equipment" type="text" list="myHomeEquipmentOptions" placeholder="Panel, roof, dryer, kitchen sink..." required />
