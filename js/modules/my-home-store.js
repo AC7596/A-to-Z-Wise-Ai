@@ -1,5 +1,5 @@
 const STORAGE_KEY = 'fixwiseMyHomeProfile';
-const CURRENT_VERSION = 2;
+const CURRENT_VERSION = 3;
 const APP_ID = 'a-to-z-wise-ai-my-home';
 const RECORD_TYPE = 'property-record';
 const LOCAL_PROPERTY_ID = 'local-property-record';
@@ -102,10 +102,13 @@ function normalizeWarranty(entry) {
 
 function normalizeMaintenanceEntry(entry) {
   const parts = toStringValue(entry?.partsReplaced || entry?.partsUsed);
+  const workType = toStringValue(entry?.workType || entry?.servicePerformed);
   return {
     id: toStringValue(entry?.id) || createId('maintenance'),
     equipment: toStringValue(entry?.equipment),
-    servicePerformed: toStringValue(entry?.servicePerformed),
+    workType,
+    servicePerformed: workType,
+    description: toStringValue(entry?.description),
     date: toDateOnly(entry?.date),
     partsReplaced: parts,
     partsUsed: parts,
@@ -151,9 +154,11 @@ function normalizeEquipmentEntry(entry) {
   return {
     id: toStringValue(entry?.id) || createId('equipment'),
     type: toStringValue(entry?.type),
+    customName: toStringValue(entry?.customName || entry?.name),
     manufacturer: toStringValue(entry?.manufacturer),
     modelNumber: toStringValue(entry?.modelNumber),
     serialNumber: toStringValue(entry?.serialNumber),
+    purchaseDate: toDateOnly(entry?.purchaseDate),
     installationDate,
     manufactureDate: toDateOnly(entry?.manufactureDate),
     approximateAge: toStringValue(entry?.approximateAge) || (!installationDate ? legacyInstallOrAge : ''),
@@ -181,6 +186,10 @@ function normalizeEquipmentEntry(entry) {
       receipt: normalizeDocumentLink(entry?.documents?.receipt || {
         name: entry?.receiptName,
         url: entry?.receiptUrl
+      }),
+      partsReference: normalizeDocumentLink(entry?.documents?.partsReference || {
+        name: entry?.partsReferenceName,
+        url: entry?.partsReferenceUrl || entry?.referenceUrl
       }),
       modelSpecificNotes: toStringValue(entry?.documents?.modelSpecificNotes || entry?.modelSpecificNotes)
     },
@@ -215,8 +224,12 @@ export function createReminderTemplate(task, target = '') {
 
 export function buildEquipmentLabel(item) {
   const manufacturerModel = [item?.manufacturer, item?.modelNumber].map(toStringValue).filter(Boolean).join(' · ');
+  const customName = toStringValue(item?.customName);
   const type = toStringValue(item?.type);
-  return manufacturerModel ? `${type} — ${manufacturerModel}` : type;
+  const primaryLabel = customName || type;
+  const typeSuffix = customName && type ? ` (${type})` : '';
+  if (manufacturerModel) return `${primaryLabel}${typeSuffix} — ${manufacturerModel}`;
+  return `${primaryLabel}${typeSuffix}` || 'Equipment record';
 }
 
 function normalizeSearchText(value) {
@@ -230,7 +243,9 @@ function getRecordParts(record) {
 function recordMentionsEquipment(record, equipment) {
   const haystack = normalizeSearchText([
     record?.equipment,
+    record?.workType,
     record?.servicePerformed,
+    record?.description,
     record?.notes,
     getRecordParts(record)
   ].filter(Boolean).join(' '));
@@ -250,7 +265,9 @@ function recordMentionsEquipment(record, equipment) {
 
 function isRepairLikeRecord(record) {
   const text = normalizeSearchText([
+    record?.workType,
     record?.servicePerformed,
+    record?.description,
     record?.notes,
     getRecordParts(record)
   ].filter(Boolean).join(' '));

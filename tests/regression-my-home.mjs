@@ -55,7 +55,7 @@ test('My Home profile regression checks', async t => {
     assert.equal(profile.appId, 'a-to-z-wise-ai-my-home');
     assert.equal(profile.recordType, 'property-record');
     assert.equal(profile.propertyId, 'local-property-record');
-    assert.equal(profile.version, 2);
+    assert.equal(profile.version, 3);
     assert.deepEqual(Object.keys(profile.homeInfo), [
       'nickname',
       'address',
@@ -81,9 +81,11 @@ test('My Home profile regression checks', async t => {
 
     profile = addEquipment({
       type: 'Furnace',
+      customName: 'Main house furnace',
       manufacturer: 'Carrier',
       modelNumber: '58STA',
       serialNumber: 'ABC123',
+      purchaseDate: '2021-08-15',
       installationDate: '2021-09-01',
       manufactureDate: '2021-05-15',
       approximateAge: 'About 4 years old',
@@ -102,6 +104,7 @@ test('My Home profile regression checks', async t => {
         installationManual: { name: 'Carrier install manual', url: 'https://example.com/install-manual' },
         warrantyDocument: { name: 'Carrier warranty PDF', url: 'https://example.com/warranty' },
         receipt: { name: 'Install invoice', url: 'https://example.com/invoice' },
+        partsReference: { url: 'https://example.com/furnace-parts' },
         modelSpecificNotes: 'Filter access is behind lower panel.'
       }
     }, storage);
@@ -122,11 +125,14 @@ test('My Home profile regression checks', async t => {
     let reloaded = loadMyHomeProfile(storage);
     assert.equal(reloaded.homeInfo.nickname, 'Maple House');
     assert.equal(reloaded.equipment.length, 1);
+    assert.equal(reloaded.equipment[0].customName, 'Main house furnace');
+    assert.equal(reloaded.equipment[0].purchaseDate, '2021-08-15');
     assert.equal(reloaded.equipment[0].location, 'Finished basement utility room');
     assert.equal(reloaded.equipment[0].warranty.provider, 'Carrier Extended Care');
     assert.equal(reloaded.equipment[0].documents.ownerManual.name, 'Updated owner manual');
     assert.equal(reloaded.equipment[0].documents.ownerManual.url, 'https://example.com/owner-manual');
     assert.equal(reloaded.equipment[0].documents.receipt.name, 'Install invoice');
+    assert.equal(reloaded.equipment[0].documents.partsReference.url, 'https://example.com/furnace-parts');
     assert.equal(getWarrantyStatus(reloaded.equipment[0].warranty, '2026-09-16'), 'Active');
     assert.equal(getWarrantyStatus({ expirationDate: '2026-09-16' }, '2026-09-16'), 'Active');
     assert.match(reloaded.updatedAt, /^\d{4}-\d{2}-\d{2}T/);
@@ -150,8 +156,9 @@ test('My Home profile regression checks', async t => {
     const equipmentId = profile.equipment[0].id;
     profile = addEquipmentServiceHistory(equipmentId, {
       date: '2026-08-15',
-      servicePerformed: 'Flushed tank and checked anode rod',
-      partsReplaced: 'Drain hose washer',
+      workType: 'Preventive maintenance',
+      description: 'Flushed tank and checked the anode rod for wear.',
+      partsUsed: 'Drain hose washer',
       performedBy: 'DIY',
       cost: '$18',
       notes: 'Sediment was moderate.'
@@ -195,7 +202,11 @@ test('My Home profile regression checks', async t => {
     const reloaded = loadMyHomeProfile(storage);
     const equipment = reloaded.equipment[0];
     assert.equal(equipment.serviceHistory.length, 1);
+    assert.equal(equipment.serviceHistory[0].workType, 'Preventive maintenance');
+    assert.equal(equipment.serviceHistory[0].servicePerformed, 'Preventive maintenance');
+    assert.equal(equipment.serviceHistory[0].description, 'Flushed tank and checked the anode rod for wear.');
     assert.equal(equipment.serviceHistory[0].performedBy, 'DIY');
+    assert.equal(equipment.serviceHistory[0].partsReplaced, 'Drain hose washer');
     assert.equal(equipment.maintenanceTasks.length, 1);
     assert.equal(getMaintenanceTaskStatus(equipment.maintenanceTasks[0], '2026-09-16'), 'Completed');
     assert.equal(equipment.maintenanceTasks[0].nextDueDate, '');
@@ -261,10 +272,12 @@ test('My Home profile regression checks', async t => {
         {
           id: 'good-equipment',
           type: 'Furnace',
+          name: 'Basement furnace',
           manufacturer: 'Trane',
           installationDateOrAge: 'Installed 2021',
           warrantyExpiration: '2030-01-01',
-          ownerManualUrl: 'javascript:alert(1)'
+          ownerManualUrl: 'javascript:alert(1)',
+          referenceUrl: 'https://example.com/trane-reference'
         },
         { id: 'bad-equipment', type: '   ', manufacturer: 'Unknown' }
       ],
@@ -281,11 +294,14 @@ test('My Home profile regression checks', async t => {
     assert.equal(normalized.homeInfo.nickname, 'Lake House');
     assert.equal(normalized.homeInfo.bathrooms, '2');
     assert.equal(normalized.equipment.length, 1);
+    assert.equal(normalized.equipment[0].customName, 'Basement furnace');
     assert.equal(normalized.equipment[0].approximateAge, 'Installed 2021');
     assert.equal(normalized.equipment[0].warranty.expirationDate, '2030-01-01');
     assert.equal(normalized.equipment[0].documents.ownerManual.url, '');
+    assert.equal(normalized.equipment[0].documents.partsReference.url, 'https://example.com/trane-reference');
     assert.equal(normalized.maintenanceRecords.length, 1);
     assert.equal(normalized.maintenanceRecords[0].partsReplaced, 'Filter');
+    assert.equal(normalized.maintenanceRecords[0].workType, 'Tune-up');
     assert.equal(normalized.upcomingMaintenance.length, 1);
     assert.equal(normalized.upcomingMaintenance[0].nextDueDate, '2026-10-01');
 
