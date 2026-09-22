@@ -201,6 +201,7 @@
 .my-home-status-pill.active{background:#e4f5ec;color:#1f6a4d;border-color:#bfe3d1}
 .my-home-status-pill.expired,.my-home-status-pill.overdue{background:#fff1f1;color:#a53030;border-color:#f0c5c5}
 .my-home-status-pill.unknown{background:#eef4f8;color:#315e7d;border-color:#cfe0ea}
+.my-home-status-pill.document{background:#f1f5f3;color:#365247;border-color:#d6e3dc}
 .my-home-status-pill.upcoming{background:#eef8f4;color:#2f7257;border-color:#c7e2d5}
 .my-home-status-pill.due{background:#fff8e9;color:#8a5a12;border-color:#ecd6a1}
 .my-home-status-pill.completed{background:#edf3ff;color:#31529a;border-color:#c9d6ff}

@@ -302,7 +302,7 @@ function renderDocumentRecord(documentRecord, { action, equipmentId = '' } = {})
         <div>
           <div class="my-home-status-line">
             <strong>${escapeHtml(documentRecord.name || 'Document record')}</strong>
-            <span class="my-home-status-pill unknown">${escapeHtml(documentRecord.type)}</span>
+            <span class="my-home-status-pill document">${escapeHtml(documentRecord.type)}</span>
             ${warrantyStatus ? `<span class="my-home-status-pill ${escapeHtml(statusClass(warrantyStatus))}">${escapeHtml(warrantyStatus)} warranty</span>` : ''}
           </div>
           ${documentRecord.url
