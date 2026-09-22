@@ -480,9 +480,8 @@ export function normalizeMyHomeProfile(rawProfile) {
       ? profile.equipment.map(normalizeEquipmentEntry).filter(item => item.type)
       : [],
     propertyDocuments: Array.isArray(profile.propertyDocuments || profile.documentsAndWarranties)
-      ? (profile.propertyDocuments || profile.documentsAndWarranties)
-        .map(item => normalizeDocumentRecord(item, normalizeDocumentType(item?.type)))
-        .filter(hasDocumentRecordContent)
+      ? dedupeDocumentRecords((profile.propertyDocuments || profile.documentsAndWarranties)
+        .map(item => normalizeDocumentRecord(item, normalizeDocumentType(item?.type))))
       : [],
     maintenanceRecords: Array.isArray(profile.maintenanceRecords)
       ? profile.maintenanceRecords.map(normalizeMaintenanceEntry).filter(item => item.equipment && item.servicePerformed)
