@@ -155,6 +155,10 @@ function dedupeDocumentRecords(records) {
   });
 }
 
+function mergeDocumentRecordArrays(...collections) {
+  return collections.filter(Array.isArray).flat();
+}
+
 function normalizeWarranty(entry) {
   return {
     startDate: toDateOnly(entry?.startDate),
@@ -231,8 +235,8 @@ function normalizeEquipmentEntry(entry) {
     }),
     modelSpecificNotes: toStringValue(entry?.documents?.modelSpecificNotes || entry?.modelSpecificNotes)
   };
-  const explicitDocumentRecords = Array.isArray(entry?.documentRecords || entry?.documentsAndWarranties)
-    ? (entry.documentRecords || entry.documentsAndWarranties)
+  const explicitDocumentRecords = mergeDocumentRecordArrays(entry?.documentRecords, entry?.documentsAndWarranties).length
+    ? mergeDocumentRecordArrays(entry?.documentRecords, entry?.documentsAndWarranties)
       .map(item => normalizeDocumentRecord(item, normalizeDocumentType(item?.type)))
     : [];
   const warrantyDetails = formatLegacyWarrantyDetails({
@@ -479,8 +483,8 @@ export function normalizeMyHomeProfile(rawProfile) {
     equipment: Array.isArray(profile.equipment)
       ? profile.equipment.map(normalizeEquipmentEntry).filter(item => item.type)
       : [],
-    propertyDocuments: Array.isArray(profile.propertyDocuments || profile.documentsAndWarranties)
-      ? dedupeDocumentRecords((profile.propertyDocuments || profile.documentsAndWarranties)
+    propertyDocuments: mergeDocumentRecordArrays(profile.propertyDocuments, profile.documentsAndWarranties).length
+      ? dedupeDocumentRecords(mergeDocumentRecordArrays(profile.propertyDocuments, profile.documentsAndWarranties)
         .map(item => normalizeDocumentRecord(item, normalizeDocumentType(item?.type))))
       : [],
     maintenanceRecords: Array.isArray(profile.maintenanceRecords)
