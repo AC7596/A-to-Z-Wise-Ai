@@ -290,6 +290,12 @@ function renderDocumentRecord(documentRecord, { action, equipmentId = '' } = {})
   const warrantyStatus = hasDocumentWarrantyDetails(documentRecord)
     ? getWarrantyStatus({ expirationDate: documentRecord.warrantyExpirationDate })
     : '';
+  const metadataRows = [
+    detailRow('Warranty provider', documentRecord.warrantyProvider),
+    detailRow('Warranty number', documentRecord.warrantyNumber),
+    dateDetailRow('Warranty start', documentRecord.warrantyStartDate),
+    dateDetailRow('Warranty expiration', documentRecord.warrantyExpirationDate)
+  ].filter(Boolean);
   const deleteAttrs = [
     `data-action="${escapeHtml(action)}"`,
     `data-id="${escapeHtml(documentRecord.id)}"`,
@@ -311,12 +317,7 @@ function renderDocumentRecord(documentRecord, { action, equipmentId = '' } = {})
         </div>
         <button type="button" class="btn secondary my-home-remove-btn" ${deleteAttrs}>Remove</button>
       </div>
-      <div class="my-home-document-meta">
-        ${detailRow('Warranty provider', documentRecord.warrantyProvider)}
-        ${detailRow('Warranty number', documentRecord.warrantyNumber)}
-        ${dateDetailRow('Warranty start', documentRecord.warrantyStartDate)}
-        ${dateDetailRow('Warranty expiration', documentRecord.warrantyExpirationDate)}
-      </div>
+      ${metadataRows.length ? `<div class="my-home-document-meta">${metadataRows.join('')}</div>` : ''}
       ${documentRecord.notes ? `<p class="my-home-entry-note">${escapeHtml(documentRecord.notes)}</p>` : ''}
     </li>
   `;
