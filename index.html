@@ -489,9 +489,64 @@
           <section class="my-home-card my-home-backup-card">
             <div class="my-home-card-header">
               <div>
-                <div class="eyebrow">Backup & import</div>
-                <h3>Keep a homeowner-controlled JSON copy</h3>
+                <div class="eyebrow">Documents, warranties, backup & import</div>
+                <h3>Keep home-wide records and a homeowner-controlled JSON copy</h3>
               </div>
+            </div>
+            <div class="my-home-detail-section">
+              <div class="my-home-section-header">
+                <h5>Property-wide documents &amp; warranties</h5>
+                <span>Use this for records that apply to the whole home instead of one exact equipment card.</span>
+              </div>
+              <form id="myHomePropertyDocumentForm" class="my-home-form">
+                <div class="my-home-form-grid my-home-reminder-grid">
+                  <label for="myHomePropertyDocumentName">
+                    Document name
+                    <input id="myHomePropertyDocumentName" name="name" type="text" placeholder="Roof warranty, home inspection, electrical permit..." required />
+                  </label>
+                  <label for="myHomePropertyDocumentType">
+                    Document type
+                    <select id="myHomePropertyDocumentType" name="type">
+                      <option value="Owner's Manual">Owner's Manual</option>
+                      <option value="Warranty">Warranty</option>
+                      <option value="Receipt">Receipt</option>
+                      <option value="Installation Document">Installation Document</option>
+                      <option value="Service Document">Service Document</option>
+                      <option value="Parts Information">Parts Information</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </label>
+                  <label class="my-home-full" for="myHomePropertyDocumentUrl">
+                    Official manufacturer or retailer URL
+                    <input id="myHomePropertyDocumentUrl" name="url" type="url" inputmode="url" placeholder="https://manufacturer.example/document-or-warranty" />
+                  </label>
+                  <label for="myHomePropertyWarrantyProvider">
+                    Warranty provider
+                    <input id="myHomePropertyWarrantyProvider" name="warrantyProvider" type="text" placeholder="Builder, installer, manufacturer, retailer..." />
+                  </label>
+                  <label for="myHomePropertyWarrantyNumber">
+                    Warranty number
+                    <input id="myHomePropertyWarrantyNumber" name="warrantyNumber" type="text" placeholder="Warranty or contract number" />
+                  </label>
+                  <label for="myHomePropertyWarrantyStart">
+                    Warranty start date
+                    <input id="myHomePropertyWarrantyStart" name="warrantyStartDate" type="date" />
+                  </label>
+                  <label for="myHomePropertyWarrantyExpiration">
+                    Warranty expiration date
+                    <input id="myHomePropertyWarrantyExpiration" name="warrantyExpirationDate" type="date" />
+                  </label>
+                  <label class="my-home-full" for="myHomePropertyDocumentNotes">
+                    Notes
+                    <textarea id="myHomePropertyDocumentNotes" name="notes" rows="3" placeholder="Coverage details, proof requirements, contractor scope, or homeowner notes"></textarea>
+                  </label>
+                </div>
+                <div class="my-home-card-actions">
+                  <button type="submit" class="btn primary">Add property-wide document or warranty</button>
+                </div>
+              </form>
+              <div id="myHomePropertyDocumentList"></div>
+              <p id="myHomePropertyDocumentEmpty" class="empty-state">No property-wide documents or warranties have been added yet.</p>
             </div>
             <p class="my-home-browser-note">
               Downloading creates a local JSON backup file from this browser. Import only valid A to Z Wise AI My Home backups.
