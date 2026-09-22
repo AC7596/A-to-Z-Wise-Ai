@@ -231,20 +231,6 @@ function normalizeEquipmentEntry(entry) {
     }),
     modelSpecificNotes: toStringValue(entry?.documents?.modelSpecificNotes || entry?.modelSpecificNotes)
   };
-  const legacyDocumentRecords = dedupeDocumentRecords([
-    normalizeDocumentRecord(documents.ownerManual, "Owner's Manual"),
-    normalizeDocumentRecord(documents.installationManual, 'Installation Document'),
-    normalizeDocumentRecord({
-      ...documents.warrantyDocument,
-      warrantyProvider: warranty.provider,
-      warrantyNumber: warranty.number,
-      warrantyStartDate: warranty.startDate,
-      warrantyExpirationDate: warranty.expirationDate,
-      notes: warranty.notes
-    }, 'Warranty'),
-    normalizeDocumentRecord(documents.receipt, 'Receipt'),
-    normalizeDocumentRecord(documents.partsReference, 'Parts Information')
-  ]);
   const explicitDocumentRecords = Array.isArray(entry?.documentRecords || entry?.documentsAndWarranties)
     ? (entry.documentRecords || entry.documentsAndWarranties)
       .map(item => normalizeDocumentRecord(item, normalizeDocumentType(item?.type)))
@@ -277,7 +263,7 @@ function normalizeEquipmentEntry(entry) {
     warrantyExpiration: warranty.expirationDate,
     warrantyDetails,
     documents,
-    documentRecords: dedupeDocumentRecords([...explicitDocumentRecords, ...legacyDocumentRecords]),
+    documentRecords: dedupeDocumentRecords(explicitDocumentRecords),
     serviceHistory: Array.isArray(entry?.serviceHistory)
       ? entry.serviceHistory.map(normalizeMaintenanceEntry).filter(item => item.date && item.servicePerformed)
       : [],

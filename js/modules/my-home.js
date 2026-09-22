@@ -421,6 +421,7 @@ function renderEquipmentCard(item) {
     renderDocumentItem('Receipt', item.documents.receipt),
     renderDocumentItem('Parts / reference link', item.documents.partsReference || {})
   ].filter(Boolean);
+  const documentRecords = item.documentRecords || [];
 
   return `
     <article class="my-home-entry my-home-equipment-record">
@@ -470,11 +471,20 @@ function renderEquipmentCard(item) {
           <h5>Manuals & documents</h5>
           <span>Browser-only: save names and lawful URLs for now.</span>
         </div>
-        ${renderDocumentRecordList(item.documentRecords || [], {
-          action: 'delete-equipment-document',
-          equipmentId: item.id
-        })}
-        ${legacyDocumentItems.length ? `<p class="my-home-browser-note">Legacy quick-link fields remain supported in this browser copy of My Home.</p>` : ''}
+        ${documentRecords.length
+          ? renderDocumentRecordList(documentRecords, {
+            action: 'delete-equipment-document',
+            equipmentId: item.id
+          })
+          : legacyDocumentItems.length
+            ? `<ul class="my-home-document-list">${legacyDocumentItems.join('')}</ul>`
+            : '<p class="my-home-browser-note">No document names or URLs have been saved yet.</p>'}
+        ${legacyDocumentItems.length && documentRecords.length
+          ? `<div class="my-home-subcollection">
+              <p class="my-home-browser-note">Legacy quick-link fields remain supported in this browser copy of My Home.</p>
+              <ul class="my-home-document-list">${legacyDocumentItems.join('')}</ul>
+            </div>`
+          : ''}
         ${item.documents.modelSpecificNotes ? `<p class="my-home-entry-note">${escapeHtml(item.documents.modelSpecificNotes)}</p>` : ''}
         <form class="my-home-form my-home-nested-form" data-form-type="equipment-document" data-equipment-id="${escapeHtml(item.id)}">
           <div class="my-home-form-grid">

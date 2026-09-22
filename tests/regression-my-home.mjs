@@ -149,9 +149,9 @@ test('My Home profile regression checks', async t => {
     assert.equal(reloaded.equipment[0].documents.ownerManual.url, 'https://example.com/owner-manual');
     assert.equal(reloaded.equipment[0].documents.receipt.name, 'Install invoice');
     assert.equal(reloaded.equipment[0].documents.partsReference.url, 'https://example.com/furnace-parts');
-    assert.equal(reloaded.equipment[0].documentRecords.length, 6);
-    assert.equal(reloaded.equipment[0].documentRecords.at(-1).type, 'Warranty');
-    assert.equal(reloaded.equipment[0].documentRecords.at(-1).warrantyProvider, 'ABC Heating & Cooling');
+    assert.equal(reloaded.equipment[0].documentRecords.length, 1);
+    assert.equal(reloaded.equipment[0].documentRecords[0].type, 'Warranty');
+    assert.equal(reloaded.equipment[0].documentRecords[0].warrantyProvider, 'ABC Heating & Cooling');
     assert.equal(getWarrantyStatus(reloaded.equipment[0].warranty, '2026-09-16'), 'Active');
     assert.equal(getWarrantyStatus({ expirationDate: '2026-09-16' }, '2026-09-16'), 'Active');
     assert.match(reloaded.updatedAt, /^\d{4}-\d{2}-\d{2}T/);
@@ -352,7 +352,7 @@ test('My Home profile regression checks', async t => {
     assert.equal(normalized.equipment[0].warranty.expirationDate, '2030-01-01');
     assert.equal(normalized.equipment[0].documents.ownerManual.url, '');
     assert.equal(normalized.equipment[0].documents.partsReference.url, 'https://example.com/trane-reference');
-    assert.equal(normalized.equipment[0].documentRecords.length, 3);
+    assert.equal(normalized.equipment[0].documentRecords.length, 1);
     assert.equal(normalized.propertyDocuments.length, 1);
     assert.equal(normalized.propertyDocuments[0].name, 'Roof warranty');
     assert.equal(normalized.maintenanceRecords.length, 1);
