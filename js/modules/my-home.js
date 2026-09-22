@@ -43,6 +43,10 @@ function formatText(value, fallback = 'Not added yet') {
   return value ? escapeHtml(value) : fallback;
 }
 
+function statusClass(value) {
+  return String(value || '').trim().toLowerCase().replace(/\s+/g, '-');
+}
+
 function equipmentDisplayName(item) {
   return item.customName || item.type;
 }
@@ -299,7 +303,7 @@ function renderDocumentRecord(documentRecord, { action, equipmentId = '' } = {})
           <div class="my-home-status-line">
             <strong>${escapeHtml(documentRecord.name || 'Document record')}</strong>
             <span class="my-home-status-pill unknown">${escapeHtml(documentRecord.type)}</span>
-            ${warrantyStatus ? `<span class="my-home-status-pill ${escapeHtml(warrantyStatus.toLowerCase())}">${escapeHtml(warrantyStatus)} warranty</span>` : ''}
+            ${warrantyStatus ? `<span class="my-home-status-pill ${escapeHtml(statusClass(warrantyStatus))}">${escapeHtml(warrantyStatus)} warranty</span>` : ''}
           </div>
           ${documentRecord.url
             ? `<a href="${escapeHtml(documentRecord.url)}" target="_blank" rel="noreferrer noopener">${escapeHtml(documentRecord.url)}</a>`
@@ -373,7 +377,7 @@ function renderTaskCard(task, equipmentId) {
         <div>
           <div class="my-home-status-line">
             <h5>${escapeHtml(task.task)}</h5>
-            <span class="my-home-status-pill ${escapeHtml(status.toLowerCase())}">${escapeHtml(status)}</span>
+            <span class="my-home-status-pill ${escapeHtml(statusClass(status))}">${escapeHtml(status)}</span>
           </div>
           <p>${escapeHtml(task.intervalBasis === 'manufacturer' ? 'Manufacturer / installer guidance' : 'General guidance')}</p>
         </div>
@@ -429,7 +433,7 @@ function renderEquipmentCard(item) {
         <div>
           <div class="my-home-status-line">
             <h4>${escapeHtml(equipmentDisplayName(item))}</h4>
-            <span class="my-home-status-pill ${escapeHtml(warrantyStatus.toLowerCase())}">${escapeHtml(warrantyStatus)} warranty</span>
+            <span class="my-home-status-pill ${escapeHtml(statusClass(warrantyStatus))}">${escapeHtml(warrantyStatus)} warranty</span>
           </div>
           <p>${escapeHtml(equipmentSubtitle(item))}</p>
         </div>
@@ -670,7 +674,7 @@ function renderGeneralReminderForm(item) {
         <div>
           <div class="my-home-status-line">
             <h4>${escapeHtml(item.task)}</h4>
-            <span class="my-home-status-pill ${escapeHtml(status.toLowerCase())}">${escapeHtml(status)}</span>
+            <span class="my-home-status-pill ${escapeHtml(statusClass(status))}">${escapeHtml(status)}</span>
           </div>
           <p>${escapeHtml(item.target || 'General property reminder')}</p>
         </div>
