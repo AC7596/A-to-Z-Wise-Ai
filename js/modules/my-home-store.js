@@ -1,5 +1,5 @@
 const STORAGE_KEY = 'fixwiseMyHomeProfile';
-const CURRENT_VERSION = 3;
+const CURRENT_VERSION = 4;
 const APP_ID = 'a-to-z-wise-ai-my-home';
 const RECORD_TYPE = 'property-record';
 const LOCAL_PROPERTY_ID = 'local-property-record';
@@ -19,6 +19,16 @@ export const EQUIPMENT_TYPES = [
   'Sump pump',
   'Garage door opener',
   'Other home equipment'
+];
+
+export const DOCUMENT_TYPES = [
+  "Owner's Manual",
+  'Warranty',
+  'Receipt',
+  'Installation Document',
+  'Service Document',
+  'Parts Information',
+  'Other'
 ];
 
 export const STARTER_REMINDERS = [
@@ -90,6 +100,61 @@ function normalizeDocumentLink(entry) {
   };
 }
 
+function normalizeDocumentType(value, fallback = 'Other') {
+  const normalized = toStringValue(value);
+  return DOCUMENT_TYPES.includes(normalized) ? normalized : fallback;
+}
+
+function normalizeDocumentRecord(entry, fallbackType = 'Other') {
+  return {
+    id: toStringValue(entry?.id) || createId('document'),
+    name: toStringValue(entry?.name),
+    type: normalizeDocumentType(entry?.type, fallbackType),
+    url: toUrlValue(entry?.url),
+    warrantyProvider: toStringValue(entry?.warrantyProvider || entry?.provider),
+    warrantyNumber: toStringValue(entry?.warrantyNumber || entry?.number),
+    warrantyStartDate: toDateOnly(entry?.warrantyStartDate || entry?.startDate),
+    warrantyExpirationDate: toDateOnly(entry?.warrantyExpirationDate || entry?.expirationDate || entry?.warrantyExpiration),
+    notes: toStringValue(entry?.notes)
+  };
+}
+
+function hasDocumentRecordContent(record) {
+  return !!(
+    record?.name
+    || record?.url
+    || record?.warrantyProvider
+    || record?.warrantyNumber
+    || record?.warrantyStartDate
+    || record?.warrantyExpirationDate
+    || record?.notes
+  );
+}
+
+function documentRecordSignature(record) {
+  return [
+    toStringValue(record?.name).toLowerCase(),
+    normalizeDocumentType(record?.type),
+    toUrlValue(record?.url).toLowerCase(),
+    toStringValue(record?.warrantyProvider).toLowerCase(),
+    toStringValue(record?.warrantyNumber).toLowerCase(),
+    toDateOnly(record?.warrantyStartDate),
+    toDateOnly(record?.warrantyExpirationDate),
+    toStringValue(record?.notes).toLowerCase()
+  ].join('|');
+}
+
+function dedupeDocumentRecords(records) {
+  const seen = new Set();
+  return records.filter(record => {
+    if (!hasDocumentRecordContent(record)) return false;
+    const signature = documentRecordSignature(record);
+    if (seen.has(signature)) return false;
+    seen.add(signature);
+    return true;
+  });
+}
+
 function normalizeWarranty(entry) {
   return {
     startDate: toDateOnly(entry?.startDate),
@@ -143,6 +208,47 @@ function normalizeEquipmentEntry(entry) {
   const warranty = normalizeWarranty(entry?.warranty || {
     expirationDate: entry?.warrantyExpiration
   });
+  const documents = {
+    ownerManual: normalizeDocumentLink(entry?.documents?.ownerManual || {
+      name: entry?.ownerManualName,
+      url: entry?.ownerManualUrl
+    }),
+    installationManual: normalizeDocumentLink(entry?.documents?.installationManual || {
+      name: entry?.installationManualName,
+      url: entry?.installationManualUrl
+    }),
+    warrantyDocument: normalizeDocumentLink(entry?.documents?.warrantyDocument || {
+      name: entry?.warrantyDocumentName,
+      url: entry?.warrantyDocumentUrl
+    }),
+    receipt: normalizeDocumentLink(entry?.documents?.receipt || {
+      name: entry?.receiptName,
+      url: entry?.receiptUrl
+    }),
+    partsReference: normalizeDocumentLink(entry?.documents?.partsReference || {
+      name: entry?.partsReferenceName,
+      url: entry?.partsReferenceUrl || entry?.referenceUrl
+    }),
+    modelSpecificNotes: toStringValue(entry?.documents?.modelSpecificNotes || entry?.modelSpecificNotes)
+  };
+  const legacyDocumentRecords = dedupeDocumentRecords([
+    normalizeDocumentRecord(documents.ownerManual, "Owner's Manual"),
+    normalizeDocumentRecord(documents.installationManual, 'Installation Document'),
+    normalizeDocumentRecord({
+      ...documents.warrantyDocument,
+      warrantyProvider: warranty.provider,
+      warrantyNumber: warranty.number,
+      warrantyStartDate: warranty.startDate,
+      warrantyExpirationDate: warranty.expirationDate,
+      notes: warranty.notes
+    }, 'Warranty'),
+    normalizeDocumentRecord(documents.receipt, 'Receipt'),
+    normalizeDocumentRecord(documents.partsReference, 'Parts Information')
+  ]);
+  const explicitDocumentRecords = Array.isArray(entry?.documentRecords || entry?.documentsAndWarranties)
+    ? (entry.documentRecords || entry.documentsAndWarranties)
+      .map(item => normalizeDocumentRecord(item, normalizeDocumentType(item?.type)))
+    : [];
   const warrantyDetails = formatLegacyWarrantyDetails({
     ...warranty,
     notes: toStringValue(entry?.warrantyDetails) || warranty.notes
@@ -170,29 +276,8 @@ function normalizeEquipmentEntry(entry) {
     warranty,
     warrantyExpiration: warranty.expirationDate,
     warrantyDetails,
-    documents: {
-      ownerManual: normalizeDocumentLink(entry?.documents?.ownerManual || {
-        name: entry?.ownerManualName,
-        url: entry?.ownerManualUrl
-      }),
-      installationManual: normalizeDocumentLink(entry?.documents?.installationManual || {
-        name: entry?.installationManualName,
-        url: entry?.installationManualUrl
-      }),
-      warrantyDocument: normalizeDocumentLink(entry?.documents?.warrantyDocument || {
-        name: entry?.warrantyDocumentName,
-        url: entry?.warrantyDocumentUrl
-      }),
-      receipt: normalizeDocumentLink(entry?.documents?.receipt || {
-        name: entry?.receiptName,
-        url: entry?.receiptUrl
-      }),
-      partsReference: normalizeDocumentLink(entry?.documents?.partsReference || {
-        name: entry?.partsReferenceName,
-        url: entry?.partsReferenceUrl || entry?.referenceUrl
-      }),
-      modelSpecificNotes: toStringValue(entry?.documents?.modelSpecificNotes || entry?.modelSpecificNotes)
-    },
+    documents,
+    documentRecords: dedupeDocumentRecords([...explicitDocumentRecords, ...legacyDocumentRecords]),
     serviceHistory: Array.isArray(entry?.serviceHistory)
       ? entry.serviceHistory.map(normalizeMaintenanceEntry).filter(item => item.date && item.servicePerformed)
       : [],
@@ -349,6 +434,7 @@ export function createDefaultMyHomeProfile() {
     updatedAt: '',
     homeInfo: createEmptyHomeInfo(),
     equipment: [],
+    propertyDocuments: [],
     maintenanceRecords: [],
     upcomingMaintenance: createStarterReminders()
   };
@@ -406,6 +492,11 @@ export function normalizeMyHomeProfile(rawProfile) {
     },
     equipment: Array.isArray(profile.equipment)
       ? profile.equipment.map(normalizeEquipmentEntry).filter(item => item.type)
+      : [],
+    propertyDocuments: Array.isArray(profile.propertyDocuments || profile.documentsAndWarranties)
+      ? (profile.propertyDocuments || profile.documentsAndWarranties)
+        .map(item => normalizeDocumentRecord(item, normalizeDocumentType(item?.type)))
+        .filter(hasDocumentRecordContent)
       : [],
     maintenanceRecords: Array.isArray(profile.maintenanceRecords)
       ? profile.maintenanceRecords.map(normalizeMaintenanceEntry).filter(item => item.equipment && item.servicePerformed)
@@ -497,6 +588,10 @@ export function updateEquipment(equipmentId, patch, storage) {
       receipt: {
         ...existing.documents.receipt,
         ...(isPlainObject(patch?.documents?.receipt) ? patch.documents.receipt : {})
+      },
+      partsReference: {
+        ...existing.documents.partsReference,
+        ...(isPlainObject(patch?.documents?.partsReference) ? patch.documents.partsReference : {})
       }
     }
   });
@@ -515,6 +610,25 @@ export function removeEquipment(equipmentId, storage) {
     ...profile,
     equipment: profile.equipment.filter(item => item.id !== equipmentId)
   }, storage);
+}
+
+export function addEquipmentDocumentRecord(equipmentId, entry, storage) {
+  const normalizedEntry = normalizeDocumentRecord(entry, normalizeDocumentType(entry?.type));
+  if (!hasDocumentRecordContent(normalizedEntry)) {
+    return loadMyHomeProfile(storage);
+  }
+
+  return updateEquipmentCollection(equipmentId, storage, equipment => ({
+    ...equipment,
+    documentRecords: dedupeDocumentRecords([...equipment.documentRecords, normalizedEntry])
+  }));
+}
+
+export function removeEquipmentDocumentRecord(equipmentId, documentId, storage) {
+  return updateEquipmentCollection(equipmentId, storage, equipment => ({
+    ...equipment,
+    documentRecords: equipment.documentRecords.filter(item => item.id !== documentId)
+  }));
 }
 
 function updateEquipmentCollection(equipmentId, storage, updater) {
@@ -607,6 +721,24 @@ export function removeMaintenanceRecord(recordId, storage) {
   return saveMyHomeProfile({
     ...profile,
     maintenanceRecords: profile.maintenanceRecords.filter(item => item.id !== recordId)
+  }, storage);
+}
+
+export function addPropertyDocumentRecord(entry, storage) {
+  const profile = loadMyHomeProfile(storage);
+  const normalizedEntry = normalizeDocumentRecord(entry, normalizeDocumentType(entry?.type));
+  if (!hasDocumentRecordContent(normalizedEntry)) return profile;
+  return saveMyHomeProfile({
+    ...profile,
+    propertyDocuments: dedupeDocumentRecords([...profile.propertyDocuments, normalizedEntry])
+  }, storage);
+}
+
+export function removePropertyDocumentRecord(documentId, storage) {
+  const profile = loadMyHomeProfile(storage);
+  return saveMyHomeProfile({
+    ...profile,
+    propertyDocuments: profile.propertyDocuments.filter(item => item.id !== documentId)
   }, storage);
 }
 
