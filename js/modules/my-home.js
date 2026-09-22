@@ -1,9 +1,12 @@
 import { escapeHtml } from '../utils/html.js';
 import {
+  DOCUMENT_TYPES,
   addEquipment,
+  addEquipmentDocumentRecord,
   addEquipmentMaintenanceTask,
   addEquipmentServiceHistory,
   addMaintenanceRecord,
+  addPropertyDocumentRecord,
   addUpcomingMaintenance,
   exportMyHomeProfile,
   getMaintenanceTaskStatus,
@@ -13,9 +16,11 @@ import {
   loadMyHomeProfile,
   markEquipmentMaintenanceTaskCompleted,
   removeEquipment,
+  removeEquipmentDocumentRecord,
   removeEquipmentMaintenanceTask,
   removeEquipmentServiceHistory,
   removeMaintenanceRecord,
+  removePropertyDocumentRecord,
   removeUpcomingMaintenance,
   updateEquipment,
   updateHomeInfo,
@@ -113,7 +118,10 @@ function cacheEls() {
     'myHomeReminderCount',
     'myHomeExportButton',
     'myHomeImportFile',
-    'myHomeImportFeedback'
+    'myHomeImportFeedback',
+    'myHomePropertyDocumentForm',
+    'myHomePropertyDocumentList',
+    'myHomePropertyDocumentEmpty'
   ].forEach(id => {
     els[id] = document.getElementById(id);
   });
@@ -264,6 +272,60 @@ function renderDocumentItem(label, documentLink) {
   `;
 }
 
+function hasDocumentWarrantyDetails(documentRecord) {
+  return !!(
+    documentRecord?.warrantyProvider
+    || documentRecord?.warrantyNumber
+    || documentRecord?.warrantyStartDate
+    || documentRecord?.warrantyExpirationDate
+    || documentRecord?.notes
+  );
+}
+
+function renderDocumentRecord(documentRecord, { action, equipmentId = '' } = {}) {
+  const warrantyStatus = hasDocumentWarrantyDetails(documentRecord)
+    ? getWarrantyStatus({ expirationDate: documentRecord.warrantyExpirationDate })
+    : '';
+  const deleteAttrs = [
+    `data-action="${escapeHtml(action)}"`,
+    `data-id="${escapeHtml(documentRecord.id)}"`,
+    equipmentId ? `data-equipment-id="${escapeHtml(equipmentId)}"` : ''
+  ].filter(Boolean).join(' ');
+
+  return `
+    <li>
+      <div class="my-home-entry-header">
+        <div>
+          <div class="my-home-status-line">
+            <strong>${escapeHtml(documentRecord.name || 'Document record')}</strong>
+            <span class="my-home-status-pill unknown">${escapeHtml(documentRecord.type)}</span>
+            ${warrantyStatus ? `<span class="my-home-status-pill ${escapeHtml(warrantyStatus.toLowerCase())}">${escapeHtml(warrantyStatus)} warranty</span>` : ''}
+          </div>
+          ${documentRecord.url
+            ? `<a href="${escapeHtml(documentRecord.url)}" target="_blank" rel="noreferrer noopener">${escapeHtml(documentRecord.url)}</a>`
+            : '<span>Official URL not added yet.</span>'}
+        </div>
+        <button type="button" class="btn secondary my-home-remove-btn" ${deleteAttrs}>Remove</button>
+      </div>
+      <div class="my-home-document-meta">
+        ${detailRow('Warranty provider', documentRecord.warrantyProvider)}
+        ${detailRow('Warranty number', documentRecord.warrantyNumber)}
+        ${dateDetailRow('Warranty start', documentRecord.warrantyStartDate)}
+        ${dateDetailRow('Warranty expiration', documentRecord.warrantyExpirationDate)}
+      </div>
+      ${documentRecord.notes ? `<p class="my-home-entry-note">${escapeHtml(documentRecord.notes)}</p>` : ''}
+    </li>
+  `;
+}
+
+function renderDocumentRecordList(records, options) {
+  if (!records.length) {
+    return '<p class="my-home-browser-note">No document names or URLs have been saved yet.</p>';
+  }
+
+  return `<ul class="my-home-document-list">${records.map(record => renderDocumentRecord(record, options)).join('')}</ul>`;
+}
+
 function renderServiceHistoryList(serviceHistory, equipmentId) {
   if (!serviceHistory.length) {
     return '<p class="my-home-browser-note">No service history has been added for this equipment yet.</p>';
@@ -352,7 +414,7 @@ function renderEquipmentTaskList(tasks, equipmentId) {
 
 function renderEquipmentCard(item) {
   const warrantyStatus = getWarrantyStatus(item.warranty);
-  const documentItems = [
+  const legacyDocumentItems = [
     renderDocumentItem('Owner manual', item.documents.ownerManual),
     renderDocumentItem('Installation manual', item.documents.installationManual),
     renderDocumentItem('Warranty documentation', item.documents.warrantyDocument),
@@ -408,8 +470,53 @@ function renderEquipmentCard(item) {
           <h5>Manuals & documents</h5>
           <span>Browser-only: save names and lawful URLs for now.</span>
         </div>
-        ${documentItems.length ? `<ul class="my-home-document-list">${documentItems.join('')}</ul>` : '<p class="my-home-browser-note">No document names or URLs have been saved yet.</p>'}
+        ${renderDocumentRecordList(item.documentRecords || [], {
+          action: 'delete-equipment-document',
+          equipmentId: item.id
+        })}
+        ${legacyDocumentItems.length ? `<p class="my-home-browser-note">Legacy quick-link fields remain supported in this browser copy of My Home.</p>` : ''}
         ${item.documents.modelSpecificNotes ? `<p class="my-home-entry-note">${escapeHtml(item.documents.modelSpecificNotes)}</p>` : ''}
+        <form class="my-home-form my-home-nested-form" data-form-type="equipment-document" data-equipment-id="${escapeHtml(item.id)}">
+          <div class="my-home-form-grid">
+            <label>
+              Document name
+              <input name="name" type="text" placeholder="Whirlpool owner manual, receipt, service ticket..." required />
+            </label>
+            <label>
+              Document type
+              <select name="type">
+                ${DOCUMENT_TYPES.map(type => `<option value="${escapeHtml(type)}">${escapeHtml(type)}</option>`).join('')}
+              </select>
+            </label>
+            <label class="my-home-full">
+              Official manufacturer or retailer URL
+              <input name="url" type="url" inputmode="url" placeholder="https://manufacturer.example/manual-or-warranty" />
+            </label>
+            <label>
+              Warranty provider
+              <input name="warrantyProvider" type="text" placeholder="Manufacturer, retailer, contractor, home warranty..." />
+            </label>
+            <label>
+              Warranty number
+              <input name="warrantyNumber" type="text" placeholder="Warranty or contract number" />
+            </label>
+            <label>
+              Warranty start date
+              <input name="warrantyStartDate" type="date" />
+            </label>
+            <label>
+              Warranty expiration date
+              <input name="warrantyExpirationDate" type="date" />
+            </label>
+            <label class="my-home-full">
+              Notes
+              <textarea name="notes" rows="3" placeholder="Coverage details, purchase source, required proof, or service-plan notes"></textarea>
+            </label>
+          </div>
+          <div class="my-home-card-actions">
+            <button type="submit" class="btn primary">Add document or warranty</button>
+          </div>
+        </form>
       </section>
 
       <section class="my-home-detail-section">
@@ -611,6 +718,20 @@ function renderReminderList() {
   els.myHomeReminderList.innerHTML = profile.upcomingMaintenance.map(renderGeneralReminderForm).join('');
 }
 
+function renderPropertyDocumentList() {
+  if (!els.myHomePropertyDocumentList) return;
+  const items = profile.propertyDocuments || [];
+  if (!items.length) {
+    els.myHomePropertyDocumentList.innerHTML = '';
+    if (els.myHomePropertyDocumentEmpty) els.myHomePropertyDocumentEmpty.style.display = 'block';
+    return;
+  }
+  if (els.myHomePropertyDocumentEmpty) els.myHomePropertyDocumentEmpty.style.display = 'none';
+  els.myHomePropertyDocumentList.innerHTML = renderDocumentRecordList(items, {
+    action: 'delete-property-document'
+  });
+}
+
 function renderAll() {
   populateHomeInfoForm();
   renderSummary();
@@ -618,6 +739,7 @@ function renderAll() {
   renderEquipmentList();
   renderMaintenanceList();
   renderReminderList();
+  renderPropertyDocumentList();
   populateEquipmentForm();
 }
 
@@ -678,6 +800,20 @@ function readEquipmentFormValues() {
   };
 }
 
+function readDocumentRecordFormValues(form) {
+  const values = readFormValues(form);
+  return {
+    name: values.name,
+    type: values.type,
+    url: values.url,
+    warrantyProvider: values.warrantyProvider,
+    warrantyNumber: values.warrantyNumber,
+    warrantyStartDate: values.warrantyStartDate,
+    warrantyExpirationDate: values.warrantyExpirationDate,
+    notes: values.notes
+  };
+}
+
 function downloadBackupFile(content) {
   const blob = new Blob([content], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -732,6 +868,14 @@ function bindForms() {
     setSaveMessage('Property reminder saved to your My Home maintenance list in this browser.');
   });
 
+  els.myHomePropertyDocumentForm?.addEventListener('submit', e => {
+    e.preventDefault();
+    profile = addPropertyDocumentRecord(readDocumentRecordFormValues(els.myHomePropertyDocumentForm));
+    els.myHomePropertyDocumentForm.reset();
+    renderAll();
+    setSaveMessage('Property-wide document or warranty saved to your My Home browser record.');
+  });
+
   els.myHomeExportButton?.addEventListener('click', () => {
     downloadBackupFile(exportMyHomeProfile());
     setImportMessage('JSON backup downloaded from this browser copy of My Home.');
@@ -781,6 +925,16 @@ function bindCollectionActions() {
       return;
     }
 
+    if (btn.dataset.action === 'delete-equipment-document') {
+      if (!confirmDestructiveAction('Remove this equipment document or warranty record?')) {
+        return;
+      }
+      profile = removeEquipmentDocumentRecord(btn.dataset.equipmentId, btn.dataset.id);
+      renderAll();
+      setSaveMessage('Equipment document or warranty record removed.');
+      return;
+    }
+
     if (btn.dataset.action === 'delete-maintenance') {
       if (!confirmDestructiveAction('Remove this property service record from your My Home timeline?')) {
         return;
@@ -798,6 +952,16 @@ function bindCollectionActions() {
       profile = removeUpcomingMaintenance(btn.dataset.id);
       renderAll();
       setSaveMessage('Property reminder removed from your My Home maintenance list.');
+      return;
+    }
+
+    if (btn.dataset.action === 'delete-property-document') {
+      if (!confirmDestructiveAction('Remove this property-wide document or warranty record?')) {
+        return;
+      }
+      profile = removePropertyDocumentRecord(btn.dataset.id);
+      renderAll();
+      setSaveMessage('Property-wide document or warranty record removed.');
       return;
     }
 
@@ -864,6 +1028,14 @@ function bindCollectionActions() {
       form.reset();
       renderAll();
       setSaveMessage('Equipment service history saved in your My Home property record.');
+      return;
+    }
+
+    if (form.dataset.formType === 'equipment-document') {
+      profile = addEquipmentDocumentRecord(equipmentId, readDocumentRecordFormValues(form));
+      form.reset();
+      renderAll();
+      setSaveMessage('Equipment document or warranty saved in your My Home property record.');
       return;
     }
 

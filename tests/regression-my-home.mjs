@@ -5,9 +5,11 @@ import path from 'node:path';
 import {
   STARTER_REMINDERS,
   addEquipment,
+  addEquipmentDocumentRecord,
   addEquipmentMaintenanceTask,
   addEquipmentServiceHistory,
   addMaintenanceRecord,
+  addPropertyDocumentRecord,
   addUpcomingMaintenance,
   createDefaultMyHomeProfile,
   exportMyHomeProfile,
@@ -18,9 +20,11 @@ import {
   markEquipmentMaintenanceTaskCompleted,
   normalizeMyHomeProfile,
   removeEquipment,
+  removeEquipmentDocumentRecord,
   removeEquipmentMaintenanceTask,
   removeEquipmentServiceHistory,
   removeMaintenanceRecord,
+  removePropertyDocumentRecord,
   removeUpcomingMaintenance,
   updateEquipment,
   updateHomeInfo,
@@ -55,7 +59,7 @@ test('My Home profile regression checks', async t => {
     assert.equal(profile.appId, 'a-to-z-wise-ai-my-home');
     assert.equal(profile.recordType, 'property-record');
     assert.equal(profile.propertyId, 'local-property-record');
-    assert.equal(profile.version, 3);
+    assert.equal(profile.version, 4);
     assert.deepEqual(Object.keys(profile.homeInfo), [
       'nickname',
       'address',
@@ -66,6 +70,7 @@ test('My Home profile regression checks', async t => {
       'bathrooms'
     ]);
     assert.equal(profile.equipment.length, 0);
+    assert.deepEqual(profile.propertyDocuments, []);
     assert.equal(profile.maintenanceRecords.length, 0);
     assert.equal(profile.upcomingMaintenance.length, STARTER_REMINDERS.length);
     assert.equal(profile.upcomingMaintenance[0].intervalBasis, 'general');
@@ -122,6 +127,17 @@ test('My Home profile regression checks', async t => {
       }
     }, storage);
 
+    profile = addEquipmentDocumentRecord(equipmentId, {
+      name: 'Carrier labor warranty',
+      type: 'Warranty',
+      url: 'https://example.com/labor-warranty',
+      warrantyProvider: 'ABC Heating & Cooling',
+      warrantyNumber: 'LAB-22',
+      warrantyStartDate: '2021-09-01',
+      warrantyExpirationDate: '2024-09-01',
+      notes: 'Labor coverage separate from manufacturer parts warranty.'
+    }, storage);
+
     let reloaded = loadMyHomeProfile(storage);
     assert.equal(reloaded.homeInfo.nickname, 'Maple House');
     assert.equal(reloaded.equipment.length, 1);
@@ -133,6 +149,9 @@ test('My Home profile regression checks', async t => {
     assert.equal(reloaded.equipment[0].documents.ownerManual.url, 'https://example.com/owner-manual');
     assert.equal(reloaded.equipment[0].documents.receipt.name, 'Install invoice');
     assert.equal(reloaded.equipment[0].documents.partsReference.url, 'https://example.com/furnace-parts');
+    assert.equal(reloaded.equipment[0].documentRecords.length, 6);
+    assert.equal(reloaded.equipment[0].documentRecords.at(-1).type, 'Warranty');
+    assert.equal(reloaded.equipment[0].documentRecords.at(-1).warrantyProvider, 'ABC Heating & Cooling');
     assert.equal(getWarrantyStatus(reloaded.equipment[0].warranty, '2026-09-16'), 'Active');
     assert.equal(getWarrantyStatus({ expirationDate: '2026-09-16' }, '2026-09-16'), 'Active');
     assert.match(reloaded.updatedAt, /^\d{4}-\d{2}-\d{2}T/);
@@ -233,12 +252,23 @@ test('My Home profile regression checks', async t => {
       recommendedInterval: 'Every month',
       nextDueDate: '2026-10-01'
     }, storage);
+    profile = addPropertyDocumentRecord({
+      name: 'Builder structural warranty',
+      type: 'Warranty',
+      url: 'https://example.com/structural-warranty',
+      warrantyProvider: 'Lakeview Builders',
+      warrantyNumber: 'HOME-55',
+      warrantyStartDate: '2020-05-01',
+      warrantyExpirationDate: '2030-05-01',
+      notes: 'Applies to foundation and framing only.'
+    }, storage);
 
     const backupJson = exportMyHomeProfile(storage);
     const backup = JSON.parse(backupJson);
     assert.equal(backup.appId, 'a-to-z-wise-ai-my-home');
     assert.equal(backup.recordType, 'property-record');
     assert.equal(backup.homeInfo.nickname, 'Lake House');
+    assert.equal(backup.propertyDocuments.length, 1);
     assert.match(backup.exportedAt, /^\d{4}-\d{2}-\d{2}T/);
 
     const importedStorage = createMemoryStorage();
@@ -277,9 +307,32 @@ test('My Home profile regression checks', async t => {
           installationDateOrAge: 'Installed 2021',
           warrantyExpiration: '2030-01-01',
           ownerManualUrl: 'javascript:alert(1)',
-          referenceUrl: 'https://example.com/trane-reference'
+          referenceUrl: 'https://example.com/trane-reference',
+          documentsAndWarranties: [
+            {
+              name: 'Registered warranty',
+              type: 'Warranty',
+              url: 'https://example.com/warranty-card',
+              warrantyProvider: 'Trane',
+              warrantyExpirationDate: '2030-01-01'
+            }
+          ]
         },
         { id: 'bad-equipment', type: '   ', manufacturer: 'Unknown' }
+      ],
+      documentsAndWarranties: [
+        {
+          id: 'property-doc-1',
+          name: 'Roof warranty',
+          type: 'Warranty',
+          url: 'https://example.com/roof-warranty',
+          warrantyProvider: 'Roof Co',
+          warrantyExpirationDate: '2035-06-01'
+        },
+        {
+          id: 'property-doc-2',
+          type: 'Other'
+        }
       ],
       maintenanceRecords: [
         { id: 'good-record', equipment: 'Furnace', servicePerformed: 'Tune-up', date: '2026-07-01', partsUsed: 'Filter' },
@@ -299,6 +352,9 @@ test('My Home profile regression checks', async t => {
     assert.equal(normalized.equipment[0].warranty.expirationDate, '2030-01-01');
     assert.equal(normalized.equipment[0].documents.ownerManual.url, '');
     assert.equal(normalized.equipment[0].documents.partsReference.url, 'https://example.com/trane-reference');
+    assert.equal(normalized.equipment[0].documentRecords.length, 3);
+    assert.equal(normalized.propertyDocuments.length, 1);
+    assert.equal(normalized.propertyDocuments[0].name, 'Roof warranty');
     assert.equal(normalized.maintenanceRecords.length, 1);
     assert.equal(normalized.maintenanceRecords[0].partsReplaced, 'Filter');
     assert.equal(normalized.maintenanceRecords[0].workType, 'Tune-up');
@@ -338,14 +394,32 @@ test('My Home profile regression checks', async t => {
     }, storage);
     const recordId = profile.maintenanceRecords[0].id;
 
+    profile = addEquipmentDocumentRecord(equipmentId, {
+      name: 'Dryer manual',
+      type: "Owner's Manual",
+      url: 'https://example.com/dryer-manual'
+    }, storage);
+    const equipmentDocumentId = profile.equipment[0].documentRecords[0].id;
+
+    profile = addPropertyDocumentRecord({
+      name: 'Whole-home warranty',
+      type: 'Warranty',
+      url: 'https://example.com/home-warranty'
+    }, storage);
+    const propertyDocumentId = profile.propertyDocuments[0].id;
+
     const reminderId = profile.upcomingMaintenance[0].id;
+    profile = removeEquipmentDocumentRecord(equipmentId, equipmentDocumentId, storage);
     profile = removeEquipmentServiceHistory(equipmentId, historyId, storage);
     profile = removeEquipmentMaintenanceTask(equipmentId, taskId, storage);
     profile = removeMaintenanceRecord(recordId, storage);
+    profile = removePropertyDocumentRecord(propertyDocumentId, storage);
     profile = removeUpcomingMaintenance(reminderId, storage);
 
+    assert.equal(profile.equipment[0].documentRecords.length, 0);
     assert.equal(profile.equipment[0].serviceHistory.length, 0);
     assert.equal(profile.equipment[0].maintenanceTasks.length, 0);
+    assert.equal(profile.propertyDocuments.length, 0);
     assert.equal(profile.maintenanceRecords.length, 0);
     assert.equal(profile.upcomingMaintenance.some(item => item.id === reminderId), false);
 
@@ -367,6 +441,7 @@ test('My Home profile regression checks', async t => {
     assert.ok(homepage.includes('id="my-home"'), 'homepage should contain the My Home section');
     assert.ok(homepage.includes('Build your home&#39;s detailed digital record.') || homepage.includes("Build your home's detailed digital record."));
     assert.ok(homepage.includes('Download My Home JSON backup'));
+    assert.ok(homepage.includes('Property-wide documents &amp; warranties') || homepage.includes('Property-wide documents & warranties'));
     assert.ok(homepage.includes('there is no account, server document upload, or permanent cloud storage yet'));
     assert.ok(homepage.includes('lawful URLs only'));
 
