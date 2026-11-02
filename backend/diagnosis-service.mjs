@@ -203,12 +203,25 @@ function collectRiskText(payload) {
     payload.symptoms?.otherSymptoms,
     ...payload.conversationHistory.map(entry => entry.answer)
   ].filter(Boolean);
-  return pool.join(' ').toLowerCase();
+  // Keep separate fields and follow-ups from sharing a negation scope.
+  return pool.join('\n').toLowerCase();
 }
 
 export function detectImmediateSafetyStop(payload) {
   const riskText = collectRiskText(payload);
-  return DANGER_RULES.find(rule => rule.pattern.test(riskText)) || null;
+  const hazardTerms = DANGER_RULES.map(rule => rule.pattern.source).join('|');
+  const negatedPrefix = new RegExp(
+    `\\b(?:no(?: signs? of| evidence of)?|without|do not|does not|did not|don't|doesn't|didn't)\\s+(?:(?:${hazardTerms})\\s*(?:,\\s*(?:(?:and|or|nor)\\s+)?|(?:and|or|nor)\\s+))*$`, 'i'
+  );
+  return DANGER_RULES.find(rule => {
+    const matches = riskText.matchAll(new RegExp(`\\b${rule.pattern.source}\\b`, 'gi'));
+    return Array.from(matches).some(match => {
+      // Only explicit, local denials are excluded. Uncertain reports and any
+      // positive report elsewhere in the conversation still trigger a stop.
+      const prefix = riskText.slice(0, match.index).split(/[.!?;\n]|\b(?:but|however|yet)\b/i).at(-1);
+      return !negatedPrefix.test(prefix);
+    });
+  }) || null;
 }
 
 export function buildSafetyStopResponse(payload, dangerRule) {
@@ -274,6 +287,10 @@ function buildSystemPrompt() {
     'Never claim certainty. Use words like possible/likely.',
     'Set hasDanger=true only for an actual hazard supported by the reported symptoms. Routine precautions (such as shutting off water before a faucet repair) and conditional stop instructions are not evidence of a current hazard. Otherwise set hasDanger=false and dangerConfig=null, while retaining safetyWarnings and whenToStopDIY.',
     'Never invent equipment details. Use only provided My Home data.',
+    'Read the original description and every conversationHistory answer together. Preserve established facts, do not ask already-answered questions, and explain how new facts narrow the possibilities. If answers conflict, ask one focused clarification rather than silently choosing one.',
+    'Do not infer a hazard from an explicit denial such as no smoke or no burning smell. Uncertain or conflicting hazard reports still require caution.',
+    'Before recommending parts or internal repair, ask for missing facts that change the troubleshooting path. For a dryer that runs but does not heat, first establish electric versus gas. With confirmed strong exhaust airflow, demote a blocked vent from likely causes unless another reported fact supports it; do not repeat vent cleaning as the main next step.',
+    'Keep safeChecks and nextActions limited to accessible homeowner checks. Do not instruct an unqualified homeowner to open electrical panels, test internal wiring or heating elements with a meter, or work on gas components. Describe those tests as work for a qualified technician in whenToCallProfessional. State a concrete stopping point, and avoid recommending replacement parts before the fault and equipment compatibility are established.',
     'Return strict JSON only with keys: matched, needsFollowUp, confidence, hasDanger, dangerConfig, possibleCauses, otherPossibleCauses, safeChecks, nextActions, tools, parts, safetyWarnings, whenToStopDIY, whenToCallProfessional, followUpQuestions, issue, category.',
     'possibleCauses and otherPossibleCauses must be arrays of objects with title and whyPossible.',
     'issue must include: causes, otherCauses, clarifyingQuestions, nextCheck, steps, tools, parts, time, difficulty, tips, stopWhen, safety, pro.',

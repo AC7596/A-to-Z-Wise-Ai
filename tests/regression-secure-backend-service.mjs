@@ -84,6 +84,45 @@ test('immediate safety guardrail returns STOP guidance for danger signals', () =
   assert.ok(response.whenToCallProfessional.length > 0);
 });
 
+test('explicit hazard denials do not trigger an emergency', () => {
+  for (const problem of [
+    'No smoke, no burning smell, and no sparking.',
+    'No smoke or burning smell.',
+    'No smoke, burning smell, or sparking.',
+    'There are no signs of smoke.',
+    "I do not smell gas.",
+    "I don't smell gas.",
+    'The sparkling faucet needs a washer.'
+  ]) {
+    const payload = validateAndNormalizeDiagnosisPayload({ scope: 'home-diy-only', problem });
+    assert.equal(detectImmediateSafetyStop(payload), null, problem);
+  }
+});
+
+test('negation never masks a separate positive or uncertain hazard report', () => {
+  for (const problem of [
+    'No smoke but a burning smell is coming from the outlet.',
+    'No smoke. Sparking at the outlet.',
+    'No smoke, but smoke started later.',
+    'I am not sure whether I smell gas.',
+    'No longer seeing smoke.',
+    'No smoke and the panel is hot.'
+  ]) {
+    const payload = validateAndNormalizeDiagnosisPayload({ scope: 'home-diy-only', problem });
+    assert.ok(detectImmediateSafetyStop(payload), problem);
+  }
+  const payload = validateAndNormalizeDiagnosisPayload({
+    scope: 'home-diy-only', problem: 'No smoke', symptoms: { smell: 'burning smell' },
+    conversationHistory: [{ answer: 'No burning smell now.' }]
+  });
+  assert.ok(detectImmediateSafetyStop(payload));
+  const laterHazard = validateAndNormalizeDiagnosisPayload({
+    scope: 'home-diy-only', problem: 'No smoke or burning smell.',
+    conversationHistory: [{ answer: 'Now there is sparking.' }]
+  });
+  assert.ok(detectImmediateSafetyStop(laterHazard));
+});
+
 test('provider output is normalized into UI-ready structured diagnosis fields', () => {
   const payload = validateAndNormalizeDiagnosisPayload(createBasePayload());
   const normalized = normalizeProviderDiagnosis({
