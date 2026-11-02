@@ -181,6 +181,26 @@ test('provider hazards and emergency difficulty retain danger alerts', () => {
   assert.equal(normalizeProviderDiagnosis({ issue: { difficulty: 'unknown' } }, payload).issue.difficulty, 'professional');
 });
 
+test('dryer internal testing is redirected to a technician across UI fields', () => {
+  const result = normalizeProviderDiagnosis({
+    hasDanger: false,
+    safeChecks: ['Check the displayed error code.', 'Test the thermal fuse.'],
+    nextActions: ['Inspect the heating element for continuity.'],
+    followUpQuestions: ['Have you tested the thermostat?', 'Is there an error code?'],
+    tools: ['Multimeter'], parts: ['Heating element'],
+    issue: { difficulty: 'intermediate', nextCheck: 'Test the heating element.' }
+  }, validateAndNormalizeDiagnosisPayload(createBasePayload()));
+  assert.deepEqual(result.safeChecks, ['Check the displayed error code.']);
+  assert.deepEqual(result.followUpQuestions, ['Is there an error code?']);
+  assert.match(result.nextActions[0], /qualified appliance technician/);
+  assert.equal(result.issue.nextCheck, 'Check the displayed error code.');
+  assert.equal(result.issue.difficulty, 'professional');
+  assert.equal(result.hasDanger, false);
+  assert.deepEqual(result.parts, []);
+  assert.deepEqual(result.tools, []);
+  assert.deepEqual(result.issue.steps, result.nextActions);
+});
+
 test('provider call uses server-side secret and returns normalized response', async () => {
   const payload = validateAndNormalizeDiagnosisPayload(createBasePayload());
 

@@ -289,7 +289,7 @@ function buildSystemPrompt() {
     'Never invent equipment details. Use only provided My Home data.',
     'Read the original description and every conversationHistory answer together. Preserve established facts, do not ask already-answered questions, and explain how new facts narrow the possibilities. If answers conflict, ask one focused clarification rather than silently choosing one.',
     'Do not infer a hazard from an explicit denial such as no smoke or no burning smell. Uncertain or conflicting hazard reports still require caution.',
-    'Before recommending parts or internal repair, ask for missing facts that change the troubleshooting path. For a dryer that runs but does not heat, first establish electric versus gas. With confirmed strong exhaust airflow, demote a blocked vent from likely causes unless another reported fact supports it; do not repeat vent cleaning as the main next step.',
+    'Before recommending parts or internal repair, ask for missing facts that change the troubleshooting path. For a dryer that runs but does not heat, first establish electric versus gas. Airflow is UNKNOWN unless the user explicitly describes it. Only if the user reports strong exhaust airflow, demote a blocked vent from likely causes unless another reported fact supports it. Never say the user reported airflow or any other fact that is absent from their request.',
     'Keep safeChecks and nextActions limited to accessible homeowner checks. Do not instruct an unqualified homeowner to open electrical panels, test internal wiring or heating elements with a meter, or work on gas components. Describe those tests as work for a qualified technician in whenToCallProfessional. State a concrete stopping point, and avoid recommending replacement parts before the fault and equipment compatibility are established.',
     'Return strict JSON only with keys: matched, needsFollowUp, confidence, hasDanger, dangerConfig, possibleCauses, otherPossibleCauses, safeChecks, nextActions, tools, parts, safetyWarnings, whenToStopDIY, whenToCallProfessional, followUpQuestions, issue, category.',
     'possibleCauses and otherPossibleCauses must be arrays of objects with title and whyPossible.',
@@ -466,6 +466,35 @@ export function normalizeProviderDiagnosis(rawResponse, payload) {
   }
   if (!normalized.whenToCallProfessional.length) {
     normalized.whenToCallProfessional = ['Call a licensed professional if the issue requires internal electrical, gas, refrigerant, or structural work.'];
+  }
+
+  // Dryer internal diagnostics belong to a technician, even if the model
+  // incorrectly places them in homeowner steps or follow-up questions.
+  if (/\bdryer\b/i.test([payload.areaOrEquipment, payload.problem].join(' '))) {
+    const internalWork = /\b(heating element|thermal fuse|thermostat|multimeter|continuity|internal|wiring|control board|gas supply|gas valve|ignit(?:er|or))\b/i;
+    const referral = 'Have a qualified appliance technician diagnose internal electrical or gas components; do not open the dryer or test internal parts yourself.';
+    const instructionLists = ['safeChecks', 'nextActions', 'followUpQuestions'];
+    const removedInternalWork = instructionLists.some(key => normalized[key].some(text => internalWork.test(text)))
+      || internalWork.test(normalized.issue.nextCheck);
+    if (removedInternalWork) {
+      instructionLists.forEach(key => {
+        normalized[key] = normalized[key].filter(text => !internalWork.test(text));
+      });
+      normalized.nextActions.push(referral);
+      normalized.whenToCallProfessional.push(referral);
+      normalized.whenToStopDIY.push('Stop before removing covers or testing internal dryer components.');
+      normalized.tools = normalized.tools.filter(text => !internalWork.test(text));
+      normalized.parts = [];
+      normalized.issue.nextCheck = normalized.safeChecks[0] || referral;
+      normalized.issue.steps = normalized.nextActions;
+      normalized.issue.clarifyingQuestions = normalized.followUpQuestions;
+      normalized.issue.tools = normalized.tools;
+      normalized.issue.parts = [];
+      normalized.issue.difficulty = normalized.hasDanger ? normalized.issue.difficulty : 'professional';
+      normalized.issue.stopWhen = normalized.whenToStopDIY.join(' ');
+      normalized.issue.pro = referral;
+      normalized.needsFollowUp = normalized.followUpQuestions.length > 0;
+    }
   }
 
   return normalized;
