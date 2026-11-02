@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import worker from '../backend/worker.mjs';
+import { buildDiagnosisRequest, buildDiagnosisTransportPayload } from '../js/api/diagnosis-contract.js';
 import {
   validateAndNormalizeDiagnosisPayload,
   detectImmediateSafetyStop,
@@ -49,6 +50,16 @@ test('secure backend payload validation preserves home/DIY contract', () => {
   assert.equal(payload.problem, 'Dryer runs but does not heat.');
   assert.equal(payload.myHomeContext.selectedEquipment.modelNumber, 'WED4815EW');
   assert.equal(payload.myHomeContext.maintenanceHistory.length, 1);
+});
+
+test('frontend requests with empty optional fields are accepted by the backend', () => {
+  const request = buildDiagnosisRequest({ category: 'Plumbing', problem: 'Faucet drips.' });
+  const { payload } = buildDiagnosisTransportPayload(request);
+  assert.equal(payload.equipment, null);
+  assert.equal(payload.symptoms, null);
+  const normalized = validateAndNormalizeDiagnosisPayload(payload);
+  assert.deepEqual(normalized.equipment, {});
+  assert.deepEqual(normalized.symptoms, {});
 });
 
 test('secure backend rejects unsupported diagnosis scope', () => {

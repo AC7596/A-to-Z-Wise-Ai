@@ -58,21 +58,21 @@ function compactObject(record) {
 
 function normalizeEquipment(equipment = {}) {
   return compactObject({
-    make: toText(equipment.make),
-    model: toText(equipment.model)
+    make: toText(equipment?.make),
+    model: toText(equipment?.model)
   }) || {};
 }
 
 function normalizeSymptoms(symptoms = {}) {
   return compactObject({
-    seen: toText(symptoms.seen),
-    heard: toText(symptoms.heard),
-    smell: toText(symptoms.smell),
-    leakDetails: toText(symptoms.leakDetails),
-    errorCode: toText(symptoms.errorCode),
-    intermittentBehavior: toText(symptoms.intermittentBehavior),
-    problemStart: toText(symptoms.problemStart),
-    otherSymptoms: toText(symptoms.otherSymptoms)
+    seen: toText(symptoms?.seen),
+    heard: toText(symptoms?.heard),
+    smell: toText(symptoms?.smell),
+    leakDetails: toText(symptoms?.leakDetails),
+    errorCode: toText(symptoms?.errorCode),
+    intermittentBehavior: toText(symptoms?.intermittentBehavior),
+    problemStart: toText(symptoms?.problemStart),
+    otherSymptoms: toText(symptoms?.otherSymptoms)
   }) || {};
 }
 
