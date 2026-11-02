@@ -272,10 +272,12 @@ function buildSystemPrompt() {
     'Never provide automotive diagnosis.',
     'Safety is highest priority. If there is any risk of electrical shock, gas leak, fire, carbon monoxide, structural failure, hazardous material, sewage, or active flooding, clearly instruct STOP and call emergency/professional help.',
     'Never claim certainty. Use words like possible/likely.',
+    'Set hasDanger=true only for an actual hazard supported by the reported symptoms. Routine precautions (such as shutting off water before a faucet repair) and conditional stop instructions are not evidence of a current hazard. Otherwise set hasDanger=false and dangerConfig=null, while retaining safetyWarnings and whenToStopDIY.',
     'Never invent equipment details. Use only provided My Home data.',
     'Return strict JSON only with keys: matched, needsFollowUp, confidence, hasDanger, dangerConfig, possibleCauses, otherPossibleCauses, safeChecks, nextActions, tools, parts, safetyWarnings, whenToStopDIY, whenToCallProfessional, followUpQuestions, issue, category.',
     'possibleCauses and otherPossibleCauses must be arrays of objects with title and whyPossible.',
     'issue must include: causes, otherCauses, clarifyingQuestions, nextCheck, steps, tools, parts, time, difficulty, tips, stopWhen, safety, pro.',
+    'issue.difficulty must be exactly one of: easy-check, beginner, intermediate, advanced, professional, emergency. Classify the recommended task, not the presence of routine safety precautions. Use professional for work requiring a qualified professional and emergency for an immediate danger.',
     'If more information is required, set needsFollowUp=true and return concise followUpQuestions.'
   ].join(' ');
 }
@@ -356,7 +358,15 @@ function normalizePossibleCauses(rawValue, fallbackWhy) {
 function normalizeDifficulty(value) {
   const allowed = new Set(['easy-check', 'beginner', 'intermediate', 'advanced', 'professional', 'emergency']);
   const normalized = toText(value).toLowerCase();
-  return allowed.has(normalized) ? normalized : 'professional';
+  const aliases = {
+    'easy homeowner check': 'easy-check',
+    'beginner diy': 'beginner',
+    'intermediate diy': 'intermediate',
+    'advanced repair': 'advanced',
+    'professional recommended': 'professional',
+    'emergency — stop immediately': 'emergency'
+  };
+  return allowed.has(normalized) ? normalized : (aliases[normalized] || 'professional');
 }
 
 export function normalizeProviderDiagnosis(rawResponse, payload) {
@@ -374,6 +384,7 @@ export function normalizeProviderDiagnosis(rawResponse, payload) {
 
   const issue = rawResponse?.issue && typeof rawResponse.issue === 'object' ? rawResponse.issue : {};
   const difficulty = normalizeDifficulty(issue.difficulty || rawResponse?.difficulty);
+  const hasDanger = rawResponse?.hasDanger === true || difficulty === 'emergency';
   const matched = typeof rawResponse?.matched === 'boolean'
     ? rawResponse.matched
     : Boolean(possibleCauses.length || followUpQuestions.length);
@@ -393,13 +404,13 @@ export function normalizeProviderDiagnosis(rawResponse, payload) {
           ? 'Possible causes identified, but more detail is needed to narrow the diagnosis.'
           : 'Likely causes based on the details provided so far.')
     },
-    hasDanger: Boolean(rawResponse?.hasDanger || safetyWarnings.length || whenToStopDIY.length),
-    dangerConfig: compactObject({
+    hasDanger,
+    dangerConfig: hasDanger ? compactObject({
       level: toText(rawResponse?.dangerConfig?.level) || (whenToStopDIY.length ? 'caution' : ''),
       badge: toText(rawResponse?.dangerConfig?.badge) || (whenToStopDIY.length ? 'Safety note' : ''),
       message: toText(rawResponse?.dangerConfig?.message) || safetyWarnings[0] || '',
       action: toText(rawResponse?.dangerConfig?.action)
-    }) || null,
+    }) || null : null,
     possibleCauses,
     otherPossibleCauses,
     safeChecks,

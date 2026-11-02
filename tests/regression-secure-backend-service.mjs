@@ -95,6 +95,42 @@ test('provider output is normalized into UI-ready structured diagnosis fields', 
   assert.ok(normalized.safeChecks.length > 0);
 });
 
+test('routine faucet precautions do not become a danger alert', () => {
+  const payload = validateAndNormalizeDiagnosisPayload({
+    scope: 'home-diy-only', category: 'Plumbing', problem: 'Faucet drips from the spout.'
+  });
+  assert.equal(detectImmediateSafetyStop(payload), null);
+  for (const hasDanger of [false, undefined]) {
+    const result = normalizeProviderDiagnosis({
+      hasDanger,
+      safetyWarnings: ['Turn off the water supply before repairs.'],
+      whenToStopDIY: ['Stop if the shutoff valve does not work.'],
+      dangerConfig: { message: 'Turn off the water supply before repairs.' },
+      issue: { difficulty: 'Beginner DIY' }
+    }, payload);
+    assert.equal(result.hasDanger, false);
+    assert.equal(result.dangerConfig, null);
+    assert.equal(result.issue.difficulty, 'beginner');
+    assert.equal(result.safetyWarnings.length, 1);
+    assert.equal(result.whenToStopDIY.length, 1);
+  }
+});
+
+test('provider hazards and emergency difficulty retain danger alerts', () => {
+  const payload = validateAndNormalizeDiagnosisPayload(createBasePayload());
+  for (const raw of [
+    { hasDanger: true, issue: { difficulty: 'professional' } },
+    { hasDanger: false, issue: { difficulty: 'emergency' } }
+  ]) {
+    const result = normalizeProviderDiagnosis({
+      ...raw, dangerConfig: { message: 'Stop work and seek professional help.' }
+    }, payload);
+    assert.equal(result.hasDanger, true);
+    assert.ok(result.dangerConfig.message);
+  }
+  assert.equal(normalizeProviderDiagnosis({ issue: { difficulty: 'unknown' } }, payload).issue.difficulty, 'professional');
+});
+
 test('provider call uses server-side secret and returns normalized response', async () => {
   const payload = validateAndNormalizeDiagnosisPayload(createBasePayload());
 
