@@ -60,3 +60,30 @@ test('enforced diagnosis preserves free immediate danger guidance', async () => 
   assert.equal(result.status, 200);
   assert.equal((await result.json()).hasDanger, true);
 });
+test('complete callback verifies PayPal identity and subscription before issuing a session', async () => {
+  const originalFetch = globalThis.fetch;
+  const calls = [];
+  globalThis.fetch = async (url, options) => {
+    calls.push(url);
+    if (url.endsWith('/v1/oauth2/token')) return Response.json({ access_token: 'test-token' });
+    if (url.includes('/userinfo?')) return Response.json({ payer_id: 'TESTPAYER1234' });
+    return Response.json({ id: 'I-TEST123456', plan_id: 'P-TEST', status: 'ACTIVE',
+      subscriber: { payer_id: 'TESTPAYER1234' }, billing_info: {
+        last_payment: { time: new Date(Date.now() - 60000).toISOString(), amount: { currency_code: 'USD', value: '9.99' } },
+        next_billing_time: new Date(Date.now() + 86400000).toISOString(), failed_payments_count: 0
+      } });
+  };
+  try {
+    const state = await signMemberToken({ aud: 'login', exp: Date.now() + 60000,
+      nonce: 'test-nonce', subscriptionId: 'I-TEST123456' }, secret);
+    const result = await handleMemberRoute(new Request(`https://backend.example/api/member/callback?code=test-code&state=${state}`,
+      { headers: { Cookie: '__Host-atoz_member_state=test-nonce' } }), env);
+    const fragment = new URLSearchParams(new URL(result.headers.get('Location')).hash.slice(1));
+    const session = await readMemberToken(fragment.get('member_token'), secret, 'member');
+    assert.equal(session.payerId, 'TESTPAYER1234');
+    assert.equal(session.subscriptionId, 'I-TEST123456');
+    assert.equal(calls.length, 4);
+    assert.ok(result.headers.get('Set-Cookie').includes('Max-Age=0'));
+    assert.ok(!fragment.has('access_token'));
+  } finally { globalThis.fetch = originalFetch; }
+});
