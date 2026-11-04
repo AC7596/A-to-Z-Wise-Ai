@@ -10,7 +10,7 @@
 // See BACKEND.md and backend/README.md for deployment/configuration details.
 
 import { diagnosisDatabase } from '../data/diagnosis-data.js';
-import { getMemberToken, clearMemberToken } from './member-session.js';
+import { getDiagnosisMemberToken, clearMemberToken } from './member-session.js';
 import { classifyIntent, INTENT, INTENT_META, INTENTIONAL_ACTION_INTENTS, getIntentFollowUpQuestions } from '../data/intent-data.js';
 import { assessRisk, RISK_LEVEL, RISK_BADGE_LABEL, matchesKeyword } from '../data/safety-data.js';
 import {
@@ -137,9 +137,10 @@ export async function diagnoseProblem(request) {
   if (backendUrl) {
     try {
       const { formData } = buildDiagnosisTransportPayload(normalizedRequest);
+      const memberToken = await getDiagnosisMemberToken();
       const response = await fetchJson(`${backendUrl}${DIAGNOSIS_ENDPOINT}`, {
         method: 'POST',
-        headers: getMemberToken() ? { Authorization: `Bearer ${getMemberToken()}` } : {},
+        headers: memberToken ? { Authorization: `Bearer ${memberToken}` } : {},
         body: formData
       });
       return normalizeDiagnosisResponse(response, normalizedRequest, {

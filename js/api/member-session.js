@@ -8,3 +8,13 @@ export function setMemberToken(token) {
 export function clearMemberToken() {
   try { sessionStorage.removeItem(storageKey); } catch { /* browser storage unavailable */ }
 }
+
+export async function getDiagnosisMemberToken() {
+  let hasAccount = false;
+  try { hasAccount = Boolean(localStorage.getItem('atoz-managed-account')); } catch { /* unavailable */ }
+  if (hasAccount) {
+    const { getAccountToken } = await import('./account-client.js');
+    return getAccountToken();
+  }
+  return getMemberToken();
+}

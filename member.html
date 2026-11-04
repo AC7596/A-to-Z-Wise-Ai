@@ -1,48 +1,24 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="referrer" content="no-referrer">
-  <meta name="robots" content="noindex,follow">
-  <title>Member access | A to Z Wise AI</title>
-  <link rel="stylesheet" href="styles.css">
-  <style>
-    [hidden] { display: none; }
-    #memberLoginForm label { display: block; font-weight: 600; margin-bottom: .5rem; }
-    #memberLoginForm input, #memberCodeForm input { width: 100%; max-width: 26rem; box-sizing: border-box; padding: .85rem; border: 1px solid #aabbb4; border-radius: .6rem; font: inherit; }
-    #memberLoginButton:disabled { opacity: .55; cursor: not-allowed; }
-    #memberStatus { padding: 1rem; background: #eef5f1; border-radius: .6rem; }
-  </style>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer"><meta name="robots" content="noindex,follow">
+<title>Your account | A to Z Wise AI</title><link rel="stylesheet" href="styles.css">
+<style>[hidden]{display:none!important}.account-card{max-width:700px;margin:40px auto;padding:24px;background:white;border:1px solid #dfe9e4;border-radius:16px}.account-card label{display:block;font-weight:600;margin-top:16px}.account-card input{width:100%;padding:12px;font:inherit;border:1px solid #aabbb4;border-radius:8px}.account-card button{margin-top:14px}.account-card button:disabled{opacity:.55;cursor:not-allowed}.account-status{background:#eef5f1;padding:16px;border-radius:8px}.account-actions{display:flex;flex-wrap:wrap;gap:12px}</style>
 </head>
 <body>
-  <header class="site-header"><div class="container nav">
-    <a class="brand" href="index.html"><span class="brand-mark">A•Z</span><span>A to Z Wise AI</span></a>
-    <nav class="nav-links"><a href="index.html#diagnosis">AI Diagnosis</a><a href="index.html#guides">Free repair guides</a></nav>
-  </div></header>
-  <main class="container page-content"><section class="legal-card">
-    <div class="eyebrow">Founding Member</div><h1>Member access</h1>
-    <p>Already subscribed? Sign in here using the email address on your PayPal subscription. Signing in here does not start another subscription or charge you.</p>
-    <p id="memberStatus" role="status">Checking member sign-in availability…</p>
-    <form id="memberLoginForm">
-      <label for="memberEmail">Email address</label>
-      <input id="memberEmail" type="email" maxlength="254" autocomplete="email" required>
-      <label for="subscriptionId">PayPal subscription ID</label>
-      <input id="subscriptionId" name="subscription_id" placeholder="I-…" maxlength="66" pattern="I-[A-Z0-9]{6,64}" required autocomplete="off">
-      <p>Find this in your PayPal subscription details. A receipt transaction ID is different.</p>
-      <button id="memberLoginButton" class="btn primary" disabled>Email me a sign-in code</button>
-    </form>
-    <form id="memberCodeForm" hidden>
-      <label for="memberCode">Code from your email</label>
-      <input id="memberCode" autocomplete="one-time-code" maxlength="32" pattern="[a-fA-F0-9]{32}" required>
-      <p>Copy the full code from your email and paste it here. Use this same browser tab.</p>
-      <button class="btn primary">Sign in</button>
-    </form>
-    <p><a href="index.html#diagnosis">Go to AI diagnosis</a> · <a href="index.html#pricing">View membership</a></p>
-    <button id="memberLogout" class="btn secondary" hidden>Sign out of this website</button>
-    <p>Your member session lasts up to one hour in this tab. PayPal verifies the subscription again when you request real AI diagnosis.</p>
-    <p><a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a></p>
-  </section></main>
-  <script type="module" src="js/modules/member-access.js"></script>
-</body>
-</html>
+<header class="site-header"><div class="container nav"><a class="brand" href="index.html"><span class="brand-mark">A•Z</span><span>A to Z Wise AI</span></a><nav class="nav-links"><a href="index.html#my-home">My Home</a><a href="index.html#diagnosis">AI Diagnosis</a></nav></div></header>
+<main class="container"><section class="account-card">
+<div class="eyebrow">Your A to Z Wise AI account</div><h1>Welcome home</h1>
+<p>Sign in with your email. PayPal handles subscription payments; you do not need to sign into PayPal each time you visit.</p>
+<p id="memberStatus" class="account-status" role="status">Checking account availability…</p>
+<form id="memberLoginForm"><label for="memberEmail">Email address</label><input id="memberEmail" type="email" maxlength="254" autocomplete="email" required><p>For an existing subscription, use its PayPal email address when linking it for the first time.</p><button id="memberLoginButton" class="btn primary" disabled>Email me a code</button></form>
+<form id="memberCodeForm" hidden><label for="memberCode">Code from your email</label><input id="memberCode" inputmode="numeric" autocomplete="one-time-code" minlength="6" maxlength="10" pattern="[0-9]{6,10}" required><button class="btn primary">Sign in</button></form>
+<section id="accountDetails" hidden><h2>Your membership</h2><p id="accountEmail"></p><p id="membershipStatus" role="status"></p>
+<form id="subscriptionLinkForm" hidden><label for="subscriptionId">Link your existing PayPal subscription once</label><input id="subscriptionId" placeholder="I-…" pattern="I-[A-Z0-9]{6,64}" maxlength="66" required><p>Use the subscription ID, not the receipt transaction ID. Linking does not charge you. We remember the connection for future visits.</p><button class="btn primary">Link subscription</button></form>
+<p><a href="index.html#pricing">View subscription options</a> · <a href="https://www.paypal.com/myaccount/autopay/">Manage billing in PayPal</a></p>
+<h2>Your private My Home cloud copy</h2><p>Save the records from this device, then load them on another signed-in device. Transfers are manual; edits are not automatically synchronized. Document links and notes are included, not uploaded files.</p>
+<div class="account-actions"><button id="cloudSave" class="btn secondary">Save this device to cloud</button><button id="cloudLoad" class="btn secondary">Load cloud copy</button><button id="cloudDownload" class="btn secondary">Download cloud backup</button></div><p id="cloudStatus" role="status"></p>
+<p><a href="index.html#my-home">Open My Home</a> · <a href="index.html#diagnosis">Get AI diagnosis</a></p><button id="memberLogout" class="btn secondary">Sign out</button><p>On a shared device, sign out when finished. Local My Home records and downloaded backups remain on that device.</p></section>
+<p><a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a> · <a href="contact.html">Help</a></p>
+</section></main><script type="module" src="js/modules/member-access.js"></script></body></html>

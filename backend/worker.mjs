@@ -13,7 +13,7 @@ const MAX_PHOTOS = 6;
 const MAX_PHOTO_SIZE_BYTES = 8 * 1024 * 1024;
 const MAX_TOTAL_PHOTO_BYTES = 20 * 1024 * 1024;
 const MAX_MULTIPART_REQUEST_BYTES = 25 * 1024 * 1024;
-const API_ROUTES = new Set(['/api/diagnose', '/api/health', '/api/member/status', '/api/member/start', '/api/member/callback', '/api/member/email/start', '/api/member/email/verify']);
+const API_ROUTES = new Set(['/api/diagnose', '/api/health', '/api/member/status', '/api/member/start', '/api/member/callback', '/api/member/config', '/api/member/account', '/api/member/link']);
 
 function normalizeOrigin(value) {
   const text = String(value || '').trim();
@@ -171,7 +171,7 @@ export default {
       if (isDisallowedCorsPreflight(request, env)) {
         return new Response(null, { status: 403 });
       }
-      const allowMethods = (normalizedPath === '/api/diagnose' || normalizedPath.startsWith('/api/member/email/')) ? 'POST, OPTIONS' : 'GET, OPTIONS';
+      const allowMethods = (normalizedPath === '/api/diagnose' || normalizedPath === '/api/member/link') ? 'POST, OPTIONS' : 'GET, OPTIONS';
       return new Response(null, {
         status: 204,
         headers: corsHeaders(request, env, allowMethods)
@@ -180,7 +180,7 @@ export default {
 
     if (normalizedPath.startsWith('/api/member/')) {
       if (!API_ROUTES.has(normalizedPath)) return jsonResponse({ error: 'not_found' }, 404, request, env);
-      const methods = normalizedPath.startsWith('/api/member/email/') ? 'POST, OPTIONS' : 'GET, OPTIONS';
+      const methods = normalizedPath === '/api/member/link' ? 'POST, OPTIONS' : 'GET, OPTIONS';
       if (request.method !== methods.split(',')[0]) return jsonResponse({ error: 'method_not_allowed' }, 405, request, env, methods);
       try {
         const result = await handleMemberRoute(request, env);
