@@ -450,7 +450,9 @@ export function getMaintenanceTaskStatus(task, referenceDate = todayIso()) {
 
 function hasRecognizedImportShape(profile) {
   if (!isPlainObject(profile)) return false;
-  if (profile.appId === APP_ID && profile.recordType === RECORD_TYPE) return true;
+  if (profile.appId !== undefined && profile.appId !== APP_ID) return false;
+  if (profile.recordType !== undefined && profile.recordType !== RECORD_TYPE) return false;
+  if (profile.version !== undefined && (!Number.isInteger(profile.version) || profile.version > CURRENT_VERSION || profile.version < 1)) return false;
   return isPlainObject(profile.homeInfo)
     && Array.isArray(profile.equipment)
     && Array.isArray(profile.maintenanceRecords)

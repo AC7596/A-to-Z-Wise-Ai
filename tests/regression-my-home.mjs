@@ -294,6 +294,32 @@ test('My Home profile regression checks', async t => {
     assert.equal(loadMyHomeProfile(preservedStorage).homeInfo.nickname, 'Keep me');
   });
 
+  await t.test('damaged, unrelated, and newer backups never replace existing records', () => {
+    const storage = createMemoryStorage();
+    updateHomeInfo({ nickname: 'Fictional Cedar House' }, storage);
+    addEquipment({ type: 'Dishwasher', modelNumber: 'TEST-123' }, storage);
+    const before = exportMyHomeProfile(storage);
+    const valid = JSON.parse(before);
+    for (const invalid of [
+      { appId: valid.appId, recordType: valid.recordType },
+      { ...valid, equipment: null },
+      { ...valid, homeInfo: [] },
+      { ...valid, maintenanceRecords: {} },
+      { ...valid, upcomingMaintenance: null },
+      { ...valid, appId: 'another-app' },
+      { ...valid, recordType: 'another-record' },
+      { ...valid, version: valid.version + 1 }
+    ]) {
+      assert.equal(importMyHomeProfile(JSON.stringify(invalid), storage).ok, false);
+      assert.deepEqual(stripDynamicFields(loadMyHomeProfile(storage)), stripDynamicFields(valid));
+    }
+    const legacy = { ...valid };
+    delete legacy.appId;
+    delete legacy.recordType;
+    delete legacy.version;
+    assert.equal(importMyHomeProfile(JSON.stringify(legacy), createMemoryStorage()).ok, true);
+  });
+
   await t.test('normalization preserves legacy fields, sanitizes invalid URLs, and restores starter reminders when needed', () => {
     const normalized = normalizeMyHomeProfile({
       version: 1,
