@@ -50,7 +50,7 @@ create policy own_home_delete on public.home_profiles for delete to authenticate
 create function public.save_home_profile(new_profile jsonb, expected_revision bigint, expected_user_id uuid)
 returns setof public.home_profiles language plpgsql security invoker set search_path = '' as $$
 begin
-  if auth.uid() is null or auth.uid() <> expected_user_id then raise exception 'Sign in required'; end if;
+  if auth.uid() is null or expected_user_id is null or auth.uid() <> expected_user_id then raise exception 'Sign in required'; end if;
   if expected_revision = 0 then
     return query insert into public.home_profiles(user_id, profile)
       values (auth.uid(), new_profile) on conflict (user_id) do nothing returning *;

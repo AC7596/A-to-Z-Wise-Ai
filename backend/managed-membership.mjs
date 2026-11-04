@@ -2,10 +2,20 @@ import { MembershipError, findSubscriptionForEmail, verifyPaidSubscription } fro
 
 const unavailable = () => new MembershipError('membership_unavailable', 503, 'Account services are temporarily unavailable. Please try again later.');
 const loginRequired = () => new MembershipError('member_login_required', 401, 'Sign in to your A to Z Wise AI account.');
+export function isPublicSupabaseKey(value) {
+  if (typeof value !== 'string') return false;
+  if (/^sb_publishable_[A-Za-z0-9_-]+$/.test(value)) return true;
+  // Legacy public keys carry the anon role. This is a configuration guard,
+  // never a substitute for verifying a customer's token with Supabase.
+  try {
+    const parts = value.split('.');
+    return parts.length === 3 && JSON.parse(atob(parts[1].replaceAll('-', '+').replaceAll('_', '/'))).role === 'anon';
+  } catch { return false; }
+}
 export function managedReady(env) {
   return env.MEMBER_LOGIN_METHOD === 'supabase' && env.MANAGED_ACCOUNTS_ENABLED === 'true' &&
     /^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(env.SUPABASE_URL || '') &&
-    Boolean(env.SUPABASE_PUBLIC_KEY && env.SUPABASE_SERVICE_ROLE_KEY && env.PAYPAL_CLIENT_ID &&
+    Boolean(isPublicSupabaseKey(env.SUPABASE_PUBLIC_KEY) && env.SUPABASE_SERVICE_ROLE_KEY && env.PAYPAL_CLIENT_ID &&
       env.PAYPAL_CLIENT_SECRET && env.PAYPAL_PLAN_ID && ['live', 'sandbox'].includes(env.PAYPAL_ENVIRONMENT));
 }
 async function jsonFetch(url, options, fetchImpl) {

@@ -4,7 +4,7 @@ import { managedUser, managedReady, handleManagedRoute, authorizeManagedMember }
 import worker from '../backend/worker.mjs';
 const id='12345678-1234-1234-1234-123456789abc';
 function fixture(){
- const env={MEMBER_LOGIN_METHOD:'supabase',MANAGED_ACCOUNTS_ENABLED:'true',SUPABASE_URL:'https://test-project.supabase.co',SUPABASE_PUBLIC_KEY:'public-test',SUPABASE_SERVICE_ROLE_KEY:'private-test',PAYPAL_CLIENT_ID:'test',PAYPAL_CLIENT_SECRET:'test',PAYPAL_PLAN_ID:'P-TEST',PAYPAL_ENVIRONMENT:'sandbox',ALLOWED_ORIGINS:'https://atozwiseai.com'};
+ const env={MEMBER_LOGIN_METHOD:'supabase',MANAGED_ACCOUNTS_ENABLED:'true',SUPABASE_URL:'https://test-project.supabase.co',SUPABASE_PUBLIC_KEY:'sb_publishable_test',SUPABASE_SERVICE_ROLE_KEY:'private-test',PAYPAL_CLIENT_ID:'test',PAYPAL_CLIENT_SECRET:'test',PAYPAL_PLAN_ID:'P-TEST',PAYPAL_ENVIRONMENT:'sandbox',ALLOWED_ORIGINS:'https://atozwiseai.com'};
  const user={id,email:'buyer@example.com',email_confirmed_at:'2026-11-01',is_anonymous:false};
  const record={id:'I-TEST123456',plan_id:'P-TEST',status:'ACTIVE',subscriber:{payer_id:'TESTPAYER1234',email_address:user.email},billing_info:{last_payment:{time:new Date(Date.now()-10000).toISOString(),amount:{currency_code:'USD',value:'9.99'}},next_billing_time:new Date(Date.now()+86400000).toISOString()}};
  let link=null, authStatus=200, conflict=false; const calls=[];
@@ -32,7 +32,7 @@ test('forged and expired sessions rejected by provider before billing access',as
 });
 test('public configuration never exposes server keys',async()=>{
  const f=fixture();const config=await handleManagedRoute(f.req('config'),f.env,f.fetchImpl);
- assert.equal(config.publicKey,'public-test');assert.ok(!JSON.stringify(config).includes('private-test'));assert.equal(f.calls.length,0);
+ assert.equal(config.publicKey,'sb_publishable_test');assert.ok(!JSON.stringify(config).includes('private-test'));assert.equal(f.calls.length,0);
 });
 test('link uses verified email and user ID, ignores client identity fields',async()=>{
  const f=fixture();await handleManagedRoute(f.req('link',{subscriptionId:f.record.id,email:'attacker@example.com',user_id:'attacker',payerId:'attacker'}),f.env,f.fetchImpl);
@@ -65,4 +65,14 @@ test('worker routes methods and preflight for managed accounts',async()=>{
  assert.match(preflight.headers.get('Access-Control-Allow-Methods'),/POST/);
  const response=await worker.fetch(f.req('link',{subscriptionId:f.record.id}),f.env);assert.equal(response.status,200);
  }finally{globalThis.fetch=original;}
+});
+
+test('configuration cannot expose an accidentally supplied secret key',async()=>{
+ const f=fixture();
+ for(const key of ['sb_secret_example', 'x.'+btoa(JSON.stringify({role:'service_role'}))+'.y', 'invalid']) {
+   const env={...f.env,SUPABASE_PUBLIC_KEY:key};
+   assert.equal(managedReady(env),false);
+   const config=await handleManagedRoute(f.req('config'),env,f.fetchImpl);
+   assert.equal(config.ready,false);assert.equal(config.publicKey,undefined);
+ }
 });
