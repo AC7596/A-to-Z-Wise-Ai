@@ -36,6 +36,21 @@ export async function verifyPaidSubscription({ subscriptionId, payerId }, env,
   { fetchImpl = fetch, now = Date.now() } = {}) {
   if (!/^I-[A-Z0-9]{6,64}$/.test(subscriptionId || '') ||
       !/^[A-Z0-9]{13}$/.test(payerId || '')) throw denied();
+  return checkSubscription(subscriptionId, subscriber => subscriber?.payer_id === payerId, env, { fetchImpl, now });
+}
+
+// This only locates the subscription for an email challenge. It does NOT
+// authenticate the caller. Send proof only to this matching PayPal address.
+export async function findSubscriptionForEmail({ subscriptionId, email }, env,
+  { fetchImpl = fetch, now = Date.now() } = {}) {
+  if (!/^I-[A-Z0-9]{6,64}$/.test(subscriptionId || '') ||
+      typeof email !== 'string' || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw denied();
+  return checkSubscription(subscriptionId, subscriber =>
+    subscriber?.email_address?.trim().toLowerCase() === email.trim().toLowerCase() &&
+    /^[A-Z0-9]{13}$/.test(subscriber?.payer_id || ''), env, { fetchImpl, now });
+}
+
+async function checkSubscription(subscriptionId, matchesIdentity, env, { fetchImpl, now }) {
   if (!env.PAYPAL_CLIENT_ID || !env.PAYPAL_CLIENT_SECRET || !env.PAYPAL_PLAN_ID ||
       !['live', 'sandbox'].includes(env.PAYPAL_ENVIRONMENT)) throw unavailable();
   const base = env.PAYPAL_ENVIRONMENT === 'live'
@@ -59,11 +74,11 @@ export async function verifyPaidSubscription({ subscriptionId, payerId }, env,
   // This initial policy has no free trials or overdue-payment grace period.
   // Reject missing payment evidence, future payments, and overdue billing.
   if (record.id !== subscriptionId || record.plan_id !== env.PAYPAL_PLAN_ID ||
-      record.status !== 'ACTIVE' || record.subscriber?.payer_id !== payerId ||
+      record.status !== 'ACTIVE' || !matchesIdentity(record.subscriber) ||
       paid?.amount?.currency_code !== 'USD' || !(Number(paid?.amount?.value) > 0) ||
       !Number.isFinite(paidAt) || paidAt > now ||
       !Number.isFinite(nextBill) || nextBill <= now ||
       Number(record.billing_info?.failed_payments_count || 0) > 0) throw denied();
   // Do not return names, email addresses, or payment credentials to the client.
-  return { subscriptionId, payerId, active: true, verifiedAt: now };
+  return { subscriptionId, payerId: record.subscriber.payer_id, active: true, verifiedAt: now };
 }

@@ -13,7 +13,7 @@ const MAX_PHOTOS = 6;
 const MAX_PHOTO_SIZE_BYTES = 8 * 1024 * 1024;
 const MAX_TOTAL_PHOTO_BYTES = 20 * 1024 * 1024;
 const MAX_MULTIPART_REQUEST_BYTES = 25 * 1024 * 1024;
-const API_ROUTES = new Set(['/api/diagnose', '/api/health', '/api/member/status', '/api/member/start', '/api/member/callback']);
+const API_ROUTES = new Set(['/api/diagnose', '/api/health', '/api/member/status', '/api/member/start', '/api/member/callback', '/api/member/email/start', '/api/member/email/verify']);
 
 function normalizeOrigin(value) {
   const text = String(value || '').trim();
@@ -171,7 +171,7 @@ export default {
       if (isDisallowedCorsPreflight(request, env)) {
         return new Response(null, { status: 403 });
       }
-      const allowMethods = normalizedPath === '/api/diagnose' ? 'POST, OPTIONS' : 'GET, OPTIONS';
+      const allowMethods = (normalizedPath === '/api/diagnose' || normalizedPath.startsWith('/api/member/email/')) ? 'POST, OPTIONS' : 'GET, OPTIONS';
       return new Response(null, {
         status: 204,
         headers: corsHeaders(request, env, allowMethods)
@@ -180,16 +180,17 @@ export default {
 
     if (normalizedPath.startsWith('/api/member/')) {
       if (!API_ROUTES.has(normalizedPath)) return jsonResponse({ error: 'not_found' }, 404, request, env);
-      if (request.method !== 'GET') return jsonResponse({ error: 'method_not_allowed' }, 405, request, env, 'GET, OPTIONS');
+      const methods = normalizedPath.startsWith('/api/member/email/') ? 'POST, OPTIONS' : 'GET, OPTIONS';
+      if (request.method !== methods.split(',')[0]) return jsonResponse({ error: 'method_not_allowed' }, 405, request, env, methods);
       try {
         const result = await handleMemberRoute(request, env);
         const headers = new Headers(result.headers);
-        for (const [key, value] of Object.entries(corsHeaders(request, env, 'GET, OPTIONS'))) headers.set(key, value);
+        for (const [key, value] of Object.entries(corsHeaders(request, env, methods))) headers.set(key, value);
         return new Response(result.body, { status: result.status, headers });
       } catch (error) {
         return jsonResponse({ error: error instanceof MembershipError ? error.code : 'membership_unavailable',
           message: error instanceof MembershipError ? error.message : 'Member sign-in is temporarily unavailable.' },
-          error instanceof MembershipError ? error.status : 503, request, env, 'GET, OPTIONS');
+          error instanceof MembershipError ? error.status : 503, request, env, methods);
       }
     }
 

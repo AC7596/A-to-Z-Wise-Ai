@@ -1,4 +1,5 @@
 import { MembershipError, verifyPaidSubscription } from './paypal-membership.mjs';
+import { emailMemberReady, handleEmailMember } from './email-member.mjs';
 
 const encoder = new TextEncoder();
 const cookieName = '__Host-atoz_member_state';
@@ -7,6 +8,7 @@ const decode = text => Uint8Array.from(atob(text.replaceAll('-', '+').replaceAll
 const unauthorized = () => new MembershipError('member_login_required', 401, 'Sign in on the Member access page to use real AI diagnosis.');
 const unavailable = () => new MembershipError('membership_unavailable', 503, 'Member sign-in is being set up. Please keep your PayPal receipt; you do not need to subscribe again.');
 export function memberReady(env) {
+  if (env.MEMBER_LOGIN_METHOD === 'email') return emailMemberReady(env);
   return env.PAYPAL_LOGIN_APPROVED === 'true' && Boolean(env.PAYPAL_CLIENT_ID &&
     env.PAYPAL_CLIENT_SECRET && env.PAYPAL_PLAN_ID && env.MEMBER_CALLBACK_URL &&
     env.MEMBER_SITE_URL && env.MEMBER_SESSION_SECRET?.length >= 32 &&
@@ -59,10 +61,20 @@ export async function authorizeMember(request, env) {
 export async function handleMemberRoute(request, env) {
   const url = new URL(request.url);
   if (url.pathname === '/api/member/status') {
-    return new Response(JSON.stringify({ ready: memberReady(env), enforced: env.MEMBERSHIP_ENFORCED === 'true' }),
+    return new Response(JSON.stringify({ ready: memberReady(env), enforced: env.MEMBERSHIP_ENFORCED === 'true', ...(env.MEMBER_LOGIN_METHOD === 'email' ? { method: 'email' } : {}) }),
       { headers: { ...responseHeaders, 'Content-Type': 'application/json' } });
   }
   if (!memberReady(env)) throw unavailable();
+  if (url.pathname.startsWith('/api/member/email/')) {
+    const result = await handleEmailMember(request, env);
+    if (result.membership) {
+      const { subscriptionId, payerId } = result.membership;
+      const memberToken = await signMemberToken({ aud: 'member', exp: Date.now() + 3600000, subscriptionId, payerId }, env.MEMBER_SESSION_SECRET);
+      return new Response(JSON.stringify({ memberToken }), { headers: { ...responseHeaders, 'Content-Type': 'application/json' } });
+    }
+    return new Response(JSON.stringify(result), { headers: { ...responseHeaders, 'Content-Type': 'application/json' } });
+  }
+  if (env.MEMBER_LOGIN_METHOD === 'email') throw unavailable();
   if (url.pathname === '/api/member/start') {
     const subscriptionId = url.searchParams.get('subscription_id') || '';
     if (!/^I-[A-Z0-9]{6,64}$/.test(subscriptionId)) throw new MembershipError('invalid_subscription', 400, 'Enter the subscription ID from PayPal.');

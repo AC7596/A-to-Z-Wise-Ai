@@ -8,9 +8,9 @@
   <title>Member access | A to Z Wise AI</title>
   <link rel="stylesheet" href="styles.css">
   <style>
-    #memberLogout[hidden] { display: none; }
+    [hidden] { display: none; }
     #memberLoginForm label { display: block; font-weight: 600; margin-bottom: .5rem; }
-    #subscriptionId { width: 100%; max-width: 26rem; box-sizing: border-box; padding: .85rem; border: 1px solid #aabbb4; border-radius: .6rem; font: inherit; }
+    #memberLoginForm input, #memberCodeForm input { width: 100%; max-width: 26rem; box-sizing: border-box; padding: .85rem; border: 1px solid #aabbb4; border-radius: .6rem; font: inherit; }
     #memberLoginButton:disabled { opacity: .55; cursor: not-allowed; }
     #memberStatus { padding: 1rem; background: #eef5f1; border-radius: .6rem; }
   </style>
@@ -22,13 +22,21 @@
   </div></header>
   <main class="container page-content"><section class="legal-card">
     <div class="eyebrow">Founding Member</div><h1>Member access</h1>
-    <p>Already subscribed? Use the same PayPal account you used to subscribe. Signing in here does not start another subscription or charge you.</p>
+    <p>Already subscribed? Sign in here using the email address on your PayPal subscription. Signing in here does not start another subscription or charge you.</p>
     <p id="memberStatus" role="status">Checking member sign-in availability…</p>
     <form id="memberLoginForm">
+      <label for="memberEmail">Email address</label>
+      <input id="memberEmail" type="email" maxlength="254" autocomplete="email" required>
       <label for="subscriptionId">PayPal subscription ID</label>
       <input id="subscriptionId" name="subscription_id" placeholder="I-…" maxlength="66" pattern="I-[A-Z0-9]{6,64}" required autocomplete="off">
       <p>Find this in your PayPal subscription details. A receipt transaction ID is different.</p>
-      <button id="memberLoginButton" class="btn primary" disabled>Log in with PayPal</button>
+      <button id="memberLoginButton" class="btn primary" disabled>Email me a sign-in code</button>
+    </form>
+    <form id="memberCodeForm" hidden>
+      <label for="memberCode">Code from your email</label>
+      <input id="memberCode" autocomplete="one-time-code" maxlength="32" pattern="[a-fA-F0-9]{32}" required>
+      <p>Copy the full code from your email and paste it here. Use this same browser tab.</p>
+      <button class="btn primary">Sign in</button>
     </form>
     <p><a href="index.html#diagnosis">Go to AI diagnosis</a> · <a href="index.html#pricing">View membership</a></p>
     <button id="memberLogout" class="btn secondary" hidden>Sign out of this website</button>

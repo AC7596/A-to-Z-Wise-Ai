@@ -2,45 +2,60 @@ import { getMemberToken, setMemberToken, clearMemberToken } from '../api/member-
 const backend = 'https://a-to-z-wise-ai-backend.ad9259465.workers.dev';
 const status = document.getElementById('memberStatus');
 const form = document.getElementById('memberLoginForm');
+const codeForm = document.getElementById('memberCodeForm');
 const button = document.getElementById('memberLoginButton');
 const logout = document.getElementById('memberLogout');
 const input = document.getElementById('subscriptionId');
-const fragment = new URLSearchParams(location.hash.slice(1));
-const query = new URLSearchParams(location.search);
-const returned = fragment.get('member_token');
-const failure = fragment.get('member_error');
-const subscription = query.get('subscription_id');
-// Remove callback values before any subsequent navigation or resource requests.
+const subscription = new URLSearchParams(location.search).get('subscription_id');
 if (location.hash || location.search) history.replaceState(null, '', location.pathname);
 if (/^I-[A-Z0-9]{6,64}$/.test(subscription || '')) input.value = subscription;
-let storageFailed = false;
-if (returned && returned.length <= 4096 && /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(returned)) storageFailed = !setMemberToken(returned);
+let ready = false, challengeId = '', browserNonce = '';
 function showSession() {
-  const signedIn = Boolean(getMemberToken());
-  logout.hidden = !signedIn;
-  if (signedIn) status.textContent = 'Sign-in session saved. You can now request a diagnosis; your paid subscription is checked for each request.';
+  logout.hidden = !getMemberToken();
+  if (!logout.hidden) status.textContent = 'Signed in on this tab. Your subscription is checked when you request real AI diagnosis.';
 }
 showSession();
-if (failure) status.textContent = failure === 'membership_required'
-  ? 'We could not match an active paid subscription to this PayPal account. Check the subscription ID and use the account that paid. Do not subscribe again.'
-  : 'Sign-in could not be completed. Please try again later. You do not need to subscribe again.';
-if (storageFailed) status.textContent = 'This browser is blocking session storage. Allow storage for this website to stay signed in.';
 logout.addEventListener('click', () => {
   clearMemberToken(); logout.hidden = true; status.textContent = 'Signed out of this website.';
 });
-let ready = false;
-form.addEventListener('submit', event => {
+async function post(path, body) {
+  const response = await fetch(`${backend}/api/member/email/${path}`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body), signal: AbortSignal.timeout(35000)
+  });
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.message || 'Sign-in is temporarily unavailable. Please try again.');
+  return result;
+}
+form.addEventListener('submit', async event => {
   event.preventDefault();
-  if (!ready || !form.reportValidity()) return;
-  location.assign(`${backend}/api/member/start?${new URLSearchParams({ subscription_id: input.value.trim().toUpperCase() })}`);
+  if (!ready || button.disabled || !form.reportValidity()) return;
+  button.disabled = true; codeForm.hidden = true;
+  browserNonce = Array.from(crypto.getRandomValues(new Uint8Array(32)), b => b.toString(16).padStart(2, '0')).join('');
+  status.textContent = 'Requesting your sign-in code…';
+  try {
+    const result = await post('start', { email: document.getElementById('memberEmail').value.trim(), subscriptionId: input.value.trim().toUpperCase(), browserNonce });
+    challengeId = result.challengeId; status.textContent = result.message; codeForm.hidden = false;
+    document.getElementById('memberCode').value = ''; document.getElementById('memberCode').focus();
+  } catch (error) { status.textContent = error.message; }
+  finally { button.disabled = !ready; }
+});
+codeForm.addEventListener('submit', async event => {
+  event.preventDefault();
+  const submit = codeForm.querySelector('button');
+  if (submit.disabled || !codeForm.reportValidity()) return;
+  submit.disabled = true;
+  try {
+    const result = await post('verify', { challengeId, browserNonce, code: document.getElementById('memberCode').value.trim().toLowerCase() });
+    if (!result.memberToken || !setMemberToken(result.memberToken)) throw new Error('Allow browser session storage to stay signed in, then request another code.');
+    codeForm.hidden = true; challengeId = ''; browserNonce = ''; document.getElementById('memberCode').value = ''; showSession();
+  } catch (error) { status.textContent = error.message; }
+  finally { submit.disabled = false; }
 });
 try {
   const response = await fetch(`${backend}/api/member/status`, { signal: AbortSignal.timeout(10000) });
-  if (!response.ok) throw new Error('unavailable');
-  ready = (await response.json()).ready === true;
-  button.disabled = !ready;
-  if (!ready) status.textContent = 'Member sign-in is being set up and is not available yet. Keep your PayPal receipt. You do not need to pay again. Current public tools remain available.';
-  else if (!getMemberToken() && !failure && !storageFailed) status.textContent = 'Enter your subscription ID, then sign in securely on PayPal.';
-} catch {
-  status.textContent = 'Member sign-in is temporarily unavailable. Please try again later. Do not subscribe again.';
-}
+  if (!response.ok) throw new Error();
+  const result = await response.json(); ready = result.ready === true && result.method === 'email'; button.disabled = !ready;
+  if (!ready) status.textContent = 'Email sign-in is being set up. Keep your PayPal receipt; you do not need to pay again. Current public tools remain available.';
+  else if (!getMemberToken()) status.textContent = 'Enter the email and subscription ID from your PayPal subscription. We will email you a sign-in code.';
+} catch { status.textContent = 'Member sign-in is temporarily unavailable. Please try again later. Do not subscribe again.'; }

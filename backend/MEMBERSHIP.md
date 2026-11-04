@@ -50,3 +50,40 @@ limits and recovery flows should be reviewed before a wider launch.
 
 Do not describe the paywall as live until all release gates pass. The public
 success page is not proof of payment and checkout query parameters are not login.
+
+## Email sign-in replacement (staged, not activated)
+
+Set MEMBER_LOGIN_METHOD=email to replace PayPal identity OAuth with emailed proof.
+PayPal remains the billing source; no subscription is created or changed by login.
+Customers enter their subscription ID and the email on that PayPal subscription.
+A 128-bit single-use code is emailed only after the server matches that address to
+an active, paid subscription. Redeeming requires the requesting browser's random
+nonce and rechecks payment. The resulting one-hour session uses the same
+per-diagnosis paid-subscription check. PayPal login approval is not needed for
+this method, but API access to existing subscriptions must still be verified.
+
+Required before activation:
+- Create a Cloudflare D1 database, apply migrations/0001_member_email.sql, and bind
+  it as MEMBER_DB. Persist the binding in both deploy configurations.
+- Configure a verified sending domain with an email service. The current adapter
+  uses Resend (https://resend.com/docs/api-reference/emails/send-email).
+- Set RESEND_API_KEY as an encrypted secret; set MEMBER_EMAIL_FROM to the verified
+  sender. Disable provider click/open tracking for authentication email.
+- Set EMAIL_LOGIN_ENABLED=true only after configuration and a real inbox delivery
+  test. MEMBERSHIP_ENFORCED stays false until a real existing paid buyer succeeds
+  and a nonmember is denied on the deployed endpoint.
+- Update the privacy policy to identify the mail provider and short-lived member
+  challenge storage BEFORE enabling delivery. Do not send customer emails yet.
+
+The database stores only code/nonce hashes plus PayPal payer/subscription IDs for
+10-minute challenges. Rate-limit identifiers are salted hashes of email/IP, with
+hourly limits (5 sends per email, 40 requests per IP). Expired entries are cleaned
+on subsequent requests; configure scheduled cleanup for a strict retention SLA.
+No password is collected. Codes are entered on the requesting tab; refreshing the
+page requires a new code. This initial version still asks for the subscription ID
+on each new login; it is not a full cross-device home-record account system.
+Do not infer a verified email or paid status from client-provided values alone.
+
+Validation: tests/regression-email-member.mjs uses real in-memory SQLite queries,
+mock provider responses and mock email delivery. This does not prove live delivery
+or access to the merchant's existing subscription.
