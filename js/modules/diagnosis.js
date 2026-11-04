@@ -535,8 +535,15 @@ export function initDiagnosisForm() {
     } catch (err) {
       resetResultSections();
       els.resultCard.classList.remove('is-loading');
-      els.resultTitle.textContent = 'Something went wrong';
-      els.resultText.textContent = 'We couldn\'t complete the analysis. Please try again in a moment.';
+      els.resultTitle.textContent = err.membershipRequired ? 'Member sign-in required' : 'Something went wrong';
+      els.resultText.textContent = err.membershipRequired
+        ? 'Use Member access to sign in with the PayPal account that holds your active subscription, then retry your diagnosis.'
+        : 'We couldn\'t complete the analysis. Please try again in a moment.';
+      if (err.membershipRequired) {
+        const link = document.createElement('a');
+        link.href = 'member.html'; link.textContent = ' Open Member access';
+        els.resultText.appendChild(link);
+      }
       els.nextCheck.textContent = '—';
       els.diyLevel.textContent = '—';
       els.safetyLevel.textContent = '—';

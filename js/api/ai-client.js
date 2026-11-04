@@ -10,6 +10,7 @@
 // See BACKEND.md and backend/README.md for deployment/configuration details.
 
 import { diagnosisDatabase } from '../data/diagnosis-data.js';
+import { getMemberToken, clearMemberToken } from './member-session.js';
 import { classifyIntent, INTENT, INTENT_META, INTENTIONAL_ACTION_INTENTS, getIntentFollowUpQuestions } from '../data/intent-data.js';
 import { assessRisk, RISK_LEVEL, RISK_BADGE_LABEL, matchesKeyword } from '../data/safety-data.js';
 import {
@@ -95,7 +96,10 @@ async function fetchJson(url, options = {}) {
         backendMessage = '';
       }
       const suffix = backendMessage ? `: ${backendMessage}` : '';
-      throw new Error(`Diagnosis backend request failed (${response.status})${suffix}`);
+      const error = new Error(`Diagnosis backend request failed (${response.status})${suffix}`);
+      error.status = response.status;
+      error.memberMessage = backendMessage;
+      throw error;
     }
     return await response.json();
   } finally {
@@ -135,6 +139,7 @@ export async function diagnoseProblem(request) {
       const { formData } = buildDiagnosisTransportPayload(normalizedRequest);
       const response = await fetchJson(`${backendUrl}${DIAGNOSIS_ENDPOINT}`, {
         method: 'POST',
+        headers: getMemberToken() ? { Authorization: `Bearer ${getMemberToken()}` } : {},
         body: formData
       });
       return normalizeDiagnosisResponse(response, normalizedRequest, {
@@ -143,6 +148,11 @@ export async function diagnoseProblem(request) {
         message: buildResponseMessage('live', backendUrl)
       });
     } catch (err) {
+      if (err.status === 401 || err.status === 403) {
+        clearMemberToken();
+        err.membershipRequired = true;
+        throw err;
+      }
       const fallbackResponse = localDemoDiagnosis(normalizedRequest);
       const fallbackReason = err && typeof err.message === 'string' ? err.message : '';
       return normalizeDiagnosisResponse(fallbackResponse, normalizedRequest, {

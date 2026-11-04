@@ -6,11 +6,14 @@ import {
   createBackendErrorResponse
 } from './diagnosis-service.mjs';
 
+import { authorizeMember, handleMemberRoute } from './member-auth.mjs';
+import { MembershipError } from './paypal-membership.mjs';
+
 const MAX_PHOTOS = 6;
 const MAX_PHOTO_SIZE_BYTES = 8 * 1024 * 1024;
 const MAX_TOTAL_PHOTO_BYTES = 20 * 1024 * 1024;
 const MAX_MULTIPART_REQUEST_BYTES = 25 * 1024 * 1024;
-const API_ROUTES = new Set(['/api/diagnose', '/api/health']);
+const API_ROUTES = new Set(['/api/diagnose', '/api/health', '/api/member/status', '/api/member/start', '/api/member/callback']);
 
 function normalizeOrigin(value) {
   const text = String(value || '').trim();
@@ -168,11 +171,26 @@ export default {
       if (isDisallowedCorsPreflight(request, env)) {
         return new Response(null, { status: 403 });
       }
-      const allowMethods = normalizedPath === '/api/health' ? 'GET, OPTIONS' : 'POST, OPTIONS';
+      const allowMethods = normalizedPath === '/api/diagnose' ? 'POST, OPTIONS' : 'GET, OPTIONS';
       return new Response(null, {
         status: 204,
         headers: corsHeaders(request, env, allowMethods)
       });
+    }
+
+    if (normalizedPath.startsWith('/api/member/')) {
+      if (!API_ROUTES.has(normalizedPath)) return jsonResponse({ error: 'not_found' }, 404, request, env);
+      if (request.method !== 'GET') return jsonResponse({ error: 'method_not_allowed' }, 405, request, env, 'GET, OPTIONS');
+      try {
+        const result = await handleMemberRoute(request, env);
+        const headers = new Headers(result.headers);
+        for (const [key, value] of Object.entries(corsHeaders(request, env, 'GET, OPTIONS'))) headers.set(key, value);
+        return new Response(result.body, { status: result.status, headers });
+      } catch (error) {
+        return jsonResponse({ error: error instanceof MembershipError ? error.code : 'membership_unavailable',
+          message: error instanceof MembershipError ? error.message : 'Member sign-in is temporarily unavailable.' },
+          error instanceof MembershipError ? error.status : 503, request, env, 'GET, OPTIONS');
+      }
     }
 
     if (normalizedPath === '/api/health' && request.method === 'GET') {
@@ -217,9 +235,13 @@ export default {
         return jsonResponse(buildSafetyStopResponse(payload, dangerRule), 200, request, env);
       }
 
+      // Local emergency safety advice stays free; paid provider calls require
+      // authenticated subscription verification when enforcement is activated.
+      if (env.MEMBERSHIP_ENFORCED === 'true') await authorizeMember(request, env);
       const diagnosis = await generateDiagnosisFromProvider(payload, env);
       return jsonResponse(diagnosis, 200, request, env);
     } catch (error) {
+      if (error instanceof MembershipError) return jsonResponse({ error: error.code, message: error.message }, error.status, request, env);
       const failure = createBackendErrorResponse(error);
       return jsonResponse(failure.body, failure.status, request, env);
     }
