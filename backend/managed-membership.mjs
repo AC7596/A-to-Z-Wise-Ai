@@ -18,9 +18,9 @@ export function managedReady(env) {
     Boolean(isPublicSupabaseKey(env.SUPABASE_PUBLIC_KEY) && env.SUPABASE_SERVICE_ROLE_KEY && env.PAYPAL_CLIENT_ID &&
       env.PAYPAL_CLIENT_SECRET && env.PAYPAL_PLAN_ID && ['live', 'sandbox'].includes(env.PAYPAL_ENVIRONMENT));
 }
-async function jsonFetch(url, options, fetchImpl) {
+async function jsonFetch(url, options, fetchImpl, service) {
   try { return await fetchImpl(url, { ...options, redirect: 'error', signal: AbortSignal.timeout(10000) }); }
-  catch { throw unavailable(); }
+  catch { throw new MembershipError(service + "_connection", 503, "Could not connect to the account service. Please try again."); }
 }
 export async function managedUser(request, env, fetchImpl = fetch) {
   if (!managedReady(env)) throw unavailable();
@@ -28,9 +28,9 @@ export async function managedUser(request, env, fetchImpl = fetch) {
   if (!/^Bearer [A-Za-z0-9_.-]+$/.test(authorization) || authorization.length > 8192) throw loginRequired();
   const response = await jsonFetch(`${env.SUPABASE_URL}/auth/v1/user`, {
     headers: { apikey: env.SUPABASE_PUBLIC_KEY, Authorization: authorization }
-  }, fetchImpl);
+  }, fetchImpl, 'identity');
   if ([401,403].includes(response.status)) throw loginRequired();
-  if (!response.ok) throw unavailable();
+  if (!response.ok) throw new MembershipError("identity_lookup_" + response.status, 503, "Your account could not be verified. Please try again.");
   const user = await response.json();
   // Never trust user_metadata, decoded-but-unverified JWTs, or client email.
   if (!/^[a-f0-9-]{36}$/i.test(user.id || '') || !user.email_confirmed_at ||
@@ -41,9 +41,9 @@ async function database(path, env, options = {}, fetchImpl = fetch) {
   const response = await jsonFetch(`${env.SUPABASE_URL}/rest/v1/${path}`, {
     ...options, headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY,
       Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`, 'Content-Type': 'application/json', ...(options.headers || {}) }
-  }, fetchImpl);
+  }, fetchImpl, 'membership');
   if (response.status === 409) throw new MembershipError('subscription_already_linked', 409, 'This subscription is already linked to an account. Sign in to that account; do not pay again.');
-  if (!response.ok) throw unavailable();
+  if (!response.ok) throw new MembershipError("membership_lookup_" + response.status, 503, "Your membership could not be loaded. Please try again.");
   const body = await response.text();
   return body ? JSON.parse(body) : null;
 }
