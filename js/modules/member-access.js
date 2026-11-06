@@ -7,6 +7,8 @@ const subscription=new URLSearchParams(location.search).get('subscription_id');
 if(location.search||location.hash)history.replaceState(null,'',location.pathname);
 if(/^I-[A-Z0-9]{6,64}$/.test(subscription||''))el('subscriptionId').value=subscription;
 async function showAccount(){
+ el('startDiagnosis').hidden=true;
+ el('subscriptionLinkForm').hidden=true;
  const {data,error}=await client.auth.getUser();
  if(error||!data.user){activeUser='';el('accountDetails').hidden=true;el('memberLoginForm').hidden=false;return;}
  activeUser=data.user.id;el('memberLoginForm').hidden=true;el('memberCodeForm').hidden=true;el('accountDetails').hidden=false;
@@ -14,6 +16,7 @@ async function showAccount(){
  bindAccountHome(client,data.user,message=>{el('cloudStatus').textContent=message;});
  try{const membership=await accountRequest('account');
  el('subscriptionLinkForm').hidden=membership.linked;
+ el('startDiagnosis').hidden=!membership.active;
  el('membershipStatus').textContent=membership.active?'Your paid membership is active.':membership.linked?'Your subscription is linked, but payment is not currently active. Check PayPal billing; do not subscribe again.':'No subscription linked yet. Already paid? Link it below once.';
  }catch(error){el('membershipStatus').textContent=error.message;}
 }

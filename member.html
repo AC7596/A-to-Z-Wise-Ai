@@ -9,16 +9,21 @@
 <body>
 <header class="site-header"><div class="container nav"><a class="brand" href="index.html"><span class="brand-mark">A•Z</span><span>A to Z Wise AI</span></a><nav class="nav-links"><a href="index.html#my-home">My Home</a><a href="index.html#diagnosis">AI Diagnosis</a></nav></div></header>
 <main class="container"><section class="account-card">
-<div class="eyebrow">Your A to Z Wise AI account</div><h1>Welcome home</h1>
-<p>Sign in with your email. PayPal handles subscription payments; you do not need to sign into PayPal each time you visit.</p>
+<div class="eyebrow">Your A to Z Wise AI account</div><h1>Your member account</h1>
+<p>Already paid? Sign in with your PayPal email, link your subscription once, then start your first diagnosis.</p>
 <p id="memberStatus" class="account-status" role="status">Checking account availability…</p>
 <form id="memberLoginForm"><label for="memberEmail">Email address</label><input id="memberEmail" type="email" maxlength="254" autocomplete="email" required><p>For an existing subscription, use its PayPal email address when linking it for the first time.</p><button id="memberLoginButton" class="btn primary" disabled>Email me a code</button></form>
 <form id="memberCodeForm" hidden><label for="memberCode">Code from your email</label><input id="memberCode" inputmode="numeric" autocomplete="one-time-code" minlength="6" maxlength="10" pattern="[0-9]{6,10}" required><button class="btn primary">Sign in</button></form>
 <section id="accountDetails" hidden><h2>Your membership</h2><p id="accountEmail"></p><p id="membershipStatus" role="status"></p>
-<form id="subscriptionLinkForm" hidden><label for="subscriptionId">Link your existing PayPal subscription once</label><input id="subscriptionId" placeholder="I-…" pattern="I-[A-Z0-9]{6,64}" maxlength="66" required><p>Use the subscription ID, not the receipt transaction ID. Linking does not charge you. We remember the connection for future visits.</p><button class="btn primary">Link subscription</button></form>
+<p id="startDiagnosis" hidden><a class="btn primary" href="index.html#diagnosis">Start my first diagnosis</a></p>
+<form id="subscriptionLinkForm" hidden><label for="subscriptionId">Link your existing PayPal subscription once</label><input id="subscriptionId" placeholder="I-…" pattern="I-[A-Z0-9]{6,64}" maxlength="66" required><p>Look for the subscription ID beginning with I- in your PayPal subscription details. Linking is free and only takes one visit.</p><button class="btn primary">Link subscription</button></form>
 <p><a href="index.html#pricing">View subscription options</a> · <a href="https://www.paypal.com/myaccount/autopay/">Manage billing in PayPal</a></p>
 <h2>Your private My Home cloud copy</h2><p>If this device looks empty after the privacy update, choose Load cloud copy to restore the records you previously saved to your account.</p><p>Save the records from this device, then load them on another signed-in device. Transfers are manual; edits are not automatically synchronized. Document links and notes are included, not uploaded files.</p>
 <div class="account-actions"><button id="cloudSave" class="btn secondary">Save this device to cloud</button><button id="cloudLoad" class="btn secondary">Load cloud copy</button><button id="cloudDownload" class="btn secondary">Download cloud backup</button></div><p id="cloudStatus" role="status"></p>
-<p><a href="index.html#my-home">Open My Home</a> · <a href="index.html#diagnosis">Get AI diagnosis</a></p><button id="memberLogout" class="btn secondary">Sign out</button><p>On a shared device, sign out when finished. My Home keeps a separate device copy for each signed-in account. Downloaded backups remain on the device.</p></section>
+<p><a href="index.html#my-home">Open My Home</a></p><button id="memberLogout" class="btn secondary">Sign out</button><p>On a shared device, sign out when finished. My Home keeps a separate device copy for each signed-in account. Downloaded backups remain on the device.</p></section>
+<details><summary>Already paid? Get help</summary>
+<p><strong>Missing your code?</strong> Check Spam or Junk for “Your A to Z Wise AI sign-in code.” After one minute you can request a fresh code. Enter the newest one.</p>
+<p><strong>Different email?</strong> Sign out and use the email on your PayPal subscription. If you can’t access that inbox, open the original PayPal payment details and look for the seller’s contact information. Keep your sign-in code private.</p>
+<p><strong>Can’t find the ID?</strong> Open your A to Z Wise AI subscription in PayPal and look for the ID starting with I-. Your existing payment covers your subscription.</p></details>
 <p><a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a> · <a href="contact.html">Help</a></p>
-</section></main><script type="module" src="js/modules/member-access.js?v=private-home-2"></script></body></html>
+</section></main><script type="module" src="js/modules/member-access.js?v=member-welcome-1"></script></body></html>
