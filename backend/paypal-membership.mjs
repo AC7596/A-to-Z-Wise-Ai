@@ -1,3 +1,4 @@
+import { fetchMemberService } from './member-service-fetch.mjs';
 // Server-only building block. Not enabled in the diagnosis route until
 // authenticated member sessions and live integration tests are complete.
 export class MembershipError extends Error {
@@ -21,9 +22,7 @@ function denied() {
 async function paypalJson(fetchImpl, url, options) {
   let response;
   try {
-    response = await fetchImpl(url, {
-      ...options, redirect: 'manual', signal: AbortSignal.timeout(10000)
-    });
+    response = await fetchMemberService(fetchImpl, url, options);
   } catch { throw unavailable(); }
   if (response.status === 404) throw denied();
   if (!response.ok) throw unavailable();

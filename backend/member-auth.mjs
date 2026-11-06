@@ -1,3 +1,4 @@
+import { fetchMemberService } from './member-service-fetch.mjs';
 import { MembershipError, verifyPaidSubscription } from './paypal-membership.mjs';
 import { managedReady, authorizeManagedMember, handleManagedRoute } from './managed-membership.mjs';
 
@@ -46,7 +47,7 @@ function siteUrl(env) {
 }
 async function providerJson(url, options) {
   try {
-    const result = await fetch(url, { ...options, redirect: 'manual', signal: AbortSignal.timeout(10000) });
+    const result = await fetchMemberService(fetch, url, options);
     if (!result.ok) throw unavailable();
     return await result.json();
   } catch { throw unavailable(); }
