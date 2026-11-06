@@ -13,7 +13,7 @@ function fixture(){
  if(url.endsWith('/rpc/allow_member_link'))return Response.json(true);
  if(url.endsWith('/auth/v1/user'))return Response.json(user,{status:authStatus});
  if(url.includes('/rest/v1/member_subscriptions')){
- if(options.method==='POST'){if(conflict)return new Response('',{status:409});link=JSON.parse(options.body);return new Response(null,{status:204});}
+ if(options.method==='POST'){if(conflict)return new Response('',{status:409});link=JSON.parse(options.body);return new Response(null,{status:201});}
  return Response.json(link?[link]:[]);}
  if(url.endsWith('/token'))return Response.json({access_token:'test-token'});
  return Response.json(record);

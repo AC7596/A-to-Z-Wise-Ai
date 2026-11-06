@@ -44,7 +44,8 @@ async function database(path, env, options = {}, fetchImpl = fetch) {
   }, fetchImpl);
   if (response.status === 409) throw new MembershipError('subscription_already_linked', 409, 'This subscription is already linked to an account. Sign in to that account; do not pay again.');
   if (!response.ok) throw unavailable();
-  return response.status === 204 ? null : response.json();
+  const body = await response.text();
+  return body ? JSON.parse(body) : null;
 }
 async function linked(user, env, fetchImpl) {
   const rows = await database(`member_subscriptions?user_id=eq.${encodeURIComponent(user.id)}&select=subscription_id,payer_id`, env, {}, fetchImpl);
