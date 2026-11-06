@@ -15,6 +15,7 @@ SUPABASE_PUBLIC_KEY = "sb_publishable_Rf33cLFbgiH6fVWHvAOWqA_HhIg67_8"
 PAYPAL_ENVIRONMENT = "live"
 PAYPAL_PLAN_ID = "P-3UR170892E856923CNKQ2DVI"
 MANAGED_ACCOUNTS_ENABLED = "true"
+MEMBERSHIP_ENFORCED = "true"
 # Set exactly to your public website origins (comma-separated).
 # If you need GitHub Pages testing, temporarily add `https://ac7596.github.io`.
 # Example:
