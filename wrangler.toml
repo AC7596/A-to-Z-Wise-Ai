@@ -1,4 +1,4 @@
-name = "a-to-z-wise-ai-diagnosis-backend"
+name = "a-to-z-wise-ai-backend"
 main = "backend/worker.mjs"
 compatibility_date = "2026-09-16"
 
@@ -6,7 +6,10 @@ compatibility_date = "2026-09-16"
 # It intentionally points at backend runtime code and does not declare static assets,
 # so Cloudflare treats this project as a real Worker and allows runtime secrets.
 
+keep_vars = true
+
 [vars]
+MANAGED_ACCOUNTS_ENABLED = "true"
 # Set exactly to your public website origins (comma-separated).
 # If you need GitHub Pages testing, temporarily add `https://ac7596.github.io`.
 # Example:
