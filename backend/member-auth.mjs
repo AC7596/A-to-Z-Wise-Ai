@@ -46,7 +46,7 @@ function siteUrl(env) {
 }
 async function providerJson(url, options) {
   try {
-    const result = await fetch(url, { ...options, redirect: 'error', signal: AbortSignal.timeout(10000) });
+    const result = await fetch(url, { ...options, redirect: 'manual', signal: AbortSignal.timeout(10000) });
     if (!result.ok) throw unavailable();
     return await result.json();
   } catch { throw unavailable(); }

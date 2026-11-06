@@ -22,7 +22,7 @@ async function paypalJson(fetchImpl, url, options) {
   let response;
   try {
     response = await fetchImpl(url, {
-      ...options, redirect: 'error', signal: AbortSignal.timeout(10000)
+      ...options, redirect: 'manual', signal: AbortSignal.timeout(10000)
     });
   } catch { throw unavailable(); }
   if (response.status === 404) throw denied();

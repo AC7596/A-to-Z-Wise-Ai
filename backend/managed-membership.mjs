@@ -19,7 +19,7 @@ export function managedReady(env) {
       env.PAYPAL_CLIENT_SECRET && env.PAYPAL_PLAN_ID && ['live', 'sandbox'].includes(env.PAYPAL_ENVIRONMENT));
 }
 async function jsonFetch(url, options, fetchImpl, service) {
-  try { return await fetchImpl(url, { ...options, redirect: 'error', signal: AbortSignal.timeout(10000) }); }
+  try { return await fetchImpl(url, { ...options, redirect: 'manual', signal: AbortSignal.timeout(10000) }); }
   catch { throw new MembershipError(service + "_connection", 503, "Could not connect to the account service. Please try again."); }
 }
 export async function managedUser(request, env, fetchImpl = fetch) {
