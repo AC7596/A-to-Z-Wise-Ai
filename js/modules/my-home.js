@@ -25,7 +25,7 @@ import {
   updateEquipment,
   updateHomeInfo,
   updateUpcomingMaintenance
-} from './my-home-store.js';
+} from './my-home-store.js?v=private-home-2';
 
 let profile = null;
 let isBound = false;

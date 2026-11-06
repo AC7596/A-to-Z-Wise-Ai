@@ -1,4 +1,4 @@
-import { exportMyHomeProfile, importMyHomeProfile } from './my-home-store.js';
+import { homeStorageScope, exportMyHomeProfile, importMyHomeProfile } from './my-home-store.js?v=private-home-2';
 
 // Explicit transfers protect existing device records; stale cloud writes fail.
 export function bindAccountHome(client, user, message) {
@@ -10,6 +10,7 @@ export function bindAccountHome(client, user, message) {
     const { data: identity, error: authError } = await client.auth.getUser();
     if (authError || identity.user?.id !== user.id) throw new Error('Your account changed. Reload this page before transferring records.');
     const { data, error } = await client.from('home_profiles').select('profile,revision,updated_at').eq('user_id',user.id).maybeSingle();
+    if (homeStorageScope() !== 'member:' + user.id) throw new Error('Account changed. Reload before transferring records.');
     if (error) throw new Error('Could not read your cloud record. Your local records are unchanged.');
     return data;
   }

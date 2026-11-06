@@ -7,7 +7,7 @@ function fixture(){
  const elements=Object.fromEntries(['cloudSave','cloudLoad','cloudDownload'].map(id=>[id,{disabled:false}]));
  const messages=[];const user={id:'user-a',email:'a@example.com'};let account=user,record=null,result=[],writes=0;
  const client={auth:{getUser:async()=>({data:{user:account}})},from:()=>({select:()=>({eq:()=>({maybeSingle:async()=>({data:record})})})}),rpc:async(name,args)=>{writes++;assert.equal(args.expected_user_id,user.id);return {data:result};}};
- globalThis.window={localStorage:storage};globalThis.document={getElementById:id=>elements[id],createElement:()=>({click(){}})};globalThis.confirm=()=>true;
+ storage.setItem('atoz-managed-account',JSON.stringify({user}));globalThis.window={localStorage:storage};globalThis.document={getElementById:id=>elements[id],createElement:()=>({click(){}})};globalThis.confirm=()=>true;
  bindAccountHome(client,user,m=>messages.push(m));
  return {storage,elements,messages,setAccount:x=>{account=x;},setRecord:x=>{record=x;},setResult:x=>{result=x;},writes:()=>writes};
 }
@@ -24,4 +24,23 @@ test('cloud restore imports a valid profile and rejects damaged data',async()=>{
  const f=fixture();updateHomeInfo({nickname:'Fictional cloud home'},f.storage);const profile=JSON.parse(exportMyHomeProfile(f.storage));updateHomeInfo({nickname:'Local before restore'},f.storage);
  f.setRecord({revision:2,profile});await f.elements.cloudLoad.onclick();assert.equal(loadMyHomeProfile(f.storage).homeInfo.nickname,'Fictional cloud home');
  f.setRecord({revision:3,profile:{appId:'a-to-z-wise-ai-my-home'}});await f.elements.cloudLoad.onclick();assert.equal(loadMyHomeProfile(f.storage).homeInfo.nickname,'Fictional cloud home');assert.match(f.messages.at(-1),/not a recognized/);
+});
+
+test('switching accounts isolates device records, guests and old ownerless records', () => {
+ const values = new Map();
+ const storage = {getItem:key=>values.get(key) ?? null,setItem:(key,value)=>values.set(key,value)};
+ const signIn = id => storage.setItem('atoz-managed-account', JSON.stringify({user:{id}}));
+ signIn('first');
+ updateHomeInfo({nickname:'First home'},storage);
+ storage.setItem('fixwiseMyHomeProfile',exportMyHomeProfile(storage));
+ signIn('second');
+ assert.equal(loadMyHomeProfile(storage).homeInfo.nickname,'');
+ updateHomeInfo({nickname:'Second home'},storage);
+ values.delete('atoz-managed-account');
+ assert.equal(loadMyHomeProfile(storage).homeInfo.nickname,'');
+ signIn('first');
+ assert.equal(loadMyHomeProfile(storage).homeInfo.nickname,'First home');
+ signIn('second');
+ assert.equal(loadMyHomeProfile(storage).homeInfo.nickname,'Second home');
+ assert.ok(storage.getItem('fixwiseMyHomeProfile'));
 });

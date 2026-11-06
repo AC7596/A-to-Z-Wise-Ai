@@ -1,5 +1,5 @@
 import { getAccountClient, accountRequest } from '../api/account-client.js';
-import { bindAccountHome } from './account-home.js';
+import { bindAccountHome } from './account-home.js?v=private-home-2';
 const el=id=>document.getElementById(id);
 const status=message=>{el('memberStatus').textContent=message;};
 let client, email='', cooldownUntil=0, activeUser='';

@@ -7,7 +7,7 @@ import { getLevelBySlug } from '../data/levels.js';
 import { escapeHtml } from '../utils/html.js';
 import { repairGuides } from '../data/guides-data.js';
 import { openRepairMode } from './repair-mode.js';
-import { buildEquipmentLabel, getEquipmentDiagnosisContext, loadMyHomeProfile } from './my-home-store.js';
+import { homeStorageScope, buildEquipmentLabel, getEquipmentDiagnosisContext, loadMyHomeProfile } from './my-home-store.js?v=private-home-2';
 
 const els = {};
 
@@ -17,7 +17,7 @@ const els = {};
 // instead of every submission being treated as an unrelated new problem.
 // It is persisted to sessionStorage so the conversation survives a reload
 // within the same browser tab/session (cleared on "Reset" or tab close).
-const SESSION_KEY = 'fixwiseDiagnosisSession';
+const SESSION_KEY = 'atozDiagnosis:v2:' + homeStorageScope();
 let session = createEmptySession();
 
 function createEmptySession() {

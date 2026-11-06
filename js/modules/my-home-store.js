@@ -1,4 +1,31 @@
-const STORAGE_KEY = 'fixwiseMyHomeProfile';
+// Old device-wide records have no reliable owner. Preserve them in place,
+// but never assign them to a guest or to whichever account signs in first.
+export function homeStorageScope(storage) {
+  const target = getStorage(storage);
+  const raw = target?.getItem('atoz-managed-account');
+  if (!raw) return 'guest';
+  const id = JSON.parse(raw)?.user?.id;
+  if (typeof id !== 'string' || !id) throw new Error('Sign in again before using My Home.');
+  return 'member:' + id;
+}
+let pageScope;
+export function bindHomePageScope() {
+  pageScope = homeStorageScope();
+  const refresh = () => {
+    if (homeStorageScope() !== pageScope) {
+      document.documentElement.hidden = true;
+      location.reload();
+    }
+  };
+  window.addEventListener('storage', refresh);
+  window.addEventListener('pageshow', refresh);
+  window.addEventListener('focus', refresh);
+}
+function profileKey(storage) {
+  const scope = homeStorageScope(storage);
+  if (pageScope !== undefined && scope !== pageScope) throw new Error('Account changed. Reload My Home.');
+  return 'atozMyHome:v2:' + scope;
+}
 const CURRENT_VERSION = 4;
 const APP_ID = 'a-to-z-wise-ai-my-home';
 const RECORD_TYPE = 'property-record';
@@ -501,7 +528,7 @@ export function loadMyHomeProfile(storage) {
   if (!targetStorage) return createDefaultMyHomeProfile();
 
   try {
-    const raw = targetStorage.getItem(STORAGE_KEY);
+    const raw = targetStorage.getItem(profileKey(targetStorage));
     if (!raw) return createDefaultMyHomeProfile();
     return normalizeMyHomeProfile(JSON.parse(raw));
   } catch (err) {
@@ -518,7 +545,7 @@ export function saveMyHomeProfile(profile, storage) {
 
   if (targetStorage) {
     try {
-      targetStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+      targetStorage.setItem(profileKey(targetStorage), JSON.stringify(normalized));
     } catch (err) {
       return normalized;
     }
