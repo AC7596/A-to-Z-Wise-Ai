@@ -3,7 +3,7 @@ const events = new Set(['email.bounced', 'email.failed', 'email.suppressed', 'em
 const encoder = new TextEncoder();
 const decode = value => Uint8Array.from(atob(value), character => character.charCodeAt(0));
 
-export async function recordMailFailure(request, env) {
+export async function recordMailFailure(request, env, notify = sendOperatorAlert) {
   if (request.method !== 'POST') return new Response(null, { status: 405 });
   const secret = env.RESEND_WEBHOOK_SECRET;
   const id = request.headers.get('svix-id');
@@ -40,7 +40,7 @@ export async function recordMailFailure(request, env) {
     const message = 'Member sign-in email delivery issue: ' + event.type;
     console.error(message);
     try {
-      await sendOperatorAlert(env, 'Sign-in email delivery', message + '. Check the delivery event in Resend.');
+      await notify(env, 'Sign-in email delivery', message + '. Check the delivery event in Resend.');
     } catch {
       return new Response(null, { status: 503 });
     }
