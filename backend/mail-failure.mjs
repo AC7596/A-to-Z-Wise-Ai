@@ -1,3 +1,4 @@
+import { sendOperatorAlert } from './operator-alerts.mjs';
 const events = new Set(['email.bounced', 'email.failed', 'email.suppressed', 'email.delivery_delayed']);
 const encoder = new TextEncoder();
 const decode = value => Uint8Array.from(atob(value), character => character.charCodeAt(0));
@@ -36,7 +37,13 @@ export async function recordMailFailure(request, env) {
   let event;
   try { event = JSON.parse(body); } catch { return new Response(null, {status:400}); }
   if (events.has(event?.type) && /^(?:[^<>]*<)?login@mail\.atozwiseai\.com>?$/i.test(event.data?.from || '')) {
-    console.error('Member sign-in email delivery issue: ' + event.type);
+    const message = 'Member sign-in email delivery issue: ' + event.type;
+    console.error(message);
+    try {
+      await sendOperatorAlert(env, 'Sign-in email delivery', message + '. Check the delivery event in Resend.');
+    } catch {
+      return new Response(null, { status: 503 });
+    }
   }
   return new Response(null, {status:204});
 }

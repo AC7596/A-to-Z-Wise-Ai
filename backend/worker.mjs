@@ -1,3 +1,4 @@
+import { sendOperatorAlert } from './operator-alerts.mjs';
 import { recordMailFailure } from './mail-failure.mjs';
 import {
   validateAndNormalizeDiagnosisPayload,
@@ -159,7 +160,7 @@ async function parseDiagnosisRequest(request) {
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, context) {
     const url = new URL(request.url);
     const normalizedPath = url.pathname.endsWith('/') && url.pathname.length > 1
       ? url.pathname.slice(0, -1)
@@ -245,8 +246,14 @@ export default {
       const diagnosis = await generateDiagnosisFromProvider(payload, env);
       return jsonResponse(diagnosis, 200, request, env);
     } catch (error) {
-      if (error instanceof MembershipError) return jsonResponse({ error: error.code, message: error.message }, error.status, request, env);
-      const failure = createBackendErrorResponse(error);
+      const failure = error instanceof MembershipError
+        ? { status: error.status, body: {error: error.code, message: error.message} }
+        : createBackendErrorResponse(error);
+      if (failure.status >= 500 && context) {
+        context.waitUntil(sendOperatorAlert(env, 'AI diagnosis unavailable',
+          'A diagnosis request returned HTTP ' + failure.status + '. Check the backend and provider status.')
+          .catch(() => console.error('Diagnosis alert delivery failed.')));
+      }
       return jsonResponse(failure.body, failure.status, request, env);
     }
   }
