@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+  <meta name="referrer" content="no-referrer" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Thank you for joining A to Z Wise AI as a Founding Member." />
   <title>Welcome to A to Z Wise AI — Founding Member</title>
@@ -38,26 +39,19 @@
     <div class="success-card">
       <div class="success-icon">🎉</div>
       <div class="eyebrow">A to Z Wise AI Founding Member</div>
-      <h1>Thank you for joining A to Z Wise AI</h1>
-      <p class="success-headline">If your subscription was started through PayPal, keep your receipt and check its status in PayPal. This page alone does not verify payment.</p>
-      <p class="success-body">
-        Thank you for supporting the A to Z Wise AI Founding Member offer at $9.99/month. Your subscription helps support the continued growth of A to Z Wise AI.
-      </p>
-
-      <div class="success-details">
-        <h3>What happens next?</h3>
-        <ul>
-          <li><strong>Use current features now:</strong> You can continue using the public A to Z Wise AI diagnosis tools, repair guides, safety information, and DIY Together with Zee activities available on the site today.</li>
-          <li><strong>Member access:</strong> <a href="member.html">View member sign-in availability</a>. Email account sign-in is being prepared; you do not need to subscribe again.</li>
-          <li><strong>Keep your PayPal receipt:</strong> Billing for your recurring monthly subscription is managed through PayPal, including cancellation.</li>
-          <li><strong>Watch for future updates:</strong> Additional AI-powered and account-based features are still in development and will be introduced only when they are ready.</li>
-        </ul>
-      </div>
-
+      <h1>Link your Founding Membership</h1>
+      <p>If your subscription was started through PayPal, sign in with the email on your receipt. Enter your subscription ID beginning with I- when prompted. Once your membership is active, you can start your first diagnosis.</p>
       <div class="success-actions">
-        <a href="index.html" class="btn primary">Return to A to Z Wise AI</a>
-        <a href="index.html#diagnosis" class="btn secondary">Start a Diagnosis</a>
+        <a id="memberAccess" href="member.html" class="btn primary">Open member access</a>
+        <a href="contact.html" class="btn secondary">Get help</a>
       </div>
+      <script>
+        const subscription = new URLSearchParams(location.search).get('subscription_id');
+        if (/^I-[A-Z0-9]{6,64}$/.test(subscription || '')) {
+          document.getElementById('memberAccess').href = 'member.html?subscription_id=' + encodeURIComponent(subscription);
+        }
+        if (location.search || location.hash) history.replaceState(null, '', location.pathname);
+      </script>
     </div>
   </main>
 

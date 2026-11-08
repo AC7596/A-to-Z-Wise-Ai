@@ -30,11 +30,14 @@ export function initMonetization() {
     if (e) e.preventDefault();
     const checkoutUrl = getCheckoutUrl();
 
-    if (isConfiguredUrl(checkoutUrl)) {
-      window.location.href = checkoutUrl;
-    } else {
-      openCheckoutModal();
-    }
+    const paymentLink = document.getElementById('openPayPalCheckout');
+    const available = isConfiguredUrl(checkoutUrl);
+    paymentLink.hidden = !available;
+    if (available) paymentLink.href = checkoutUrl;
+    document.getElementById('checkoutInstructions').textContent = available
+      ? 'PayPal opens in a new tab. After paying $9.99 for your monthly membership, come back here to sign in with your PayPal email.'
+      : 'Checkout is temporarily unavailable. If you already paid, open member access below.';
+    openCheckoutModal();
   }
 
   function openCheckoutModal() {

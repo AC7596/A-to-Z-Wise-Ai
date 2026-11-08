@@ -9,7 +9,7 @@ import { initFixy } from './modules/kids.js';
 import { initKidsActivities } from './modules/kids-activities.js';
 import { initMyHome } from './modules/my-home.js?v=private-home-2';
 import { initRepairMode } from './modules/repair-mode.js';
-import { initMonetization } from './modules/monetization.js';
+import { initMonetization } from './modules/monetization.js?v=member-checkout-2';
 
 import { bindHomePageScope } from './modules/my-home-store.js?v=private-home-2';
 bindHomePageScope();

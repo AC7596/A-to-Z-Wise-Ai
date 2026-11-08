@@ -25,8 +25,8 @@ test('Monetization Configuration & Integration Checks', async (t) => {
   await t.test('success page keeps paypal messaging but links back through local site paths', () => {
     const content = fs.readFileSync(path.resolve(process.cwd(), 'success.html'), 'utf8');
     assert.ok(content.includes('started through PayPal'));
-    assert.ok(content.includes('href="index.html" class="btn primary"'));
-    assert.ok(content.includes('href="index.html#diagnosis" class="btn secondary"'));
+    assert.ok(content.includes('href="member.html" class="btn primary"'));
+    assert.ok(content.includes('href="contact.html" class="btn secondary"'));
   });
 
   await t.test('robots.txt advertises the atozwiseai.com sitemap', () => {

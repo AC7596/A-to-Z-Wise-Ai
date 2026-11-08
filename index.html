@@ -1042,24 +1042,16 @@
     </section>
   </main>
 
-  <div id="checkoutModal" class="repair-modal checkout-modal" hidden aria-hidden="true">
+  <div id="checkoutModal" role="dialog" aria-modal="true" aria-labelledby="checkoutHeading" class="repair-modal checkout-modal" hidden aria-hidden="true">
     <div class="repair-modal-backdrop checkout-modal-backdrop"></div>
     <div class="repair-modal-panel checkout-modal-panel">
       <button class="repair-modal-close" data-action="close-checkout-modal" aria-label="Close modal">✕</button>
       <div class="checkout-modal-content">
-        <div class="status-pill">Checkout Integration</div>
-        <h3>Checkout temporarily unavailable</h3>
-        <p>
-          Thank you for your interest in becoming an <strong>A to Z Wise AI Founding Member</strong>!
-        </p>
-        <p>
-          The hosted subscription checkout could not be opened from this page just now. Please return to the pricing section and try again in a moment.
-        </p>
-        <p>
-          In the meantime, you can still use A to Z Wise AI's current diagnosis tools, repair guides, safety information, and DIY Together with Zee features.
-        </p>
+        <h3 id="checkoutHeading">Founding Member checkout</h3>
+        <p id="checkoutInstructions">PayPal opens in a new tab. After paying $9.99 for your monthly membership, come back here to sign in with your PayPal email.</p>
         <div class="checkout-modal-actions">
-          <a class="btn primary" href="#diagnosis" data-action="close-checkout-modal">Try Diagnosis Demo</a>
+          <a id="openPayPalCheckout" class="btn primary" target="_blank" rel="noopener noreferrer" hidden>Continue to PayPal</a>
+          <a class="btn secondary" href="member.html">Already paid? Open member access</a>
           <button class="btn secondary" data-action="close-checkout-modal">Close</button>
         </div>
       </div>
@@ -1079,6 +1071,6 @@
     </div>
   </footer>
 
-  <script type="module" src="js/main.js?v=private-home-2"></script>
+  <script type="module" src="js/main.js?v=member-checkout-2"></script>
 </body>
 </html>
