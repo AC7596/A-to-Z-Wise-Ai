@@ -76,3 +76,28 @@ test('configuration cannot expose an accidentally supplied secret key',async()=>
    assert.equal(config.ready,false);assert.equal(config.publicKey,undefined);
  }
 });
+
+test('first paid diagnosis requires a linked account and checks the subscription again after cancellation', async t => {
+  const f = fixture();
+  const env = { ...f.env, MEMBERSHIP_ENFORCED: 'true', AI_PROVIDER_API_KEY: 'fictional', AI_PROVIDER_BASE_URL: 'https://ai.example' };
+  let diagnoses = 0;
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    if (url !== 'https://ai.example/chat/completions') return f.fetchImpl(url, options);
+    diagnoses++;
+    const result = { matched: true, possibleCauses: ['Hair caught in the drain strainer'], safeChecks: ['Check the visible strainer.'] };
+    return Response.json({choices: [{message: {content: JSON.stringify(result)}}]});
+  });
+  const diagnose = () => worker.fetch(new Request('https://backend.example/api/diagnose', {
+    method: 'POST', headers: f.req().headers,
+    body: JSON.stringify({scope:'home-diy-only', category:'Plumbing', problem:'The shower drains slowly.'})
+  }), env);
+  assert.equal((await diagnose()).status, 403);
+  assert.equal(diagnoses, 0);
+  assert.equal((await worker.fetch(f.req('link', {subscriptionId:f.record.id}), env)).status, 200);
+  const response = await diagnose();
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).matched, true);
+  f.record.status = 'CANCELLED';
+  assert.equal((await diagnose()).status, 403);
+  assert.equal(diagnoses, 1);
+});
