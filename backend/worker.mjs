@@ -1,3 +1,4 @@
+import { recordMailFailure } from './mail-failure.mjs';
 import {
   validateAndNormalizeDiagnosisPayload,
   detectImmediateSafetyStop,
@@ -163,6 +164,8 @@ export default {
     const normalizedPath = url.pathname.endsWith('/') && url.pathname.length > 1
       ? url.pathname.slice(0, -1)
       : url.pathname;
+
+    if (normalizedPath === '/api/events/sign-in-email') return recordMailFailure(request, env);
 
     if (request.method === 'OPTIONS') {
       if (!API_ROUTES.has(normalizedPath)) {

@@ -28,3 +28,6 @@ AI_PROVIDER_BASE_URL = "https://api.openai.com/v1"
 
 # Required secret (set outside git):
 # wrangler secret put AI_PROVIDER_API_KEY
+
+[observability.issues]
+enabled = true
