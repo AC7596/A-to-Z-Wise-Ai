@@ -62,7 +62,7 @@ function getBackendBaseUrl() {
 export const isBackendConnected = () => Boolean(getBackendBaseUrl());
 
 const DIAGNOSIS_ENDPOINT = '/api/diagnose';
-const REQUEST_TIMEOUT_MS = 15000;
+const REQUEST_TIMEOUT_MS = 60000;
 
 function buildResponseMessage(mode, backendUrl, details = '') {
   if (mode === 'live') {
